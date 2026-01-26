@@ -19,11 +19,11 @@
 
 **Purpose**: Project initialization and package structure
 
-- [ ] T001 Create project structure with chatgpt_archive/ package directory
-- [ ] T002 Create pyproject.toml with click and pyyaml dependencies
-- [ ] T003 [P] Create chatgpt_archive/__init__.py with version number
-- [ ] T004 [P] Create chatgpt_archive/__main__.py entry point
-- [ ] T005 [P] Create README.md with installation and usage instructions
+- [X] T001 Create project structure with chatgpt_archive/ package directory
+- [X] T002 Create pyproject.toml with click and pyyaml dependencies
+- [X] T003 [P] Create chatgpt_archive/__init__.py with version number
+- [X] T004 [P] Create chatgpt_archive/__main__.py entry point
+- [X] T005 [P] Create README.md with installation and usage instructions
 
 ---
 
@@ -33,11 +33,11 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Implement database connection and schema setup in chatgpt_archive/db.py
-- [ ] T007 [P] Create Conversation dataclass in chatgpt_archive/models.py
-- [ ] T008 [P] Create Message dataclass in chatgpt_archive/models.py
-- [ ] T009 [P] Create Attachment dataclass in chatgpt_archive/models.py
-- [ ] T010 Create Click command group skeleton in chatgpt_archive/cli.py
+- [X] T006 Implement database connection and schema setup in chatgpt_archive/db.py
+- [X] T007 [P] Create Conversation dataclass in chatgpt_archive/models.py
+- [X] T008 [P] Create Message dataclass in chatgpt_archive/models.py
+- [X] T009 [P] Create Attachment dataclass in chatgpt_archive/models.py
+- [X] T010 Create Click command group skeleton in chatgpt_archive/cli.py
 
 **Checkpoint**: Foundation ready - user story implementation can begin
 
