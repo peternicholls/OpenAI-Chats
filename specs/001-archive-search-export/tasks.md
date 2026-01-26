@@ -51,14 +51,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Implement JSON parsing for conversations.json in chatgpt_archive/importer.py
-- [ ] T012 [US1] Implement message tree traversal to extract messages in chatgpt_archive/importer.py
-- [ ] T013 [US1] Implement conversation insertion with idempotent upsert logic and fallback title (first user message or "[Untitled]") in chatgpt_archive/importer.py
-- [ ] T014 [US1] Implement message batch insertion with FTS5 triggers in chatgpt_archive/importer.py
-- [ ] T015 [US1] Implement attachment detection and storage in chatgpt_archive/importer.py
-- [ ] T016 [US1] Add import command to CLI with progress output in chatgpt_archive/cli.py
-- [ ] T017 [US1] Add --json flag support for machine-readable import output in chatgpt_archive/cli.py
-- [ ] T018 [US1] Add error handling for invalid JSON and missing files in chatgpt_archive/importer.py
+- [X] T011 [US1] Implement JSON parsing for conversations.json in chatgpt_archive/importer.py
+- [X] T012 [US1] Implement message tree traversal to extract messages in chatgpt_archive/importer.py
+- [X] T013 [US1] Implement conversation insertion with idempotent upsert logic and fallback title (first user message or "[Untitled]") in chatgpt_archive/importer.py
+- [X] T014 [US1] Implement message batch insertion with FTS5 triggers in chatgpt_archive/importer.py
+- [X] T015 [US1] Implement attachment detection and storage in chatgpt_archive/importer.py
+- [X] T016 [US1] Add import command to CLI with progress output in chatgpt_archive/cli.py
+- [X] T017 [US1] Add --json flag support for machine-readable import output in chatgpt_archive/cli.py
+- [X] T018 [US1] Add error handling for invalid JSON and missing files in chatgpt_archive/importer.py
 
 **Checkpoint**: User Story 1 complete - can import archive and query database directly
 
