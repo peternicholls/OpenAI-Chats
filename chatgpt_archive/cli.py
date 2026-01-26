@@ -8,6 +8,7 @@ Commands:
     export   Export a conversation to file
 """
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -16,7 +17,8 @@ from typing import Optional
 import click  # type: ignore[import-untyped]
 
 from chatgpt_archive import __version__
-from chatgpt_archive.db import get_db_path, init_db
+from chatgpt_archive.db import get_db_path, init_db, get_db_size
+from chatgpt_archive import importer
 
 
 def get_db_option_path(db: Optional[str]) -> Path:
@@ -98,9 +100,73 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
     Example:
         chatgpt-archive import ~/Downloads/chatgpt-export/
     """
-    # TODO: Implement in Phase 3 (T011-T018)
-    click.echo("Import command placeholder - implementation in Phase 3", err=True)
-    sys.exit(1)
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+    archive_path = Path(archive_dir)
+    
+    try:
+        if not json_output:
+            click.echo(f"Importing from {archive_path}...")
+        
+        # Progress tracking
+        total = 0
+        def progress_callback(current: int, total_count: int) -> None:
+            nonlocal total
+            total = total_count
+            if not json_output and current % 100 == 0:
+                click.echo(f"  Processed {current}/{total_count} conversations...", err=True)
+        
+        # Run import
+        conversations_imported, messages_imported = importer.import_archive(
+            archive_path,
+            db_path,
+            progress_callback
+        )
+        
+        # Get database size
+        db_size = get_db_size(db_path)
+        
+        # Output results
+        if json_output:
+            result = {
+                "status": "success",
+                "conversations_imported": conversations_imported,
+                "messages_imported": messages_imported,
+                "database_path": str(db_path),
+                "database_size_bytes": db_size
+            }
+            click.echo(json.dumps(result, indent=2))
+        else:
+            click.echo(f"\n✓ Import complete!")
+            click.echo(f"  Conversations: {conversations_imported}")
+            click.echo(f"  Messages: {messages_imported}")
+            click.echo(f"  Database: {db_path} ({db_size / 1024 / 1024:.1f} MB)")
+        
+        sys.exit(0)
+        
+    except importer.InvalidArchiveError as e:
+        if json_output:
+            error = {"status": "error", "error": "invalid_archive", "message": str(e)}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+        
+    except importer.InvalidJSONError as e:
+        if json_output:
+            error = {"status": "error", "error": "invalid_json", "message": str(e)}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(2)
+        
+    except Exception as e:
+        if json_output:
+            error = {"status": "error", "error": "import_failed", "message": str(e)}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo(f"Error: Import failed: {e}", err=True)
+        sys.exit(3)
 
 
 @main.command()  # type: ignore[attr-defined]

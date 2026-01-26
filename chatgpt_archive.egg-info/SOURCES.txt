@@ -4,6 +4,7 @@ chatgpt_archive/__init__.py
 chatgpt_archive/__main__.py
 chatgpt_archive/cli.py
 chatgpt_archive/db.py
+chatgpt_archive/importer.py
 chatgpt_archive/models.py
 chatgpt_archive.egg-info/PKG-INFO
 chatgpt_archive.egg-info/SOURCES.txt
