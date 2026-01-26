@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-import click
+import click  # type: ignore[import-untyped]
 
 from chatgpt_archive import __version__
 from chatgpt_archive.db import get_db_path, init_db
@@ -67,7 +67,7 @@ class AliasedGroup(click.Group):
 )
 @click.version_option(version=__version__, prog_name="chatgpt-archive")
 @click.pass_context
-def main(ctx, db: Optional[str], json_output: bool):
+def main(ctx: click.Context, db: Optional[str], json_output: bool) -> None:
     """ChatGPT Archive Search & Export - manage your ChatGPT conversation history.
     
     Import your ChatGPT export, search through conversations, view them,
@@ -85,10 +85,10 @@ def main(ctx, db: Optional[str], json_output: bool):
     ctx.obj["json_output"] = json_output
 
 
-@main.command("import")
+@main.command("import")  # type: ignore[attr-defined]
 @click.argument("archive_dir", type=click.Path(exists=True, file_okay=False))
 @click.pass_context
-def import_archive(ctx, archive_dir: str):
+def import_archive(ctx: click.Context, archive_dir: str) -> None:
     """Import conversations from ChatGPT export archive.
     
     ARCHIVE_DIR is the path to the extracted ChatGPT export directory
@@ -103,13 +103,13 @@ def import_archive(ctx, archive_dir: str):
     sys.exit(1)
 
 
-@main.command()
+@main.command()  # type: ignore[attr-defined]
 @click.argument("query")
 @click.option("--from", "from_date", help="Filter: conversations after date (YYYY-MM-DD)")
 @click.option("--to", "to_date", help="Filter: conversations before date (YYYY-MM-DD)")
 @click.option("--limit", "-l", default=20, help="Maximum results to return")
 @click.pass_context
-def search(ctx, query: str, from_date: Optional[str], to_date: Optional[str], limit: int):
+def search(ctx: click.Context, query: str, from_date: Optional[str], to_date: Optional[str], limit: int) -> None:
     """Search conversations by keyword or phrase.
     
     QUERY is the search term. Supports FTS5 syntax for advanced queries.
@@ -125,7 +125,7 @@ def search(ctx, query: str, from_date: Optional[str], to_date: Optional[str], li
     sys.exit(1)
 
 
-@main.command("list")
+@main.command("list")  # type: ignore[attr-defined]
 @click.option("--sort", "-s", type=click.Choice(["date", "title", "messages"]), default="date",
               help="Sort by field")
 @click.option("--order", "-o", type=click.Choice(["asc", "desc"]), default="desc",
@@ -133,7 +133,7 @@ def search(ctx, query: str, from_date: Optional[str], to_date: Optional[str], li
 @click.option("--limit", "-l", default=50, help="Maximum results")
 @click.option("--offset", default=0, help="Skip first N results (pagination)")
 @click.pass_context
-def list_conversations(ctx, sort: str, order: str, limit: int, offset: int):
+def list_conversations(ctx: click.Context, sort: str, order: str, limit: int, offset: int) -> None:
     """List all imported conversations.
     
     \b
@@ -147,10 +147,10 @@ def list_conversations(ctx, sort: str, order: str, limit: int, offset: int):
     sys.exit(1)
 
 
-@main.command()
+@main.command()  # type: ignore[attr-defined]
 @click.argument("conversation_id")
 @click.pass_context
-def view(ctx, conversation_id: str):
+def view(ctx: click.Context, conversation_id: str) -> None:
     """View a specific conversation.
     
     CONVERSATION_ID is the OpenAI conversation ID (shown in search/list output).
@@ -164,14 +164,14 @@ def view(ctx, conversation_id: str):
     sys.exit(1)
 
 
-@main.command()
+@main.command()  # type: ignore[attr-defined]
 @click.argument("conversation_id")
 @click.option("--format", "-f", "fmt", required=True,
               type=click.Choice(["md", "json", "yaml", "html", "xml"]),
               help="Output format")
 @click.option("--output", "-o", type=click.Path(), help="Output file (stdout if not specified)")
 @click.pass_context
-def export(ctx, conversation_id: str, fmt: str, output: Optional[str]):
+def export(ctx: click.Context, conversation_id: str, fmt: str, output: Optional[str]) -> None:
     """Export a conversation to file.
     
     CONVERSATION_ID is the OpenAI conversation ID.
@@ -188,4 +188,4 @@ def export(ctx, conversation_id: str, fmt: str, output: Optional[str]):
 
 
 if __name__ == "__main__":
-    main()
+    main()  # type: ignore[call-arg]  # Click handles the arguments
