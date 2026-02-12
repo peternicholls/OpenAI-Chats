@@ -3,7 +3,7 @@
 import sqlite3
 import tempfile
 from pathlib import Path
-from click.testing import CliRunner
+from click.testing import CliRunner  # type: ignore
 
 from chatgpt_archive.cli import main
 
@@ -18,7 +18,7 @@ class TestRealArchive:
         
         if not archive_dir.exists():
             # Skip if archive not available
-            import pytest
+            import pytest  # type: ignore
             pytest.skip("Real archive not found")
         
         runner = CliRunner()
@@ -73,7 +73,7 @@ class TestRealArchive:
         archive_dir = Path(__file__).parent.parent / "6a46cf212e33de2339fe70a219a979b44d35de684e8b961a5e3b73077d3caef5-2026-01-26-08-54-37-28ec05edc89840ebbb963f264ef55875"
         
         if not archive_dir.exists():
-            import pytest
+            import pytest  # type: ignore
             pytest.skip("Real archive not found")
         
         runner = CliRunner()
@@ -106,11 +106,13 @@ class TestRealArchive:
             
             output2 = json.loads(result2.output)
             
-            # Should have same counts
+            # Should have same conversation count
             assert output2["conversations_imported"] == conv_count1
-            assert output2["messages_imported"] == msg_count1
             
-            # Verify database has no duplicates
+            # Should have 0 new messages (all already exist - smart merge)
+            assert output2["messages_imported"] == 0
+            
+            # Verify database state
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             

@@ -21,6 +21,12 @@ from chatgpt_archive.db import (
     get_db_path, get_connection, init_db, get_db_size,
     get_conversation_by_id, get_conversation_messages,
     list_conversations as db_list_conversations,
+    delete_conversation as db_delete_conversation,
+    add_tag as db_add_tag,
+    remove_tag as db_remove_tag,
+    get_conversation_tags as db_get_tags,
+    list_all_tags as db_list_all_tags,
+    list_conversations_by_tag as db_list_by_tag,
 )
 from chatgpt_archive import importer
 from chatgpt_archive.search import (
@@ -78,7 +84,7 @@ class AliasedGroup(click.Group):
 
 @click.group(cls=AliasedGroup)
 @click.option(
-    "--db", "-d",
+    "--db", "-d", "--database",
     type=click.Path(),
     envvar="CHATGPT_ARCHIVE_DB",
     help="Database file path (default: ~/.chatgpt-archive/chats.db)"
@@ -424,8 +430,10 @@ def embed(ctx: click.Context, model: str, batch_size: int, estimate: bool, yes: 
               help="Sort order")
 @click.option("--limit", "-l", default=50, help="Maximum results")
 @click.option("--offset", default=0, help="Skip first N results (pagination)")
+@click.option("--tag", "-t", help="Filter by tag name")
 @click.pass_context
-def list_conversations(ctx: click.Context, sort: str, order: str, limit: int, offset: int) -> None:
+def list_conversations(ctx: click.Context, sort: str, order: str, limit: int, offset: int,
+                       tag: Optional[str]) -> None:
     """List all imported conversations.
     
     \b
@@ -433,6 +441,7 @@ def list_conversations(ctx: click.Context, sort: str, order: str, limit: int, of
         chatgpt-archive list
         chatgpt-archive list --sort title --order asc
         chatgpt-archive list --limit 10 --offset 20
+        chatgpt-archive list --tag important
     """
     db_path = ctx.obj["db_path"]
     json_output = ctx.obj["json_output"]
@@ -450,13 +459,21 @@ def list_conversations(ctx: click.Context, sort: str, order: str, limit: int, of
     try:
         conn = get_connection(db_path)
         try:
-            conversations, total = db_list_conversations(
-                conn, sort_by=sort, order=order, limit=limit, offset=offset
-            )
+            if tag:
+                conversations, total = db_list_by_tag(
+                    conn, tag_name=tag, sort_by=sort, order=order,
+                    limit=limit, offset=offset
+                )
+            else:
+                conversations, total = db_list_conversations(
+                    conn, sort_by=sort, order=order, limit=limit, offset=offset
+                )
             
             if json_output:
                 _list_json(conversations, total, offset, limit)
             else:
+                if tag:
+                    click.echo(f"Tag: {tag}")
                 _list_human(conversations, total, offset, limit)
             
             sys.exit(0)
@@ -722,7 +739,7 @@ def _view_json(conv, messages) -> None:
 @main.command()  # type: ignore[attr-defined]
 @click.argument("conversation_id")
 @click.option("--format", "-f", "fmt", required=True,
-              type=click.Choice(["md", "json", "yaml", "html", "xml"]),
+              type=click.Choice(["md", "json", "yaml", "html", "xml", "csv", "xlsx"]),
               help="Output format")
 @click.option("--output", "-o", type=click.Path(), help="Output file (stdout if not specified)")
 @click.pass_context
@@ -736,6 +753,8 @@ def export(ctx: click.Context, conversation_id: str, fmt: str, output: Optional[
         chatgpt-archive export <id> -f md -o conversation.md
         chatgpt-archive export <id> -f json
         chatgpt-archive export <id> -f html -o chat.html
+        chatgpt-archive export <id> -f csv -o chat.csv
+        chatgpt-archive export <id> -f xlsx -o chat.xlsx
     """
     from chatgpt_archive.exporters import get_exporter
     
@@ -793,12 +812,27 @@ def export(ctx: click.Context, conversation_id: str, fmt: str, output: Optional[
             if output:
                 output_path = Path(output).expanduser()
                 try:
-                    output_path.write_text(content, encoding="utf-8")
+                    # Excel format needs binary write
+                    if fmt == "xlsx":
+                        try:
+                            raw_bytes = exporter.export_bytes(conv_dict, messages_list)
+                            output_path.write_bytes(raw_bytes)
+                        except AttributeError:
+                            output_path.write_text(content, encoding="utf-8")
+                    else:
+                        output_path.write_text(content, encoding="utf-8")
                     click.echo(f"Exported to {output_path}", err=True)
                 except IOError as e:
                     click.echo(f"Error: Failed to write file: {e}", err=True)
                     sys.exit(4)
             else:
+                if fmt == "xlsx":
+                    click.echo(
+                        "Error: Excel format requires --output/-o option "
+                        "(binary format cannot be written to stdout).",
+                        err=True,
+                    )
+                    sys.exit(4)
                 # Write to stdout
                 click.echo(content)
             
@@ -809,6 +843,323 @@ def export(ctx: click.Context, conversation_id: str, fmt: str, output: Optional[
     
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
+        sys.exit(3)
+
+
+@main.group()  # type: ignore[attr-defined]
+@click.pass_context
+def tag(ctx: click.Context) -> None:
+    """Manage conversation tags.
+    
+    \b
+    Examples:
+        chatgpt-archive tag add <id> "important"
+        chatgpt-archive tag remove <id> "important"
+        chatgpt-archive tag show <id>
+        chatgpt-archive tag list
+    """
+    pass
+
+
+@tag.command("add")
+@click.argument("conversation_id")
+@click.argument("tag_name")
+@click.pass_context
+def tag_add(ctx: click.Context, conversation_id: str, tag_name: str) -> None:
+    """Add a tag to a conversation.
+    
+    \b
+    Example:
+        chatgpt-archive tag add 6974cc29-... "important"
+    """
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+    
+    if not db_path.exists():
+        if json_output:
+            error = {"status": "error", "error": "database_not_found",
+                     "message": "Database not found. Run 'chatgpt-archive import' first."}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+    
+    try:
+        conn = get_connection(db_path)
+        try:
+            result = db_add_tag(conn, conversation_id, tag_name)
+            if result:
+                if json_output:
+                    click.echo(json.dumps({
+                        "status": "success",
+                        "conversation_id": conversation_id,
+                        "tag": tag_name.strip(),
+                    }, indent=2))
+                else:
+                    click.echo(f"✓ Tagged \"{tag_name.strip()}\" on {conversation_id}")
+                sys.exit(0)
+            else:
+                if json_output:
+                    error = {"status": "error", "error": "conversation_not_found",
+                             "message": f"Conversation not found: {conversation_id}"}
+                    click.echo(json.dumps(error), err=True)
+                else:
+                    click.echo(f"Error: Conversation not found: {conversation_id}", err=True)
+                sys.exit(2)
+        finally:
+            conn.close()
+    except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(2)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(3)
+
+
+@tag.command("remove")
+@click.argument("conversation_id")
+@click.argument("tag_name")
+@click.pass_context
+def tag_remove(ctx: click.Context, conversation_id: str, tag_name: str) -> None:
+    """Remove a tag from a conversation.
+    
+    \b
+    Example:
+        chatgpt-archive tag remove 6974cc29-... "important"
+    """
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+    
+    if not db_path.exists():
+        if json_output:
+            error = {"status": "error", "error": "database_not_found",
+                     "message": "Database not found. Run 'chatgpt-archive import' first."}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+    
+    try:
+        conn = get_connection(db_path)
+        try:
+            result = db_remove_tag(conn, conversation_id, tag_name)
+            if result:
+                if json_output:
+                    click.echo(json.dumps({
+                        "status": "success",
+                        "conversation_id": conversation_id,
+                        "tag_removed": tag_name.strip(),
+                    }, indent=2))
+                else:
+                    click.echo(f"✓ Removed tag \"{tag_name.strip()}\" from {conversation_id}")
+                sys.exit(0)
+            else:
+                if json_output:
+                    error = {"status": "error", "error": "not_found",
+                             "message": f"Tag \"{tag_name}\" not found on conversation {conversation_id}"}
+                    click.echo(json.dumps(error), err=True)
+                else:
+                    click.echo(
+                        f"Error: Tag \"{tag_name}\" not found on conversation {conversation_id}",
+                        err=True,
+                    )
+                sys.exit(2)
+        finally:
+            conn.close()
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(3)
+
+
+@tag.command("show")
+@click.argument("conversation_id")
+@click.pass_context
+def tag_show(ctx: click.Context, conversation_id: str) -> None:
+    """Show all tags for a conversation.
+    
+    \b
+    Example:
+        chatgpt-archive tag show 6974cc29-...
+    """
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+    
+    if not db_path.exists():
+        if json_output:
+            error = {"status": "error", "error": "database_not_found",
+                     "message": "Database not found. Run 'chatgpt-archive import' first."}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+    
+    try:
+        conn = get_connection(db_path)
+        try:
+            # Verify conversation exists
+            conv = get_conversation_by_id(conn, conversation_id)
+            if conv is None:
+                if json_output:
+                    error = {"status": "error", "error": "conversation_not_found",
+                             "message": f"Conversation not found: {conversation_id}"}
+                    click.echo(json.dumps(error), err=True)
+                else:
+                    click.echo(f"Error: Conversation not found: {conversation_id}", err=True)
+                sys.exit(2)
+            
+            tags = db_get_tags(conn, conversation_id)
+            
+            if json_output:
+                click.echo(json.dumps({
+                    "conversation_id": conversation_id,
+                    "title": conv["title"],
+                    "tags": tags,
+                }, indent=2))
+            else:
+                title = conv["title"] or "[Untitled]"
+                click.echo(f"{title}")
+                if tags:
+                    click.echo(f"Tags: {', '.join(tags)}")
+                else:
+                    click.echo("No tags")
+            sys.exit(0)
+        finally:
+            conn.close()
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(3)
+
+
+@tag.command("list")
+@click.pass_context
+def tag_list(ctx: click.Context) -> None:
+    """List all tags with usage counts.
+    
+    \b
+    Example:
+        chatgpt-archive tag list
+    """
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+    
+    if not db_path.exists():
+        if json_output:
+            error = {"status": "error", "error": "database_not_found",
+                     "message": "Database not found. Run 'chatgpt-archive import' first."}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+    
+    try:
+        conn = get_connection(db_path)
+        try:
+            tags = db_list_all_tags(conn)
+            
+            if json_output:
+                click.echo(json.dumps({"tags": tags}, indent=2))
+            else:
+                if not tags:
+                    click.echo("No tags. Use 'chatgpt-archive tag add <id> <tag>' to create one.")
+                else:
+                    click.echo(f"{len(tags)} tag(s)")
+                    click.echo()
+                    for t in tags:
+                        click.echo(f"  {t['name']} ({t['count']} conversations)")
+            sys.exit(0)
+        finally:
+            conn.close()
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(3)
+
+
+@main.command()  # type: ignore[attr-defined]
+@click.argument("conversation_id")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+@click.pass_context
+def delete(ctx: click.Context, conversation_id: str, yes: bool) -> None:
+    """Delete a conversation from the database.
+    
+    CONVERSATION_ID is the OpenAI conversation ID. This permanently removes
+    the conversation and all its messages from the database.
+    
+    \b
+    Examples:
+        chatgpt-archive delete 6974cc29-45d8-8327-a6dc-ef1ef0a82f46
+        chatgpt-archive delete <id> --yes   # Skip confirmation
+    """
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+    
+    # Check database exists
+    if not db_path.exists():
+        if json_output:
+            error = {"status": "error", "error": "database_not_found",
+                     "message": "Database not found. Run 'chatgpt-archive import' first."}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+    
+    try:
+        conn = get_connection(db_path)
+        try:
+            # Check conversation exists before confirming
+            conv = get_conversation_by_id(conn, conversation_id)
+            if conv is None:
+                if json_output:
+                    error = {"status": "error", "error": "conversation_not_found",
+                             "message": f"Conversation not found: {conversation_id}"}
+                    click.echo(json.dumps(error), err=True)
+                else:
+                    click.echo(f"Error: Conversation not found: {conversation_id}", err=True)
+                sys.exit(2)
+            
+            title = conv["title"] or "[Untitled]"
+            msg_count = conv["message_count"]
+            
+            # Confirm deletion
+            if not yes and not json_output:
+                click.echo(f"Delete \"{title}\" ({msg_count} messages)?")
+                if not click.confirm("This action cannot be undone. Continue?"):
+                    click.echo("Aborted.")
+                    sys.exit(0)
+            
+            # Perform deletion
+            deleted = db_delete_conversation(conn, conversation_id)
+            
+            if deleted:
+                if json_output:
+                    result = {
+                        "status": "success",
+                        "deleted_id": conversation_id,
+                        "title": title,
+                        "messages_removed": msg_count,
+                    }
+                    click.echo(json.dumps(result, indent=2))
+                else:
+                    click.echo(f"✓ Deleted \"{title}\" ({msg_count} messages)")
+                sys.exit(0)
+            else:
+                # Should not happen since we checked above, but handle defensively
+                if json_output:
+                    error = {"status": "error", "error": "delete_failed",
+                             "message": "Failed to delete conversation"}
+                    click.echo(json.dumps(error), err=True)
+                else:
+                    click.echo("Error: Failed to delete conversation", err=True)
+                sys.exit(3)
+            
+        finally:
+            conn.close()
+    
+    except Exception as e:
+        if json_output:
+            error = {"status": "error", "error": "delete_failed", "message": str(e)}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo(f"Error: {e}", err=True)
         sys.exit(3)
 
 

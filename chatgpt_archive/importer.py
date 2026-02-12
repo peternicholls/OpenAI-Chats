@@ -176,8 +176,11 @@ def insert_conversation(
 ) -> Tuple[int, int]:
     """Insert or update a conversation and its messages.
     
-    Implements idempotent upsert - if conversation with same openai_id exists,
-    it will be updated. Uses REPLACE to handle this.
+    Implements idempotent upsert with intelligent merging:
+    - If a conversation with the same openai_id exists, metadata is updated
+      only when the incoming data is newer (based on update_time).
+    - Messages are merged: existing messages are kept, new messages are added.
+    - Duplicate messages (same openai_id) are skipped to avoid data loss.
     
     Args:
         conn: Database connection
@@ -204,22 +207,63 @@ def insert_conversation(
     
     # Check if conversation exists
     cursor.execute(
-        'SELECT id FROM conversations WHERE openai_id = ?',
+        'SELECT id, update_time FROM conversations WHERE openai_id = ?',
         (openai_id,)
     )
     existing = cursor.fetchone()
     
     if existing:
-        # Update existing conversation
+        # Merge with existing conversation
         conv_db_id: int = existing[0]
-        cursor.execute('''
-            UPDATE conversations 
-            SET title = ?, update_time = ?, model_slug = ?, is_archived = ?
-            WHERE id = ?
-        ''', (title, update_time, model_slug, int(is_archived), conv_db_id))
+        existing_update_time = existing[1]
         
-        # Delete old messages (will be re-inserted)
-        cursor.execute('DELETE FROM messages WHERE conversation_id = ?', (conv_db_id,))
+        # Only update metadata if incoming data is newer or existing has no update_time
+        if existing_update_time is None or (
+            update_time is not None and update_time >= existing_update_time
+        ):
+            cursor.execute('''
+                UPDATE conversations 
+                SET title = COALESCE(?, title),
+                    update_time = COALESCE(?, update_time),
+                    model_slug = COALESCE(?, model_slug),
+                    is_archived = ?
+                WHERE id = ?
+            ''', (title, update_time, model_slug, int(is_archived), conv_db_id))
+        
+        # Get existing message openai_ids for merge deduplication
+        existing_msg_ids = set(
+            row[0] for row in cursor.execute(
+                'SELECT openai_id FROM messages WHERE conversation_id = ?',
+                (conv_db_id,)
+            ).fetchall()
+        )
+        
+        # Extract new messages and only insert those not already present
+        messages = extract_messages_from_mapping(mapping, conv_db_id)
+        
+        messages_inserted = 0
+        for message in messages:
+            if message.openai_id in existing_msg_ids:
+                continue  # Skip duplicate message
+            
+            cursor.execute('''
+                INSERT INTO messages (
+                    conversation_id, openai_id, parent_id, author_role,
+                    content, content_type, create_time, weight, is_hidden
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                message.conversation_id,
+                message.openai_id,
+                message.parent_id,
+                message.author_role,
+                message.content,
+                message.content_type,
+                message.create_time,
+                message.weight,
+                int(message.is_hidden)
+            ))
+            messages_inserted += 1
+        
     else:
         # Insert new conversation
         cursor.execute('''
@@ -229,38 +273,38 @@ def insert_conversation(
         conv_db_id_temp = cursor.lastrowid
         assert conv_db_id_temp is not None, "Failed to get conversation ID after insert"
         conv_db_id: int = conv_db_id_temp
-    
-    # Extract and insert messages
-    messages = extract_messages_from_mapping(mapping, conv_db_id)
-    
-    # If title is None/empty, use fallback
-    if not title:
-        fallback_title = get_fallback_title(messages)
-        cursor.execute(
-            'UPDATE conversations SET title = ? WHERE id = ?',
-            (fallback_title, conv_db_id)
-        )
-    
-    # Batch insert messages
-    messages_inserted = 0
-    for message in messages:
-        cursor.execute('''
-            INSERT INTO messages (
-                conversation_id, openai_id, parent_id, author_role,
-                content, content_type, create_time, weight, is_hidden
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            message.conversation_id,
-            message.openai_id,
-            message.parent_id,
-            message.author_role,
-            message.content,
-            message.content_type,
-            message.create_time,
-            message.weight,
-            int(message.is_hidden)
-        ))
-        messages_inserted += 1
+        
+        # Extract and insert all messages
+        messages = extract_messages_from_mapping(mapping, conv_db_id)
+        
+        # If title is None/empty, use fallback
+        if not title:
+            fallback_title = get_fallback_title(messages)
+            cursor.execute(
+                'UPDATE conversations SET title = ? WHERE id = ?',
+                (fallback_title, conv_db_id)
+            )
+        
+        # Batch insert messages
+        messages_inserted = 0
+        for message in messages:
+            cursor.execute('''
+                INSERT INTO messages (
+                    conversation_id, openai_id, parent_id, author_role,
+                    content, content_type, create_time, weight, is_hidden
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                message.conversation_id,
+                message.openai_id,
+                message.parent_id,
+                message.author_role,
+                message.content,
+                message.content_type,
+                message.create_time,
+                message.weight,
+                int(message.is_hidden)
+            ))
+            messages_inserted += 1
     
     return conv_db_id, messages_inserted
 

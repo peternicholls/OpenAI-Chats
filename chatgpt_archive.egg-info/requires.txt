@@ -5,6 +5,9 @@ pyyaml>=6.0
 pytest>=7.0
 pytest-cov>=4.0
 
+[excel]
+openpyxl>=3.1.0
+
 [semantic]
 sqlite-vec>=0.1.1
 openai>=1.0

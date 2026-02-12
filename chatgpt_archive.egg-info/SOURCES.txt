@@ -16,6 +16,8 @@ chatgpt_archive.egg-info/requires.txt
 chatgpt_archive.egg-info/top_level.txt
 chatgpt_archive/exporters/__init__.py
 chatgpt_archive/exporters/base.py
+chatgpt_archive/exporters/csv_export.py
+chatgpt_archive/exporters/excel_export.py
 chatgpt_archive/exporters/html.py
 chatgpt_archive/exporters/json_export.py
 chatgpt_archive/exporters/markdown.py

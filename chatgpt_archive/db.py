@@ -73,6 +73,22 @@ CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id
 CREATE INDEX IF NOT EXISTS idx_messages_parent ON messages(parent_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_create_time ON conversations(create_time);
 CREATE INDEX IF NOT EXISTS idx_conversations_title ON conversations(title);
+
+-- Tags system
+CREATE TABLE IF NOT EXISTS tags (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    name    TEXT UNIQUE NOT NULL COLLATE NOCASE
+);
+
+CREATE TABLE IF NOT EXISTS conversation_tags (
+    conversation_id INTEGER NOT NULL,
+    tag_id          INTEGER NOT NULL,
+    PRIMARY KEY (conversation_id, tag_id),
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_conversation_tags_tag ON conversation_tags(tag_id);
 """
 
 # Embeddings schema (separate so it can be applied when semantic feature is enabled)
@@ -475,3 +491,239 @@ def get_total_message_count(conn: sqlite3.Connection) -> int:
         Total message count
     """
     return conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
+
+
+def delete_conversation(conn: sqlite3.Connection, openai_id: str) -> bool:
+    """Delete a conversation and all its messages by OpenAI ID.
+    
+    Cascading deletes will remove associated messages, attachments,
+    and embeddings due to ON DELETE CASCADE foreign key constraints.
+    
+    Args:
+        conn: Database connection
+        openai_id: The OpenAI conversation ID (UUID string)
+        
+    Returns:
+        True if the conversation was found and deleted, False if not found
+    """
+    cursor = conn.execute(
+        "SELECT id FROM conversations WHERE openai_id = ?",
+        (openai_id,)
+    )
+    row = cursor.fetchone()
+    if row is None:
+        return False
+    
+    db_id = row[0]
+    
+    # Delete messages first (triggers FTS cleanup via triggers)
+    conn.execute("DELETE FROM messages WHERE conversation_id = ?", (db_id,))
+    
+    # Delete any embeddings for those messages
+    try:
+        conn.execute(
+            "DELETE FROM message_embeddings WHERE message_id NOT IN "
+            "(SELECT id FROM messages)"
+        )
+    except sqlite3.OperationalError:
+        pass  # Embeddings table may not exist
+    
+    # Delete the conversation
+    conn.execute("DELETE FROM conversations WHERE id = ?", (db_id,))
+    conn.commit()
+    
+    return True
+
+
+def add_tag(conn: sqlite3.Connection, openai_id: str, tag_name: str) -> bool:
+    """Add a tag to a conversation.
+    
+    Creates the tag if it doesn't exist, then associates it with the conversation.
+    Tag names are case-insensitive (stored as-is but compared case-insensitively).
+    
+    Args:
+        conn: Database connection
+        openai_id: The OpenAI conversation ID
+        tag_name: Tag name to add
+        
+    Returns:
+        True if tag was added, False if conversation not found
+        
+    Raises:
+        ValueError: If tag_name is empty
+    """
+    tag_name = tag_name.strip()
+    if not tag_name:
+        raise ValueError("Tag name cannot be empty")
+    
+    # Get conversation DB id
+    row = conn.execute(
+        "SELECT id FROM conversations WHERE openai_id = ?",
+        (openai_id,)
+    ).fetchone()
+    if row is None:
+        return False
+    conv_db_id = row[0]
+    
+    # Create or get tag
+    conn.execute(
+        "INSERT OR IGNORE INTO tags (name) VALUES (?)",
+        (tag_name,)
+    )
+    tag_row = conn.execute(
+        "SELECT id FROM tags WHERE name = ? COLLATE NOCASE",
+        (tag_name,)
+    ).fetchone()
+    tag_id = tag_row[0]
+    
+    # Associate tag with conversation (ignore if already exists)
+    conn.execute(
+        "INSERT OR IGNORE INTO conversation_tags (conversation_id, tag_id) VALUES (?, ?)",
+        (conv_db_id, tag_id)
+    )
+    conn.commit()
+    return True
+
+
+def remove_tag(conn: sqlite3.Connection, openai_id: str, tag_name: str) -> bool:
+    """Remove a tag from a conversation.
+    
+    Args:
+        conn: Database connection
+        openai_id: The OpenAI conversation ID
+        tag_name: Tag name to remove
+        
+    Returns:
+        True if the tag was removed, False if conversation or tag not found
+    """
+    row = conn.execute(
+        "SELECT id FROM conversations WHERE openai_id = ?",
+        (openai_id,)
+    ).fetchone()
+    if row is None:
+        return False
+    conv_db_id = row[0]
+    
+    tag_row = conn.execute(
+        "SELECT id FROM tags WHERE name = ? COLLATE NOCASE",
+        (tag_name.strip(),)
+    ).fetchone()
+    if tag_row is None:
+        return False
+    tag_id = tag_row[0]
+    
+    cursor = conn.execute(
+        "DELETE FROM conversation_tags WHERE conversation_id = ? AND tag_id = ?",
+        (conv_db_id, tag_id)
+    )
+    conn.commit()
+    
+    # Clean up orphan tags (no conversations using them)
+    conn.execute(
+        "DELETE FROM tags WHERE id NOT IN (SELECT DISTINCT tag_id FROM conversation_tags)"
+    )
+    conn.commit()
+    
+    return cursor.rowcount > 0
+
+
+def get_conversation_tags(conn: sqlite3.Connection, openai_id: str) -> list:
+    """Get all tags for a conversation.
+    
+    Args:
+        conn: Database connection
+        openai_id: The OpenAI conversation ID
+        
+    Returns:
+        List of tag name strings
+    """
+    rows = conn.execute(
+        """
+        SELECT t.name
+        FROM tags t
+        JOIN conversation_tags ct ON t.id = ct.tag_id
+        JOIN conversations c ON ct.conversation_id = c.id
+        WHERE c.openai_id = ?
+        ORDER BY t.name
+        """,
+        (openai_id,)
+    ).fetchall()
+    return [row[0] for row in rows]
+
+
+def list_all_tags(conn: sqlite3.Connection) -> list:
+    """List all tags with usage counts.
+    
+    Args:
+        conn: Database connection
+        
+    Returns:
+        List of dicts with 'name' and 'count' keys
+    """
+    rows = conn.execute(
+        """
+        SELECT t.name, COUNT(ct.conversation_id) as count
+        FROM tags t
+        LEFT JOIN conversation_tags ct ON t.id = ct.tag_id
+        GROUP BY t.id
+        ORDER BY t.name
+        """
+    ).fetchall()
+    return [{"name": row[0], "count": row[1]} for row in rows]
+
+
+def list_conversations_by_tag(
+    conn: sqlite3.Connection,
+    tag_name: str,
+    sort_by: str = "date",
+    order: str = "desc",
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple:
+    """List conversations that have a specific tag.
+    
+    Args:
+        conn: Database connection
+        tag_name: Tag name to filter by
+        sort_by: Sort field: 'date', 'title', 'messages'
+        order: Sort order: 'asc' or 'desc'
+        limit: Maximum results
+        offset: Pagination offset
+        
+    Returns:
+        Tuple of (conversations list, total count)
+    """
+    sort_map = {
+        "date": "c.create_time",
+        "title": "c.title",
+        "messages": "message_count",
+    }
+    sort_column = sort_map.get(sort_by, "c.create_time")
+    order_clause = "DESC" if order.lower() == "desc" else "ASC"
+    null_handling = "NULLS LAST" if order_clause == "DESC" else "NULLS FIRST"
+    
+    # Get total count for this tag
+    total = conn.execute(
+        """
+        SELECT COUNT(DISTINCT ct.conversation_id)
+        FROM conversation_tags ct
+        JOIN tags t ON ct.tag_id = t.id
+        WHERE t.name = ? COLLATE NOCASE
+        """,
+        (tag_name.strip(),)
+    ).fetchone()[0]
+    
+    query = f"""
+        SELECT c.id, c.openai_id, c.title, c.create_time, c.update_time,
+               c.model_slug, c.is_archived,
+               (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id) as message_count
+        FROM conversations c
+        JOIN conversation_tags ct ON c.id = ct.conversation_id
+        JOIN tags t ON ct.tag_id = t.id
+        WHERE t.name = ? COLLATE NOCASE
+        ORDER BY {sort_column} {order_clause} {null_handling}
+        LIMIT ? OFFSET ?
+    """
+    
+    rows = conn.execute(query, (tag_name.strip(), limit, offset)).fetchall()
+    return list(rows), total

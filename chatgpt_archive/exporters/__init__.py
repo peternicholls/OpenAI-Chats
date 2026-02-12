@@ -9,6 +9,8 @@ Available formats:
     - yaml: YAML format
     - html: HTML with CSS styling
     - xml: XML format
+    - csv: CSV format
+    - xlsx: Excel format (requires openpyxl)
 """
 
 from typing import Dict, Type, Optional
@@ -19,6 +21,14 @@ from .json_export import JSONExporter
 from .yaml_export import YAMLExporter
 from .html import HTMLExporter
 from .xml_export import XMLExporter
+from .csv_export import CSVExporter
+
+# Excel exporter is optional (requires openpyxl)
+try:
+    from .excel_export import ExcelExporter
+    _HAS_EXCEL = True
+except ImportError:
+    _HAS_EXCEL = False
 
 
 # Registry mapping format names to exporter classes
@@ -30,10 +40,16 @@ EXPORTERS: Dict[str, Type[BaseExporter]] = {
     "yml": YAMLExporter,
     "html": HTMLExporter,
     "xml": XMLExporter,
+    "csv": CSVExporter,
 }
 
+# Add Excel exporter if openpyxl is available
+if _HAS_EXCEL:
+    EXPORTERS["xlsx"] = ExcelExporter  # type: ignore[assignment]
+    EXPORTERS["excel"] = ExcelExporter  # type: ignore[assignment]
+
 # Supported format options for CLI
-SUPPORTED_FORMATS = ["md", "json", "yaml", "html", "xml"]
+SUPPORTED_FORMATS = ["md", "json", "yaml", "html", "xml", "csv", "xlsx"]
 
 
 def get_exporter(format_name: str) -> Optional[BaseExporter]:
@@ -82,6 +98,7 @@ __all__ = [
     "YAMLExporter",
     "HTMLExporter",
     "XMLExporter",
+    "CSVExporter",
     "EXPORTERS",
     "SUPPORTED_FORMATS",
     "get_exporter",
