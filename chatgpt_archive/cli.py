@@ -17,8 +17,18 @@ from typing import Optional
 import click  # type: ignore[import-untyped]
 
 from chatgpt_archive import __version__
-from chatgpt_archive.db import get_db_path, init_db, get_db_size
+from chatgpt_archive.db import (
+    get_db_path, get_connection, init_db, get_db_size,
+    get_conversation_by_id, get_conversation_messages,
+    list_conversations as db_list_conversations,
+)
 from chatgpt_archive import importer
+from chatgpt_archive.search import (
+    execute_search,
+    format_results_human,
+    format_results_json,
+    InvalidQueryError,
+)
 
 
 def get_db_option_path(db: Optional[str]) -> Path:
@@ -39,6 +49,18 @@ class AliasedGroup(click.Group):
     """Click group that supports command aliases."""
     
     def get_command(self, ctx, cmd_name):
+        """Resolve command name, supporting aliases.
+        
+        Checks for an exact match first, then falls back to
+        predefined aliases: ls→list, find→search, show→view.
+        
+        Args:
+            ctx: Click context
+            cmd_name: Command name entered by user
+            
+        Returns:
+            Resolved Click command, or None if not found
+        """
         # Check for exact match first
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
@@ -174,24 +196,228 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
 @click.option("--from", "from_date", help="Filter: conversations after date (YYYY-MM-DD)")
 @click.option("--to", "to_date", help="Filter: conversations before date (YYYY-MM-DD)")
 @click.option("--limit", "-l", default=20, help="Maximum results to return")
+@click.option("--semantic", is_flag=True, help="Use semantic (vector) search instead of keyword search")
+@click.option("--hybrid", is_flag=True, help="Combine keyword and semantic search for best results")
 @click.pass_context
-def search(ctx: click.Context, query: str, from_date: Optional[str], to_date: Optional[str], limit: int) -> None:
+def search(ctx: click.Context, query: str, from_date: Optional[str], to_date: Optional[str],
+           limit: int, semantic: bool, hybrid: bool) -> None:
     """Search conversations by keyword or phrase.
     
     QUERY is the search term. Supports FTS5 syntax for advanced queries.
+    Use --semantic for meaning-based search or --hybrid to combine both.
     
     \b
     Examples:
         chatgpt-archive search "machine learning"
         chatgpt-archive search "python AND tutorial"
         chatgpt-archive search "error" --from 2024-01-01
+        chatgpt-archive search "neural networks" --semantic
+        chatgpt-archive search "AI concepts" --hybrid
     """
-    # TODO: Implement in Phase 4 (T019-T024)
-    click.echo("Search command placeholder - implementation in Phase 4", err=True)
-    sys.exit(1)
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+    
+    # Check database exists
+    if not db_path.exists():
+        if json_output:
+            error = {"status": "error", "error": "database_not_found",
+                     "message": "Database not found. Run 'chatgpt-archive import' first."}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+    
+    try:
+        conn = get_connection(db_path)
+        try:
+            if semantic or hybrid:
+                # Use semantic/hybrid search
+                try:
+                    from chatgpt_archive.search import execute_semantic_search, execute_hybrid_search
+                    if hybrid:
+                        results = execute_hybrid_search(conn, query, from_date, to_date, limit)
+                    else:
+                        results = execute_semantic_search(conn, query, from_date, to_date, limit)
+                except ImportError:
+                    click.echo(
+                        "Error: Semantic search requires 'chatgpt-archive[semantic]'. "
+                        "Install with: pip install 'chatgpt-archive[semantic]'",
+                        err=True
+                    )
+                    sys.exit(1)
+            else:
+                results = execute_search(conn, query, from_date, to_date, limit)
+            
+            if json_output:
+                click.echo(json.dumps(format_results_json(results), indent=2))
+            else:
+                click.echo(format_results_human(results))
+            
+            sys.exit(0)
+        finally:
+            conn.close()
+    
+    except InvalidQueryError as e:
+        if json_output:
+            error = {"status": "error", "error": "invalid_query", "message": str(e)}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(2)
 
 
-@main.command("list")  # type: ignore[attr-defined]
+@main.command()  # type: ignore[attr-defined]
+@click.option("--model", "-m", default="text-embedding-3-small",
+              help="Embedding model to use (default: text-embedding-3-small)")
+@click.option("--batch-size", "-b", default=100, help="Messages per API batch (default: 100)")
+@click.option("--estimate", is_flag=True, help="Show cost estimate without generating embeddings")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+@click.pass_context
+def embed(ctx: click.Context, model: str, batch_size: int, estimate: bool, yes: bool) -> None:
+    """Generate vector embeddings for semantic search.
+    
+    Creates embeddings for all messages using OpenAI's embedding API.
+    Requires OPENAI_API_KEY environment variable to be set.
+    Supports resume - only embeds messages without existing embeddings.
+    
+    \b
+    Examples:
+        chatgpt-archive embed --estimate          # Show cost estimate
+        chatgpt-archive embed                     # Generate embeddings (with confirmation)
+        chatgpt-archive embed --yes               # Skip confirmation
+        chatgpt-archive embed --model text-embedding-3-large
+    """
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+    
+    # Check database exists
+    if not db_path.exists():
+        if json_output:
+            error = {"status": "error", "error": "database_not_found",
+                     "message": "Database not found. Run 'chatgpt-archive import' first."}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+    
+    try:
+        from chatgpt_archive.embeddings import (
+            embed_messages,
+            estimate_cost,
+            EmbeddingProgress,
+            APIKeyMissingError,
+            EmbeddingError,
+        )
+        from chatgpt_archive.db import init_embeddings_schema
+    except ImportError:
+        click.echo(
+            "Error: Semantic search requires additional packages. "
+            "Install with: pip install 'chatgpt-archive[semantic]'",
+            err=True
+        )
+        sys.exit(1)
+    
+    try:
+        conn = get_connection(db_path)
+        init_embeddings_schema(conn)
+        
+        try:
+            # Cost estimation
+            cost_info = estimate_cost(conn, model)
+            
+            if cost_info["messages_to_embed"] == 0:
+                if json_output:
+                    click.echo(json.dumps({"status": "complete", "message": "All messages already embedded"}))
+                else:
+                    click.echo("✓ All messages already have embeddings. Nothing to do.")
+                sys.exit(0)
+            
+            if estimate or not yes:
+                if json_output:
+                    click.echo(json.dumps(cost_info, indent=2))
+                    if estimate:
+                        sys.exit(0)
+                else:
+                    click.echo(f"Embedding cost estimate:")
+                    click.echo(f"  Messages to embed: {cost_info['messages_to_embed']:,}")
+                    click.echo(f"  Estimated tokens:  {cost_info['estimated_tokens']:,}")
+                    click.echo(f"  Model:             {cost_info['model']}")
+                    click.echo(f"  Estimated cost:    {cost_info['estimated_cost_display']}")
+                    click.echo()
+                    
+                    if estimate:
+                        sys.exit(0)
+                    
+                    if not yes:
+                        if not click.confirm("Proceed with embedding generation?"):
+                            click.echo("Aborted.")
+                            sys.exit(0)
+            
+            # Progress callback
+            last_percent = [0]
+            def progress_callback(progress: EmbeddingProgress) -> None:
+                if not json_output:
+                    pct = int(progress.percent_complete)
+                    if pct > last_percent[0] or pct == 0:
+                        last_percent[0] = pct
+                        click.echo(
+                            f"\r  Embedding: {progress.completed:,}/{progress.total:,} "
+                            f"({progress.percent_complete}%) "
+                            f"- est. cost: ${progress.estimated_cost:.4f}",
+                            nl=False, err=True
+                        )
+            
+            # Generate embeddings
+            if not json_output:
+                click.echo("Generating embeddings...")
+            
+            result = embed_messages(
+                conn, model=model, batch_size=batch_size,
+                progress_callback=progress_callback
+            )
+            
+            if not json_output:
+                click.echo()  # Newline after progress
+                click.echo(f"\n✓ Embedding complete!")
+                click.echo(f"  Embedded:  {result.completed:,}/{result.total:,} messages")
+                click.echo(f"  Remaining: {result.remaining:,}")
+                click.echo(f"  Tokens:    ~{result.tokens_used:,}")
+                click.echo(f"  Cost:      ~${result.estimated_cost:.4f}")
+            else:
+                output = {
+                    "status": "success",
+                    "total": result.total,
+                    "completed": result.completed,
+                    "remaining": result.remaining,
+                    "tokens_used": result.tokens_used,
+                    "estimated_cost": result.estimated_cost,
+                    "model": result.model,
+                }
+                click.echo(json.dumps(output, indent=2))
+            
+            sys.exit(0)
+            
+        finally:
+            conn.close()
+    
+    except APIKeyMissingError as e:
+        if json_output:
+            error = {"status": "error", "error": "api_key_missing", "message": str(e)}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    
+    except EmbeddingError as e:
+        if json_output:
+            error = {"status": "error", "error": "embedding_failed", "message": str(e)}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@main.command("list")  # type: ignore[attr-defined]  # noqa: F811
 @click.option("--sort", "-s", type=click.Choice(["date", "title", "messages"]), default="date",
               help="Sort by field")
 @click.option("--order", "-o", type=click.Choice(["asc", "desc"]), default="desc",
@@ -208,9 +434,103 @@ def list_conversations(ctx: click.Context, sort: str, order: str, limit: int, of
         chatgpt-archive list --sort title --order asc
         chatgpt-archive list --limit 10 --offset 20
     """
-    # TODO: Implement in Phase 7 (T041-T046)
-    click.echo("List command placeholder - implementation in Phase 7", err=True)
-    sys.exit(1)
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+    
+    # Check database exists
+    if not db_path.exists():
+        if json_output:
+            error = {"status": "error", "error": "database_not_found",
+                     "message": "Database not found. Run 'chatgpt-archive import' first."}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+    
+    try:
+        conn = get_connection(db_path)
+        try:
+            conversations, total = db_list_conversations(
+                conn, sort_by=sort, order=order, limit=limit, offset=offset
+            )
+            
+            if json_output:
+                _list_json(conversations, total, offset, limit)
+            else:
+                _list_human(conversations, total, offset, limit)
+            
+            sys.exit(0)
+            
+        finally:
+            conn.close()
+    
+    except Exception as e:
+        if json_output:
+            error = {"status": "error", "error": "list_failed", "message": str(e)}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+def _list_human(conversations, total: int, offset: int, limit: int) -> None:
+    """Display conversation list in human-readable format.
+    
+    Args:
+        conversations: List of conversation Row objects
+        total: Total number of conversations
+        offset: Current pagination offset
+        limit: Current pagination limit
+    """
+    if total == 0:
+        click.echo("No conversations found. Run 'chatgpt-archive import' first.")
+        return
+    
+    click.echo(f"{total:,} conversations")
+    click.echo()
+    
+    for conv in conversations:
+        title = conv["title"] or "[Untitled]"
+        date_str = _format_date(conv["create_time"])
+        msg_count = conv["message_count"]
+        conv_id = conv["openai_id"]
+        
+        click.echo(f"[{date_str}] {title} ({msg_count} messages)")
+        click.echo(f"  ID: {conv_id}")
+        click.echo()
+    
+    # Pagination info
+    showing_end = min(offset + len(conversations), total)
+    showing_start = offset + 1 if conversations else 0
+    click.echo(f"(showing {showing_start}-{showing_end} of {total:,})")
+
+
+def _list_json(conversations, total: int, offset: int, limit: int) -> None:
+    """Display conversation list in JSON format.
+    
+    Args:
+        conversations: List of conversation Row objects
+        total: Total number of conversations
+        offset: Current pagination offset
+        limit: Current pagination limit
+    """
+    result = {
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+        "conversations": [
+            {
+                "id": conv["openai_id"],
+                "title": conv["title"],
+                "create_time": conv["create_time"],
+                "update_time": conv["update_time"],
+                "message_count": conv["message_count"],
+                "model": conv["model_slug"],
+            }
+            for conv in conversations
+        ]
+    }
+    click.echo(json.dumps(result, indent=2))
 
 
 @main.command()  # type: ignore[attr-defined]
@@ -225,9 +545,178 @@ def view(ctx: click.Context, conversation_id: str) -> None:
     Example:
         chatgpt-archive view 6974cc29-45d8-8327-a6dc-ef1ef0a82f46
     """
-    # TODO: Implement in Phase 5 (T025-T030)
-    click.echo("View command placeholder - implementation in Phase 5", err=True)
-    sys.exit(1)
+    db_path = ctx.obj["db_path"]
+    json_output = ctx.obj["json_output"]
+
+    # Check database exists
+    if not db_path.exists():
+        if json_output:
+            error = {"status": "error", "error": "database_not_found",
+                     "message": "Database not found. Run 'chatgpt-archive import' first."}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+
+    try:
+        conn = get_connection(db_path)
+        try:
+            # Retrieve conversation
+            conv = get_conversation_by_id(conn, conversation_id)
+
+            if conv is None:
+                if json_output:
+                    error = {"status": "error", "error": "conversation_not_found",
+                             "message": f"Conversation not found: {conversation_id}"}
+                    click.echo(json.dumps(error), err=True)
+                else:
+                    click.echo(f"Error: Conversation not found: {conversation_id}", err=True)
+                sys.exit(2)
+
+            # Retrieve messages
+            messages = get_conversation_messages(conn, conv["id"])
+
+            if json_output:
+                _view_json(conv, messages)
+            else:
+                _view_human(conv, messages)
+
+            sys.exit(0)
+        finally:
+            conn.close()
+
+    except Exception as e:
+        if json_output:
+            error = {"status": "error", "error": "view_failed", "message": str(e)}
+            click.echo(json.dumps(error), err=True)
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(3)
+
+
+def _format_timestamp(ts: Optional[float]) -> str:
+    """Format a unix timestamp for display.
+    
+    Args:
+        ts: Unix timestamp or None
+        
+    Returns:
+        Formatted datetime string or empty string
+    """
+    if ts is None:
+        return ""
+    from datetime import datetime, timezone
+    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _format_date(ts: Optional[float]) -> str:
+    """Format a unix timestamp as date only.
+    
+    Args:
+        ts: Unix timestamp or None
+        
+    Returns:
+        Formatted date string or ""
+    """
+    if ts is None:
+        return ""
+    from datetime import datetime, timezone
+    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+    return dt.strftime("%Y-%m-%d")
+
+
+def _format_time(ts: Optional[float]) -> str:
+    """Format a unix timestamp as time only.
+    
+    Args:
+        ts: Unix timestamp or None
+        
+    Returns:
+        Formatted time string or ""
+    """
+    if ts is None:
+        return ""
+    from datetime import datetime, timezone
+    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+    return dt.strftime("%H:%M:%S")
+
+
+def _view_human(conv, messages) -> None:
+    """Display a conversation in human-readable format.
+    
+    For long conversations (1000+ messages), output is paginated
+    using click's built-in pager.
+    
+    Args:
+        conv: Conversation Row from database
+        messages: List of message Rows
+    """
+    title = conv["title"] or "[Untitled]"
+    created = _format_timestamp(conv["create_time"])
+    model = conv["model_slug"] or "unknown"
+    msg_count = conv["message_count"]
+
+    lines = []
+    lines.append(f"# {title}")
+    lines.append(f"Created: {created} | Model: {model} | {msg_count} messages")
+    lines.append("")
+
+    for msg in messages:
+        role = msg["author_role"]
+        content = msg["content"] or ""
+        time_str = _format_time(msg["create_time"])
+
+        # Skip messages with no content (system placeholders)
+        if not content.strip() and role == "system":
+            continue
+
+        lines.append("---")
+        lines.append("")
+
+        role_label = role.capitalize()
+        if time_str:
+            lines.append(f"**{role_label}** ({time_str}):")
+        else:
+            lines.append(f"**{role_label}**:")
+
+        lines.append(content)
+        lines.append("")
+
+    output = "\n".join(lines)
+
+    # Paginate for long conversations (1000+ messages)
+    if len(messages) >= 1000:
+        click.echo_via_pager(output)
+    else:
+        click.echo(output)
+
+
+def _view_json(conv, messages) -> None:
+    """Display a conversation in JSON format.
+    
+    Args:
+        conv: Conversation Row from database
+        messages: List of message Rows
+    """
+    result = {
+        "id": conv["openai_id"],
+        "title": conv["title"],
+        "create_time": conv["create_time"],
+        "update_time": conv["update_time"],
+        "model": conv["model_slug"],
+        "message_count": conv["message_count"],
+        "messages": [
+            {
+                "id": msg["openai_id"],
+                "role": msg["author_role"],
+                "content": msg["content"],
+                "create_time": msg["create_time"],
+            }
+            for msg in messages
+        ]
+    }
+    click.echo(json.dumps(result, indent=2))
 
 
 @main.command()  # type: ignore[attr-defined]
@@ -248,9 +737,79 @@ def export(ctx: click.Context, conversation_id: str, fmt: str, output: Optional[
         chatgpt-archive export <id> -f json
         chatgpt-archive export <id> -f html -o chat.html
     """
-    # TODO: Implement in Phase 6 (T031-T040)
-    click.echo("Export command placeholder - implementation in Phase 6", err=True)
-    sys.exit(1)
+    from chatgpt_archive.exporters import get_exporter
+    
+    db_path = ctx.obj["db_path"]
+    
+    # Check database exists
+    if not db_path.exists():
+        click.echo("Error: Database not found. Run 'chatgpt-archive import' first.", err=True)
+        sys.exit(1)
+    
+    # Get exporter
+    exporter = get_exporter(fmt)
+    if exporter is None:
+        click.echo(f"Error: Invalid format: {fmt}", err=True)
+        sys.exit(3)
+    
+    try:
+        conn = get_connection(db_path)
+        try:
+            # Retrieve conversation
+            conv = get_conversation_by_id(conn, conversation_id)
+            
+            if conv is None:
+                click.echo(f"Error: Conversation not found: {conversation_id}", err=True)
+                sys.exit(2)
+            
+            # Retrieve messages
+            messages = get_conversation_messages(conn, conv["id"])
+            
+            # Build conversation dict for exporter
+            conv_dict = {
+                "id": conv["openai_id"],
+                "title": conv["title"],
+                "create_time": conv["create_time"],
+                "update_time": conv["update_time"],
+                "model": conv["model_slug"],
+                "message_count": conv["message_count"],
+            }
+            
+            # Build messages list for exporter
+            messages_list = [
+                {
+                    "id": msg["openai_id"],
+                    "role": msg["author_role"],
+                    "content": msg["content"],
+                    "create_time": msg["create_time"],
+                }
+                for msg in messages
+            ]
+            
+            # Export
+            content = exporter.export(conv_dict, messages_list)
+            
+            # Write output
+            if output:
+                output_path = Path(output).expanduser()
+                try:
+                    output_path.write_text(content, encoding="utf-8")
+                    click.echo(f"Exported to {output_path}", err=True)
+                except IOError as e:
+                    click.echo(f"Error: Failed to write file: {e}", err=True)
+                    sys.exit(4)
+            else:
+                # Write to stdout
+                click.echo(content)
+            
+            sys.exit(0)
+            
+        finally:
+            conn.close()
+    
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(3)
 
 
 if __name__ == "__main__":

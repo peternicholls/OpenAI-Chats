@@ -52,6 +52,15 @@
 │ rowid           → messages.id                               │
 │ content         TEXT (full-text indexed)                    │
 └─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│              message_embeddings (Optional)                   │
+├─────────────────────────────────────────────────────────────┤
+│ message_id      INTEGER PRIMARY KEY → messages.id          │
+│ embedding       BLOB (1536-dim float32 vector)              │
+│ model           TEXT (e.g., "text-embedding-3-small")       │
+│ created_at      REAL (unix timestamp)                       │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Schema DDL
@@ -118,6 +127,19 @@ CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id
 CREATE INDEX IF NOT EXISTS idx_messages_parent ON messages(parent_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_create_time ON conversations(create_time);
 CREATE INDEX IF NOT EXISTS idx_conversations_title ON conversations(title);
+
+-- Vector embeddings table (optional, for semantic search)
+-- Requires: pip install chatgpt-archive[semantic]
+CREATE TABLE IF NOT EXISTS message_embeddings (
+    message_id      INTEGER PRIMARY KEY,
+    embedding       BLOB NOT NULL,
+    model           TEXT DEFAULT 'text-embedding-3-small',
+    created_at      REAL DEFAULT (unixepoch()),
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);
+
+-- Index for faster embedding lookups
+CREATE INDEX IF NOT EXISTS idx_embeddings_created ON message_embeddings(created_at);
 ```
 
 ## Field Mappings
@@ -185,4 +207,35 @@ SELECT id, openai_id, title,
        (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id) as msg_count
 FROM conversations c
 ORDER BY create_time DESC;
+
+-- Vector similarity search (requires sqlite-vec extension)
+-- Find semantically similar messages using L2 distance
+SELECT c.id, c.title, m.content,
+       vec_distance_L2(e.embedding, ?) as distance
+FROM message_embeddings e
+JOIN messages m ON e.message_id = m.id
+JOIN conversations c ON m.conversation_id = c.id
+ORDER BY distance
+LIMIT 10;
+
+-- Hybrid search: combine keyword (FTS5) and semantic (vector) results
+SELECT DISTINCT c.id, c.title,
+       COALESCE(fts_score, 0) + COALESCE(1.0 / (1.0 + vec_dist), 0) as combined_score
+FROM conversations c
+LEFT JOIN (
+    SELECT m.conversation_id, bm25(messages_fts) as fts_score
+    FROM messages_fts
+    JOIN messages m ON messages_fts.rowid = m.id
+    WHERE messages_fts MATCH ?
+) fts ON c.id = fts.conversation_id
+LEFT JOIN (
+    SELECT m.conversation_id, vec_distance_L2(e.embedding, ?) as vec_dist
+    FROM message_embeddings e
+    JOIN messages m ON e.message_id = m.id
+    ORDER BY vec_dist
+    LIMIT 20
+) vec ON c.id = vec.conversation_id
+WHERE fts_score IS NOT NULL OR vec_dist IS NOT NULL
+ORDER BY combined_score DESC
+LIMIT 10;
 ```

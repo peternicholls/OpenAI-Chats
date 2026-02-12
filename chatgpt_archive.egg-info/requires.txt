@@ -4,3 +4,7 @@ pyyaml>=6.0
 [dev]
 pytest>=7.0
 pytest-cov>=4.0
+
+[semantic]
+sqlite-vec>=0.1.1
+openai>=1.0

@@ -2,6 +2,7 @@
 
 import os
 import sqlite3
+import struct
 from pathlib import Path
 from typing import Optional
 
@@ -73,6 +74,28 @@ CREATE INDEX IF NOT EXISTS idx_messages_parent ON messages(parent_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_create_time ON conversations(create_time);
 CREATE INDEX IF NOT EXISTS idx_conversations_title ON conversations(title);
 """
+
+# Embeddings schema (separate so it can be applied when semantic feature is enabled)
+EMBEDDINGS_SCHEMA_SQL = """
+-- Vector embeddings table for semantic search
+CREATE TABLE IF NOT EXISTS message_embeddings (
+    message_id      INTEGER PRIMARY KEY,
+    embedding       BLOB NOT NULL,
+    model           TEXT DEFAULT 'text-embedding-3-small',
+    created_at      REAL DEFAULT (unixepoch()),
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);
+
+-- Index for faster embedding lookups
+CREATE INDEX IF NOT EXISTS idx_embeddings_created ON message_embeddings(created_at);
+"""
+
+# Embedding dimensions for supported models
+EMBEDDING_DIMENSIONS = {
+    "text-embedding-3-small": 1536,
+    "text-embedding-3-large": 3072,
+    "text-embedding-ada-002": 1536,
+}
 
 
 def get_db_path() -> Path:
@@ -173,3 +196,282 @@ def get_db_size(db_path: Optional[Path] = None) -> int:
     if db_path.exists():
         return db_path.stat().st_size
     return 0
+
+
+def is_sqlite_vec_available() -> bool:
+    """Check if the sqlite-vec extension is available.
+    
+    Returns:
+        True if sqlite-vec can be loaded
+    """
+    try:
+        import sqlite_vec  # type: ignore[import-untyped]
+        return True
+    except ImportError:
+        return False
+
+
+def load_sqlite_vec(conn: sqlite3.Connection) -> bool:
+    """Load the sqlite-vec extension into a connection.
+    
+    Args:
+        conn: Database connection to load the extension into
+        
+    Returns:
+        True if extension was loaded successfully, False otherwise
+    """
+    try:
+        import sqlite_vec  # type: ignore[import-untyped]
+        conn.enable_load_extension(True)
+        sqlite_vec.load(conn)
+        return True
+    except (ImportError, Exception):
+        return False
+
+
+def init_embeddings_schema(conn: sqlite3.Connection) -> None:
+    """Initialize the embeddings table schema.
+    
+    Creates the message_embeddings table if it doesn't exist.
+    
+    Args:
+        conn: Database connection
+    """
+    conn.executescript(EMBEDDINGS_SCHEMA_SQL)
+    conn.commit()
+
+
+def init_vec_table(conn: sqlite3.Connection, dimensions: int = 1536) -> bool:
+    """Initialize the sqlite-vec virtual table for similarity search.
+    
+    Creates a virtual table that allows efficient nearest-neighbor
+    vector search using the sqlite-vec extension.
+    
+    Args:
+        conn: Database connection (must have sqlite-vec loaded)
+        dimensions: Embedding vector dimensions (default: 1536 for text-embedding-3-small)
+        
+    Returns:
+        True if virtual table was created successfully
+    """
+    try:
+        conn.execute(f"""
+            CREATE VIRTUAL TABLE IF NOT EXISTS vec_messages 
+            USING vec0(
+                message_id INTEGER PRIMARY KEY,
+                embedding float[{dimensions}]
+            )
+        """)
+        conn.commit()
+        return True
+    except Exception:
+        return False
+
+
+def serialize_embedding(embedding: list) -> bytes:
+    """Serialize a float list to a binary blob for storage.
+    
+    Args:
+        embedding: List of float values
+        
+    Returns:
+        Binary blob of packed float32 values
+    """
+    return struct.pack(f'{len(embedding)}f', *embedding)
+
+
+def deserialize_embedding(blob: bytes) -> list:
+    """Deserialize a binary blob back to a float list.
+    
+    Args:
+        blob: Binary blob of packed float32 values
+        
+    Returns:
+        List of float values
+    """
+    n = len(blob) // 4  # 4 bytes per float32
+    return list(struct.unpack(f'{n}f', blob))
+
+
+def get_conversation_by_id(conn: sqlite3.Connection, openai_id: str) -> Optional[sqlite3.Row]:
+    """Retrieve a conversation by its OpenAI ID.
+    
+    Args:
+        conn: Database connection
+        openai_id: The OpenAI conversation ID (UUID string)
+        
+    Returns:
+        Row with conversation data, or None if not found
+    """
+    row = conn.execute(
+        """
+        SELECT c.id, c.openai_id, c.title, c.create_time, c.update_time,
+               c.model_slug, c.is_archived,
+               (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id) as message_count
+        FROM conversations c
+        WHERE c.openai_id = ?
+        """,
+        (openai_id,)
+    ).fetchone()
+    return row
+
+
+def get_conversation_messages(conn: sqlite3.Connection, conversation_db_id: int,
+                               include_hidden: bool = False) -> list:
+    """Retrieve all messages for a conversation in chronological order.
+    
+    Messages are ordered by their database insertion order (id), which
+    corresponds to the tree traversal order from import. Hidden system
+    messages are excluded by default.
+    
+    Args:
+        conn: Database connection
+        conversation_db_id: The internal database ID of the conversation
+        include_hidden: Whether to include hidden system messages
+        
+    Returns:
+        List of Row objects with message data
+    """
+    if include_hidden:
+        rows = conn.execute(
+            """
+            SELECT id, openai_id, parent_id, author_role, content,
+                   content_type, create_time, weight, is_hidden
+            FROM messages
+            WHERE conversation_id = ?
+            ORDER BY id
+            """,
+            (conversation_db_id,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT id, openai_id, parent_id, author_role, content,
+                   content_type, create_time, weight, is_hidden
+            FROM messages
+            WHERE conversation_id = ? AND is_hidden = 0
+            ORDER BY id
+            """,
+            (conversation_db_id,)
+        ).fetchall()
+    return rows
+
+
+def get_embedding_stats(conn: sqlite3.Connection) -> dict:
+    """Get statistics about stored embeddings.
+    
+    Args:
+        conn: Database connection
+        
+    Returns:
+        Dictionary with embedding statistics
+    """
+    try:
+        total_messages = conn.execute(
+            "SELECT COUNT(*) FROM messages WHERE content IS NOT NULL AND content != ''"
+        ).fetchone()[0]
+        
+        embedded_count = conn.execute(
+            "SELECT COUNT(*) FROM message_embeddings"
+        ).fetchone()[0]
+        
+        model = None
+        if embedded_count > 0:
+            row = conn.execute(
+                "SELECT model FROM message_embeddings LIMIT 1"
+            ).fetchone()
+            model = row[0] if row else None
+        
+        return {
+            "total_messages": total_messages,
+            "embedded_count": embedded_count,
+            "remaining": total_messages - embedded_count,
+            "model": model,
+            "percent_complete": round(
+                (embedded_count / total_messages * 100) if total_messages > 0 else 0, 1
+            ),
+        }
+    except sqlite3.OperationalError:
+        # Table doesn't exist yet
+        return {
+            "total_messages": 0,
+            "embedded_count": 0,
+            "remaining": 0,
+            "model": None,
+            "percent_complete": 0,
+        }
+
+
+def list_conversations(
+    conn: sqlite3.Connection,
+    sort_by: str = "date",
+    order: str = "desc",
+    limit: int = 50,
+    offset: int = 0
+) -> tuple:
+    """List conversations with message counts and pagination.
+    
+    Args:
+        conn: Database connection
+        sort_by: Field to sort by: 'date', 'title', 'messages'
+        order: Sort order: 'asc' or 'desc'
+        limit: Maximum number of results
+        offset: Number of results to skip (pagination)
+        
+    Returns:
+        Tuple of (conversations list, total count)
+    """
+    # Map sort_by to actual SQL columns
+    sort_map = {
+        "date": "c.create_time",
+        "title": "c.title",
+        "messages": "message_count",
+    }
+    sort_column = sort_map.get(sort_by, "c.create_time")
+    
+    # Validate order
+    order_clause = "DESC" if order.lower() == "desc" else "ASC"
+    
+    # Handle NULL values in sorting (put NULLs at end for DESC, beginning for ASC)
+    null_handling = "NULLS LAST" if order_clause == "DESC" else "NULLS FIRST"
+    
+    # Get total count
+    total = conn.execute("SELECT COUNT(*) FROM conversations").fetchone()[0]
+    
+    # Query conversations with message counts
+    query = f"""
+        SELECT c.id, c.openai_id, c.title, c.create_time, c.update_time,
+               c.model_slug, c.is_archived,
+               (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id) as message_count
+        FROM conversations c
+        ORDER BY {sort_column} {order_clause} {null_handling}
+        LIMIT ? OFFSET ?
+    """
+    
+    rows = conn.execute(query, (limit, offset)).fetchall()
+    
+    return list(rows), total
+
+
+def get_conversation_count(conn: sqlite3.Connection) -> int:
+    """Get total number of conversations.
+    
+    Args:
+        conn: Database connection
+        
+    Returns:
+        Total conversation count
+    """
+    return conn.execute("SELECT COUNT(*) FROM conversations").fetchone()[0]
+
+
+def get_total_message_count(conn: sqlite3.Connection) -> int:
+    """Get total number of messages across all conversations.
+    
+    Args:
+        conn: Database connection
+        
+    Returns:
+        Total message count
+    """
+    return conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]

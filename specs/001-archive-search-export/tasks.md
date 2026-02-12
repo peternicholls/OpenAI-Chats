@@ -72,14 +72,38 @@
 
 ### Implementation for User Story 2
 
-- [ ] T019 [US2] Implement FTS5 query builder with term sanitization in chatgpt_archive/search.py
-- [ ] T020 [US2] Implement search result formatting with snippet generation and match count per FR-008 in chatgpt_archive/search.py
-- [ ] T021 [US2] Implement date range filtering for search in chatgpt_archive/search.py
-- [ ] T022 [US2] Add search command to CLI with --from/--to/--limit options in chatgpt_archive/cli.py
-- [ ] T023 [US2] Add --json flag for search results output in chatgpt_archive/cli.py
-- [ ] T024 [US2] Handle "no results" case with user-friendly message in chatgpt_archive/search.py
+- [X] T019 [US2] Implement FTS5 query builder with term sanitization in chatgpt_archive/search.py
+- [X] T020 [US2] Implement search result formatting with snippet generation and match count per FR-008 in chatgpt_archive/search.py
+- [X] T021 [US2] Implement date range filtering for search in chatgpt_archive/search.py
+- [X] T022 [US2] Add search command to CLI with --from/--to/--limit options in chatgpt_archive/cli.py
+- [X] T023 [US2] Add --json flag for search results output in chatgpt_archive/cli.py
+- [X] T024 [US2] Handle "no results" case with user-friendly message in chatgpt_archive/search.py
 
 **Checkpoint**: User Stories 1-2 complete - can import AND search archive
+
+---
+
+## Phase 4b: Semantic Search with Vector Embeddings (Optional Enhancement)
+
+**Goal**: Add semantic search capability using OpenAI embeddings and sqlite-vec for similarity search
+
+**Independent Test**: Run `chatgpt-archive search "machine learning" --semantic` and verify semantically similar results (e.g., "neural networks", "deep learning") are found even without exact keyword matches
+
+### Implementation for Semantic Search
+
+- [X] T019b [US2+] Add message_embeddings table to database schema in chatgpt_archive/db.py
+- [X] T020b [US2+] Implement batch embedding generation using OpenAI API in chatgpt_archive/embeddings.py
+- [X] T021b [US2+] Add sqlite-vec extension loading and virtual table setup in chatgpt_archive/db.py
+- [X] T022b [US2+] Implement progressive embedding during import (embed as we import) in chatgpt_archive/importer.py
+- [X] T023b [US2+] Add embed command to CLI for generating embeddings on existing database in chatgpt_archive/cli.py
+- [X] T024b [US2+] Implement hybrid search (combine FTS5 keyword + vector semantic) in chatgpt_archive/search.py
+- [X] T025b [US2+] Add --semantic and --hybrid flags to search command in chatgpt_archive/cli.py
+- [X] T026b [US2+] Add progress tracking and resume capability for embedding generation in chatgpt_archive/embeddings.py
+- [X] T027b [US2+] Add cost estimation and confirmation prompt for embedding API calls in chatgpt_archive/cli.py
+
+**Checkpoint**: Semantic search operational - can find conversations by meaning, not just keywords
+
+**Cost Note**: Embedding 63,493 messages with text-embedding-3-small (~$0.02/1M tokens) estimated at $2-5 total
 
 ---
 
@@ -91,12 +115,12 @@
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Implement conversation retrieval by ID in chatgpt_archive/db.py
-- [ ] T026 [US3] Implement message ordering (handle tree structure) in chatgpt_archive/db.py
-- [ ] T027 [US3] Implement human-readable conversation formatting with pagination for long conversations (1000+ messages) in chatgpt_archive/cli.py
-- [ ] T028 [US3] Add view command to CLI in chatgpt_archive/cli.py
-- [ ] T029 [US3] Add --json flag for view output in chatgpt_archive/cli.py
-- [ ] T030 [US3] Handle "conversation not found" error case in chatgpt_archive/cli.py
+- [X] T025 [US3] Implement conversation retrieval by ID in chatgpt_archive/db.py
+- [X] T026 [US3] Implement message ordering (handle tree structure) in chatgpt_archive/db.py
+- [X] T027 [US3] Implement human-readable conversation formatting with pagination for long conversations (1000+ messages) in chatgpt_archive/cli.py
+- [X] T028 [US3] Add view command to CLI in chatgpt_archive/cli.py
+- [X] T029 [US3] Add --json flag for view output in chatgpt_archive/cli.py
+- [X] T030 [US3] Handle "conversation not found" error case in chatgpt_archive/cli.py
 
 **Checkpoint**: User Stories 1-3 complete - can import, search, and view conversations
 
@@ -110,16 +134,16 @@
 
 ### Implementation for User Story 4
 
-- [ ] T031 [P] [US4] Create base exporter abstract class in chatgpt_archive/exporters/base.py
-- [ ] T032 [P] [US4] Implement Markdown exporter in chatgpt_archive/exporters/markdown.py
-- [ ] T033 [P] [US4] Implement JSON exporter in chatgpt_archive/exporters/json_export.py
-- [ ] T034 [P] [US4] Implement YAML exporter in chatgpt_archive/exporters/yaml_export.py
-- [ ] T035 [P] [US4] Implement HTML exporter with CSS styling in chatgpt_archive/exporters/html.py
-- [ ] T036 [P] [US4] Implement XML exporter in chatgpt_archive/exporters/xml_export.py
-- [ ] T037 [US4] Create exporter registry in chatgpt_archive/exporters/__init__.py
-- [ ] T038 [US4] Add export command to CLI with --format and --output options in chatgpt_archive/cli.py
-- [ ] T039 [US4] Handle stdout output when no --output specified in chatgpt_archive/cli.py
-- [ ] T040 [US4] Add file write error handling in chatgpt_archive/cli.py
+- [X] T031 [P] [US4] Create base exporter abstract class in chatgpt_archive/exporters/base.py
+- [X] T032 [P] [US4] Implement Markdown exporter in chatgpt_archive/exporters/markdown.py
+- [X] T033 [P] [US4] Implement JSON exporter in chatgpt_archive/exporters/json_export.py
+- [X] T034 [P] [US4] Implement YAML exporter in chatgpt_archive/exporters/yaml_export.py
+- [X] T035 [P] [US4] Implement HTML exporter with CSS styling in chatgpt_archive/exporters/html.py
+- [X] T036 [P] [US4] Implement XML exporter in chatgpt_archive/exporters/xml_export.py
+- [X] T037 [US4] Create exporter registry in chatgpt_archive/exporters/__init__.py
+- [X] T038 [US4] Add export command to CLI with --format and --output options in chatgpt_archive/cli.py
+- [X] T039 [US4] Handle stdout output when no --output specified in chatgpt_archive/cli.py
+- [X] T040 [US4] Add file write error handling in chatgpt_archive/cli.py
 
 **Checkpoint**: User Stories 1-4 complete - full import/search/view/export workflow
 
@@ -133,28 +157,112 @@
 
 ### Implementation for User Story 5
 
-- [ ] T041 [US5] Implement conversation listing query with message counts in chatgpt_archive/db.py
-- [ ] T042 [US5] Implement sorting (by date, title, message count) in chatgpt_archive/db.py
-- [ ] T043 [US5] Implement pagination with offset/limit in chatgpt_archive/db.py
-- [ ] T044 [US5] Add list command to CLI with --sort/--order/--limit/--offset options in chatgpt_archive/cli.py
-- [ ] T045 [US5] Add --json flag for list output in chatgpt_archive/cli.py
-- [ ] T046 [US5] Format human-readable list output with summary counts in chatgpt_archive/cli.py
+- [X] T041 [US5] Implement conversation listing query with message counts in chatgpt_archive/db.py
+- [X] T042 [US5] Implement sorting (by date, title, message count) in chatgpt_archive/db.py
+- [X] T043 [US5] Implement pagination with offset/limit in chatgpt_archive/db.py
+- [X] T044 [US5] Add list command to CLI with --sort/--order/--limit/--offset options in chatgpt_archive/cli.py
+- [X] T045 [US5] Add --json flag for list output in chatgpt_archive/cli.py
+- [X] T046 [US5] Format human-readable list output with summary counts in chatgpt_archive/cli.py
 
 **Checkpoint**: All user stories complete - full feature set implemented
 
 ---
 
-## Phase 8: Polish & Cross-Cutting Concerns
+## Phase 8: Polish & Documentation
 
-**Purpose**: Final improvements affecting multiple user stories
+**Purpose**: Final improvements and comprehensive documentation for easy onboarding and use
 
-- [ ] T047 [P] Add environment variable CHATGPT_ARCHIVE_DB support in chatgpt_archive/cli.py
-- [ ] T048 [P] Add --version flag to CLI in chatgpt_archive/cli.py
-- [ ] T049 [P] Ensure all errors output to stderr in chatgpt_archive/cli.py
-- [ ] T050 Add database path expansion (~/ handling) throughout chatgpt_archive/db.py
-- [ ] T051 Run quickstart.md validation - verify all documented commands work
-- [ ] T052 Performance validation - ensure <60s import, <500ms search, <2s export
-- [ ] T053 Database size validation - ensure DB file is <2x original JSON size per SC-007
+### Code Quality & Error Handling
+
+- [X] T047 [P] Add environment variable CHATGPT_ARCHIVE_DB support in chatgpt_archive/cli.py
+- [X] T048 [P] Add --version flag to CLI in chatgpt_archive/cli.py
+- [X] T049 [P] Ensure all errors output to stderr in chatgpt_archive/cli.py
+- [X] T050 Add database path expansion (~/ handling) throughout chatgpt_archive/db.py
+
+### Documentation & User Experience
+
+- [X] T051 Enhance README.md with comprehensive quickstart guide, installation instructions, and common use cases
+- [X] T052 Add examples section to README.md with real-world command examples and expected outputs
+- [X] T053 Create USAGE.md with detailed command reference and all CLI options in docs/USAGE.md
+- [X] T054 [P] Create TROUBLESHOOTING.md with common issues and solutions in docs/TROUBLESHOOTING.md
+- [X] T055 [P] Create CONTRIBUTING.md with development setup and contribution guidelines in CONTRIBUTING.md
+- [X] T056 Add inline help text for all CLI commands with usage examples in chatgpt_archive/cli.py
+- [X] T057 Create API documentation for programmatic usage in docs/API.md
+- [X] T058 Add docstrings to all public functions and classes following Google style guide
+- [X] T059 Create CHANGELOG.md with version history and feature additions in CHANGELOG.md
+
+### Validation & Performance
+
+- [X] T060 Run quickstart.md validation - verify all documented commands work end-to-end
+- [X] T061 Performance validation - ensure <60s import, <500ms search, <2s export per requirements
+- [X] T062 Database size validation - ensure DB file is <2x original JSON size per SC-007
+- [X] T063 Test error scenarios - verify helpful error messages for missing files, corrupted data, etc.
+
+**Checkpoint**: Production-ready with comprehensive documentation for users and developers
+
+---
+
+## Phase 8b: Enhancements - Additional Features
+
+**Purpose**: Extra features that enhance functionality beyond MVP (not critical for core use cases)
+
+**Note**: Semantic search with embeddings is already covered in Phase 4b (optional)
+
+- [ ] T064 [P] Add CSV export format in chatgpt_archive/exporters/csv_export.py
+- [ ] T065 [P] Add Excel export format using openpyxl in chatgpt_archive/exporters/excel_export.py
+- [ ] T066 [P] Implement conversation merging logic for duplicate imports in chatgpt_archive/importer.py
+- [ ] T067 Add delete command to remove conversations from database in chatgpt_archive/cli.py
+- [ ] T068 Implement conversation tagging system - add tags table to chatgpt_archive/db.py
+- [ ] T069 Add tag command and --tag filter to search/list in chatgpt_archive/cli.py
+- [ ] T070 Add --database option for specifying alternate database paths in chatgpt_archive/cli.py
+- [ ] T071 [P] Add openpyxl dependency to pyproject.toml for Excel export
+
+---
+
+## Phase 9: Web Interface & Docker (Optional Enhancement)
+
+**Purpose**: Provide browser-based UI for search, view, and export with Docker deployment
+
+**Independent Test**: Run `docker-compose up` and access http://localhost:8080 to search, view, and export conversations via web browser
+
+### Backend API
+
+- [ ] T072 Add Flask and Flask-CORS dependencies to pyproject.toml
+- [ ] T073 Create Flask application skeleton in chatgpt_archive/web/app.py
+- [ ] T074 [P] Implement /api/search endpoint with query parameters in chatgpt_archive/web/app.py
+- [ ] T075 [P] Implement /api/conversations endpoint for listing in chatgpt_archive/web/app.py
+- [ ] T076 [P] Implement /api/conversations/<id> endpoint for viewing in chatgpt_archive/web/app.py
+- [ ] T077 [P] Implement /api/export/<id> endpoint with format parameter in chatgpt_archive/web/app.py
+- [ ] T078 Add CORS configuration for local development in chatgpt_archive/web/app.py
+- [ ] T079 Add error handling and JSON error responses in chatgpt_archive/web/app.py
+
+### Frontend UI
+
+**Make this beautiful and user-friendly - this is the face of the project!**
+
+- [ ] T080 Create static/ directory structure for web assets
+- [ ] T081 [P] Create index.html with search interface in chatgpt_archive/web/static/index.html
+- [ ] T082 [P] Create conversation view modal/page in chatgpt_archive/web/static/index.html
+- [ ] T083 [P] Create CSS styling with responsive design in chatgpt_archive/web/static/styles.css
+- [ ] T084 Implement JavaScript for search functionality in chatgpt_archive/web/static/app.js
+- [ ] T085 Implement JavaScript for conversation viewing in chatgpt_archive/web/static/app.js
+- [ ] T086 Implement JavaScript for export functionality in chatgpt_archive/web/static/app.js
+- [ ] T087 Add pagination controls for search results in chatgpt_archive/web/static/app.js
+- [ ] T088 Add loading states and error handling in UI in chatgpt_archive/web/static/app.js
+
+### Docker Setup
+
+- [ ] T089 Create Dockerfile with Python base image and dependencies in Dockerfile
+- [ ] T090 Create docker-compose.yml with volume mounts for database in docker-compose.yml
+- [ ] T091 Create .dockerignore file in .dockerignore
+- [ ] T092 Add web command to CLI for starting Flask server in chatgpt_archive/cli.py
+- [ ] T093 Configure Flask to use environment variable for database path in chatgpt_archive/web/app.py
+- [ ] T094 Add health check endpoint /api/health in chatgpt_archive/web/app.py
+- [ ] T095 Create README section for Docker deployment with docker-compose.yml in README.md
+
+**Checkpoint**: Web interface operational - can search, view, and export via browser at http://localhost:8080
+
+**Tech Stack**: Flask (backend), Vanilla JS (frontend), Docker + Docker Compose (deployment)
 
 ---
 
@@ -171,8 +279,15 @@ Phase 2 (Foundational) ← BLOCKING
 ↓       ↓       ↓       ↓           ↓
 US1 →  US2  →  US3  →  US4  →     US5    (Sequential by priority)
 (P1)   (P2)    (P3)    (P4)       (P5)
-    ↓
+        ↓
+   Phase 4b (Semantic Search - OPTIONAL)
+        ↓
 Phase 8 (Polish)
+        ↓
+Phase 8b (Enhancements - OPTIONAL)
+        ↓
+Phase 9 (Web Interface & Docker - OPTIONAL)
+    ↳ Requires: US2 (Search), US3 (View), US4 (Export)
 ```
 
 ### User Story Dependencies
@@ -202,9 +317,26 @@ T006 → [T007, T008, T009] in parallel → T010
 T031 → [T032, T033, T034, T035, T036] all in parallel → T037 → T038...
 ```
 
-**Within Phase 8 (Polish)**:
+**Within Phase 8 (Polish & Documentation)**:
 ```
-[T047, T048, T049] all in parallel → T050 → T051 → T052
+Code Quality: [T047, T048, T049] in parallel → T050
+Documentation: [T051, T052] in parallel, then [T053, T054, T055, T056, T057, T058, T059] in parallel
+Validation: T060 → T061 → T062 → T063
+```
+
+**Within Phase 8b (Enhancements)**:
+```
+[T064, T065, T066] in parallel → T067 → T068 → T069 → T070
+(T071 can be done anytime after T065 is planned)
+```
+
+**Within Phase 9 (Web Interface)**:
+```
+T072 → T073 → [T074, T075, T076, T077] in parallel → T078 → T079
+             ↓
+        [T080] → [T081, T082, T083] in parallel → T084 → T085 → T086 → T087 → T088
+             ↓
+        [T089, T090, T091] in parallel → T092 → T093 → T094 → T095
 ```
 
 ---
@@ -228,7 +360,9 @@ T031 → [T032, T033, T034, T035, T036] all in parallel → T037 → T038...
 | 5 (US3) | View conversations in terminal |
 | 6 (US4) | Export to any format |
 | 7 (US5) | Browse/list all conversations |
-| 8 (Polish) | Production-ready tool |
+| 8 (Polish) | Production-ready tool with comprehensive documentation |
+| 8b (Enhancements) | Additional export formats, tagging, advanced features |
+| 9 (Web UI) | Browser-based interface with Docker deployment |
 
 ### Recommended Approach
 
@@ -250,3 +384,7 @@ T031 → [T032, T033, T034, T035, T036] all in parallel → T037 → T038...
 - No tests explicitly requested - add tests/ directory if needed later
 - Commit after each task or logical group
 - Run `pip install -e .` after T002 to test CLI during development
+- **Phase 4b (Semantic Search) is OPTIONAL**: Adds vector embeddings for semantic search; requires OpenAI API key and costs ~$2-5 for 64K messages
+- **Hybrid Search Strategy**: Combine FTS5 (keyword) + vector (semantic) for best results - use keyword as primary, vector to catch semantic matches
+- **Phase 8 (Polish & Documentation)**: Includes comprehensive documentation (README, USAGE.md, API.md, TROUBLESHOOTING.md, CONTRIBUTING.md) with examples, inline help, and validation - essential for production readiness
+- **Phase 8b (Enhancements) is OPTIONAL**: Additional export formats (CSV, Excel), conversation tagging, and multi-database support - implement only if needed

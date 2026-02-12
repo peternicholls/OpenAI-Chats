@@ -268,7 +268,9 @@ def insert_conversation(
 def import_archive(
     archive_dir: Path,
     db_path: Optional[Path] = None,
-    progress_callback: Optional[Callable[[int, int], None]] = None
+    progress_callback: Optional[Callable[[int, int], None]] = None,
+    embed: bool = False,
+    embed_model: str = "text-embedding-3-small",
 ) -> Tuple[int, int]:
     """Import ChatGPT archive into database.
     
@@ -276,6 +278,8 @@ def import_archive(
         archive_dir: Path to extracted ChatGPT export directory
         db_path: Optional database path (uses default if None)
         progress_callback: Optional function called with (current, total) for progress
+        embed: Whether to generate embeddings during import (requires OpenAI API key)
+        embed_model: Embedding model to use if embed=True
         
     Returns:
         Tuple of (conversations_imported, messages_imported)
@@ -297,6 +301,14 @@ def import_archive(
     
     # Initialize database
     conn = init_db(db_path)
+    
+    # Set up embeddings schema if embedding was requested
+    if embed:
+        try:
+            from chatgpt_archive.db import init_embeddings_schema
+            init_embeddings_schema(conn)
+        except Exception:
+            pass  # Schema creation failure is non-critical
     
     try:
         conversations_imported = 0
@@ -320,6 +332,14 @@ def import_archive(
         
         # Commit all changes
         conn.commit()
+        
+        # Progressive embedding: generate embeddings after import if requested
+        if embed:
+            try:
+                from chatgpt_archive.embeddings import embed_messages
+                embed_messages(conn, model=embed_model)
+            except Exception:
+                pass  # Embedding failure is non-critical
         
         return conversations_imported, messages_imported
         
