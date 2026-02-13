@@ -47,12 +47,12 @@ Web application architecture:
 
 - [x] T008 Create FastAPI application entry point in api/main.py with basic app initialization
 - [x] T009 [P] Setup API routing structure with router imports in api/routers/__init__.py
-- [x] T010 [P] Configure CORS middleware in api/middleware/cors.py with localhost:3000 origin
+- [x] T010 [P] Configure CORS middleware in api/middleware/cors.py (allow localhost:3000 in dev, configure via CORS_ORIGINS env var in production for Docker networking)
 - [x] T011 [P] Create Pydantic base models in api/models/responses.py (ConversationSummary, Message, PaginatedResponse, ErrorResponse)
 - [x] T012 [P] Create Pydantic request models in api/models/requests.py (SearchRequest, TagRequest, ExportRequest)
 - [x] T013 Create archive service adapter in api/services/archive_service.py (adapter pattern over chatgpt_archive library — not logic duplication per FR-012)
 - [x] T014 [P] Create settings service in api/services/settings_service.py for persistent user settings in ~/.chatgpt-archive/settings.json
-- [x] T015 Add health check endpoint in api/routers/health.py (GET /api/health)
+- [x] T015 Add health check endpoint in api/routers/health.py (GET /api/health) - check: API responds, DB file accessible, return 200 OK with status
 - [x] T016 [P] Initialize shadcn/ui CLI in web/ with Tailwind CSS (shadcn generates source files — not an npm dependency)
 - [x] T017 [P] Create TypeScript types in web/src/types/index.ts matching API contracts
 - [x] T018 [P] Create API client service in web/src/services/api.ts with fetch wrapper
@@ -71,9 +71,12 @@ Web application architecture:
 - [x] T031 [P] Create Dockerfile for frontend in docker/web.Dockerfile (Node 20, static export with nginx)
 - [x] T032 Create docker-compose.yml with api and web services, volume mount using ${HOME}/.chatgpt-archive:/data for host data persistence
 - [x] T033 [P] Create .env.example files for both api/ and web/ with required environment variables
-- [ ] T171 Validate SQLite schema compatibility: verify API can read existing feature 001 database without migration
-- [ ] T172 [P] Add settings loading on FastAPI startup in api/main.py (load ~/.chatgpt-archive/settings.json if exists)
-- [ ] T173 [P] Add startup warning log if server binds to 0.0.0.0 (security: non-localhost exposure)
+- [ ] T034_NEW [P] Add input validation middleware in api/middleware/validation.py (sanitize query params, validate request bodies)
+- [ ] T035_NEW [P] Configure Content Security Policy headers in api/middleware/cors.py (restrict script sources, prevent XSS)
+- [ ] T036_NEW Add environment variable validation on startup in api/main.py (check required vars: DB_PATH, CORS_ORIGINS)
+- [ ] T171 Validate SQLite schema compatibility in api/services/archive_service.py: verify conversations, messages, embeddings tables exist with expected column types (id, title, create_time, etc.)
+- [ ] T172 [P] Add settings loading on FastAPI startup in api/main.py (load ~/.chatgpt-archive/settings.json if exists, use defaults if missing/corrupted, log warning on parse errors)
+- [ ] T173 [P] Add startup warning log in api/main.py if server binds to 0.0.0.0 (log level: WARNING, format: "Security: API exposed on all interfaces (0.0.0.0)")
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -89,37 +92,40 @@ Web application architecture:
 
 #### Backend API
 
-- [x] T034 [P] [US1] Create conversation router in api/routers/conversations.py with GET /api/conversations endpoint (single endpoint, query params: offset, limit, sort, order, tag_filter)
-- [x] T035 [P] [US1] Add GET conversation by ID endpoint in api/routers/conversations.py
-- [x] T036 [P] [US1] Add DELETE conversation endpoint in api/routers/conversations.py
-- [x] T037 [P] [US1] Create import router in api/routers/import.py with POST import endpoint
-- [x] T038 [US1] Add import progress tracking with in-memory state in api/services/archive_service.py
-- [x] T039 [P] [US1] Create SSE progress stream endpoint in api/routers/progress.py (GET /api/import/progress with EventSource support)
-- [x] T040 [US1] (depends on T013) Integrate chatgpt_archive.importer.Importer in archive_service.py: instantiate Importer, call import_archive(zip_path, db_path), wire progress callbacks
-- [x] T041 [US1] Add file upload handling (multipart/form-data) in import endpoint
-- [x] T042 [US1] Add pagination logic to conversation list endpoint (offset, limit parameters)
-- [x] T043 [US1] Add sorting to conversation list (by date, title, message_count)
-- [x] T044 [US1] Add error handling and validation for all US1 endpoints
+- [x] T037 [P] [US1] Create conversation router in api/routers/conversations.py with GET /api/conversations endpoint (single endpoint, query params: offset, limit, sort, order, tag_filter)
+- [x] T038 [P] [US1] Add GET conversation by ID endpoint in api/routers/conversations.py
+- [x] T039 [P] [US1] Add DELETE conversation endpoint in api/routers/conversations.py
+- [x] T040 [P] [US1] Create import router in api/routers/import.py with POST import endpoint
+- [x] T041 [US1] Add import progress tracking with in-memory state in api/services/archive_service.py
+- [x] T042 [P] [US1] Create SSE progress stream endpoint in api/routers/progress.py (GET /api/import/progress with EventSource support)
+- [x] T043 [US1] (depends on T013) Integrate chatgpt_archive.importer.Importer in archive_service.py: instantiate Importer, call import_archive(zip_path, db_path), wire progress callbacks
+- [x] T044 [US1] Add file upload handling (multipart/form-data) in import endpoint
+- [x] T045 [US1] Add pagination logic to conversation list endpoint (offset, limit parameters)
+- [x] T046 [US1] Add sorting to conversation list (by date, title, message_count)
+- [x] T047 [US1] Add error handling and validation for all US1 endpoints
 
 #### Frontend UI
 
-- [x] T045 [P] [US1] Create conversation list page in web/src/app/page.tsx (server component)
-- [x] T046 [P] [US1] Create ConversationCard component in web/src/components/conversations/ConversationCard.tsx
-- [x] T047 [P] [US1] Create Pagination component in web/src/components/common/Pagination.tsx
-- [x] T048 [P] [US1] Create conversation detail page in web/src/app/conversation/[id]/page.tsx
-- [x] T049 [P] [US1] Create MessageBubble component in web/src/components/conversations/MessageBubble.tsx
-- [x] T050 [P] [US1] Create ConversationHeader component in web/src/components/conversations/ConversationHeader.tsx
-- [ ] T051 [P] [US1] Create import page in web/src/app/import/page.tsx
-- [ ] T052 [US1] Create ImportDialog component in web/src/components/import/ImportDialog.tsx (client component with file upload)
-- [ ] T053 [US1] Create ImportProgress component in web/src/components/import/ImportProgress.tsx with progress bar
-- [x] T054 [US1] (depends on T039) Implement SSE listener hook in web/src/hooks/useSSE.ts for import progress (EventSource with auto-reconnect on connection drop)
-- [x] T055 [US1] Create useConversations hook in web/src/hooks/useConversations.ts with React Query
-- [x] T056 [US1] Add API client methods for conversations in web/src/services/api.ts (list, getById, delete)
-- [x] T057 [US1] Add API client method for import in web/src/services/api.ts (uploadArchive, getProgress)
-- [x] T058 [US1] Add list filtering UI (sort dropdown, order toggle) in conversation list page
-- [x] T059 [US1] Add delete confirmation dialog using shadcn/ui AlertDialog
-- [x] T060 [US1] Add navigation between list and detail views
-- [ ] T061 [US1] Add error states and loading skeletons using shadcn/ui Skeleton
+- [x] T048 [P] [US1] Create conversation list page in web/src/app/page.tsx (server component)
+- [x] T049 [P] [US1] Create ConversationCard component in web/src/components/conversations/ConversationCard.tsx
+- [x] T050 [P] [US1] Create Pagination component in web/src/components/common/Pagination.tsx
+- [x] T051 [P] [US1] Create conversation detail page in web/src/app/conversation/[id]/page.tsx
+- [x] T052 [P] [US1] Create MessageBubble component in web/src/components/conversations/MessageBubble.tsx
+- [x] T053 [P] [US1] Create ConversationHeader component in web/src/components/conversations/ConversationHeader.tsx
+- [ ] T054 [P] [US1] Create import page in web/src/app/import/page.tsx
+- [ ] T055 [US1] Create ImportDialog component in web/src/components/import/ImportDialog.tsx (client component with file upload: accept .zip only, max 500MB, show upload progress bar)
+- [ ] T056 [US1] Create ImportProgress component in web/src/components/import/ImportProgress.tsx with progress bar (display: file name, progress %, current step, error recovery UI)
+- [x] T057 [US1] (depends on T042) Implement SSE listener hook in web/src/hooks/useSSE.ts for import progress (EventSource with auto-reconnect on connection drop)
+- [x] T058 [US1] Create useConversations hook in web/src/hooks/useConversations.ts with React Query
+- [x] T059 [US1] Add API client methods for conversations in web/src/services/api.ts (list, getById, delete)
+- [x] T060 [US1] Add API client method for import in web/src/services/api.ts (uploadArchive, getProgress)
+- [x] T061 [US1] Add list filtering UI (sort dropdown, order toggle) in conversation list page
+- [x] T062 [US1] Add delete confirmation dialog using shadcn/ui AlertDialog
+- [x] T063 [US1] Add navigation between list and detail views
+- [ ] T064 [P] [US1] Add error states for conversation list in web/src/app/page.tsx (empty state, network error, retry button)
+- [ ] T065 [P] [US1] Add loading skeletons for conversation list using shadcn/ui Skeleton in web/src/components/conversations/ConversationListSkeleton.tsx
+- [ ] T066 [P] [US1] Add error states for conversation detail in web/src/app/conversation/[id]/page.tsx (not found, network error, retry button)
+- [ ] T067 [P] [US1] Add error states for import in ImportDialog component (invalid file type, file too large, upload failed, corrupted ZIP)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. Run quickstart.md validation for US1 scope.
 
@@ -135,28 +141,28 @@ Web application architecture:
 
 #### Backend API
 
-- [x] T062 [P] [US2] Create search router in api/routers/search.py with POST search endpoint
-- [x] T063 [US2] Integrate chatgpt_archive.search module in archive_service.py search method
-- [x] T064 [US2] Add search result preview generation (snippet extraction) in search endpoint
-- [x] T065 [US2] Add search filtering by date range in search endpoint
-- [x] T066 [US2] Add pagination to search results
-- [x] T067 [US2] Add error handling and validation for search requests
+- [x] T068 [P] [US2] Create search router in api/routers/search.py with POST search endpoint
+- [x] T069 [US2] Integrate chatgpt_archive.search module in archive_service.py search method
+- [x] T070 [US2] Add search result preview generation (snippet extraction) in search endpoint
+- [x] T071 [US2] Add search filtering by date range in search endpoint
+- [x] T072 [US2] Add pagination to search results
+- [x] T073 [US2] Add error handling and validation for search requests
 
 #### Frontend UI
 
-- [x] T068 [P] [US2] Create search page in web/src/app/search/page.tsx
-- [ ] T069 [P] [US2] Create SearchBar component in web/src/components/search/SearchBar.tsx (client component with debounce)
-- [ ] T070 [P] [US2] Create SearchFilters component in web/src/components/search/SearchFilters.tsx (date range, search type)
-- [ ] T071 [P] [US2] Create SearchResults component in web/src/components/search/SearchResults.tsx
-- [ ] T072 [P] [US2] Add shadcn/ui DatePicker component for search filters
-- [x] T073 [P] [US2] Add shadcn/ui Select component for search type selector
-- [x] T074 [US2] Create useSearch hook in web/src/hooks/useSearch.ts with React Query and debounce
-- [x] T075 [US2] Add search API client method in web/src/services/api.ts
-- [ ] T076 [US2] Implement 500ms debounce logic in SearchBar input
-- [ ] T077 [US2] Add search term highlighting in results
-- [x] T078 [US2] Add search result click navigation to conversation detail
-- [x] T079 [US2] Add empty state for no results
-- [x] T080 [US2] Add global search bar in Header component linking to search page
+- [x] T074 [P] [US2] Create search page in web/src/app/search/page.tsx
+- [ ] T075 [P] [US2] Generate shadcn/ui DatePicker components via CLI: `npx shadcn-ui add calendar popover` into web/src/components/ui/
+- [ ] T076 [US2] (depends on T075) Create SearchFilters component in web/src/components/search/SearchFilters.tsx (date range using DatePicker, search type dropdown)
+- [ ] T077 [US2] (depends on T075) Create SearchBar component in web/src/components/search/SearchBar.tsx (client component with 500ms debounce using lodash.debounce or custom useDebounce hook)
+- [ ] T078 [P] [US2] Create SearchResults component in web/src/components/search/SearchResults.tsx
+- [x] T079 [P] [US2] Add shadcn/ui Select component for search type selector
+- [x] T080 [US2] Create useSearch hook in web/src/hooks/useSearch.ts with React Query and debounce
+- [x] T081 [US2] Add search API client method in web/src/services/api.ts
+- [ ] T082 [P] [US2] Implement search term highlighting in SearchResults using react-highlight-words library (highlight matched keywords in result snippets)
+- [ ] T083 [US2] Implement 500ms debounce logic in SearchBar input (use useDebounce custom hook)
+- [x] T084 [US2] Add search result click navigation to conversation detail
+- [x] T085 [US2] Add empty state for no results
+- [x] T086 [US2] Add global search bar in Header component linking to search page
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. Run quickstart.md validation for US1+US2 scope.
 
@@ -172,24 +178,25 @@ Web application architecture:
 
 #### Backend API
 
-- [x] T081 [P] [US3] Create export router in api/routers/export.py with GET export endpoint
-- [x] T082 [US3] Integrate chatgpt_archive.exporters in archive_service.py export method
-- [x] T083 [US3] Add file response handling for each format (md, json, yaml, html, xml, csv, xlsx)
-- [x] T084 [US3] Add Content-Disposition headers for download filenames
-- [ ] T085 [US3] Add multi-conversation export support (comma-separated IDs)
-- [ ] T086 [US3] Add error handling for unsupported formats and missing conversations
+- [x] T087 [P] [US3] Create export router in api/routers/export.py with GET export endpoint
+- [x] T088 [US3] Integrate chatgpt_archive.exporters in archive_service.py export method
+- [x] T089 [US3] Add file response handling for each format (md, json, yaml, html, xml, csv, xlsx)
+- [x] T090 [US3] Add Content-Disposition headers for download filenames
+- [ ] T091 [US3] Add multi-conversation export support in export endpoint (accept comma-separated conversation IDs, generate combined export)
+- [ ] T092 [US3] Add error handling for unsupported formats and missing conversations
 
 #### Frontend UI
 
-- [x] T087 [P] [US3] Create ExportDialog component in web/src/components/export/ExportDialog.tsx
-- [x] T088 [P] [US3] Add shadcn/ui DropdownMenu for format selection
-- [x] T089 [US3] Add export button to conversation detail header
-- [x] T090 [US3] Add export API client method in web/src/services/api.ts
-- [x] T091 [US3] Implement file download trigger in ExportDialog
-- [ ] T092 [US3] Add multi-select checkbox to conversation list for batch export
-- [ ] T093 [US3] Add batch export button to conversation list
-- [ ] T094 [US3] Add export success toast notification using shadcn/ui Toast
-- [ ] T095 [US3] Add export error handling with user-friendly messages
+- [x] T093 [P] [US3] Create ExportDialog component in web/src/components/export/ExportDialog.tsx
+- [x] T094 [P] [US3] Add shadcn/ui DropdownMenu for format selection
+- [x] T095 [US3] Add export button to conversation detail header
+- [x] T096 [US3] Add export API client method in web/src/services/api.ts
+- [x] T097 [US3] Implement file download trigger in ExportDialog
+- [ ] T098 [P] [US3] Create multi-select UI in conversation list: add checkbox to ConversationCard, track selected IDs in page state
+- [ ] T099 [P] [US3] Add batch export button to conversation list toolbar (visible when conversations selected)
+- [ ] T100 [P] [US3] Add export success toast notification using shadcn/ui Toast (generate and add via CLI)
+- [ ] T101 [P] [US3] Add export error handling with user-friendly messages (format not supported, conversation not found, server error)
+- [ ] T102 [US3] Add validation test: export all 7 formats (md, json, yaml, html, xml, csv, xlsx) with multi-conversation selection, verify each downloads correctly
 
 **Checkpoint**: All three user stories (US1, US2, US3) should now be independently functional. Run quickstart.md validation for US1-US3 scope.
 
@@ -205,37 +212,40 @@ Web application architecture:
 
 #### Backend API
 
-- [x] T096 [P] [US4] Create tags router in api/routers/tags.py with GET all tags endpoint
-- [x] T097 [P] [US4] Add GET tags for conversation endpoint in tags router
-- [x] T098 [P] [US4] Add POST add tag endpoint in tags router
-- [x] T099 [P] [US4] Add DELETE remove tag endpoint in tags router
-- [x] T100 [P] [US4] Create favorites router in api/routers/favorites.py with POST toggle favorite endpoint (uses conversations.is_favorite INTEGER column)
-- [x] T101 [P] [US4] Add GET favorites list endpoint in favorites router (WHERE is_favorite = 1)
-- [x] T102 [US4] Extend ConversationSummary model with is_favorite: bool field in api/models/responses.py
-- [x] T103 [US4] Add favorite status to conversation list query in archive_service.py
-- [ ] T104 [US4] Add tag filtering to conversation list endpoint
-- [ ] T105 [US4] Add validation for tag names (alphanumeric, hyphens, underscores only)
+- [x] T103 [P] [US4] Create tags router in api/routers/tags.py with GET all tags endpoint
+- [x] T104 [P] [US4] Add GET tags for conversation endpoint in tags router
+- [x] T105 [P] [US4] Add POST add tag endpoint in tags router
+- [x] T106 [P] [US4] Add DELETE remove tag endpoint in tags router
+- [x] T107 [P] [US4] Create favorites router in api/routers/favorites.py with POST toggle favorite endpoint (uses conversations.is_favorite INTEGER column)
+- [x] T108 [P] [US4] Add GET favorites list endpoint in favorites router (WHERE is_favorite = 1)
+- [x] T109 [US4] Extend ConversationSummary model with is_favorite: bool field in api/models/responses.py
+- [x] T110 [US4] Add favorite status to conversation list query in archive_service.py
+- [ ] T111 [US4] Add tag filtering to conversation list endpoint in api/routers/conversations.py (filter by tag name via query param: ?tag=work)
+- [ ] T112 [US4] Add tag validation in tags router: alphanumeric + hyphens/underscores only, max 50 chars, case-insensitive uniqueness
 
 #### Frontend UI
 
-- [ ] T106 [P] [US4] Create favorites page in web/src/app/favorites/page.tsx
-- [ ] T107 [P] [US4] Create FavoriteButton component in web/src/components/favorites/FavoriteButton.tsx (star icon toggle)
-- [ ] T108 [P] [US4] Create TagList component in web/src/components/tags/TagList.tsx for sidebar
-- [ ] T109 [P] [US4] Create TagEditor component in web/src/components/tags/TagEditor.tsx (add/remove tags)
-- [x] T110 [P] [US4] Add shadcn/ui Popover for tag editor
-- [x] T111 [P] [US4] Add shadcn/ui Input with autocomplete for tag input
-- [x] T112 [US4] Create useTags hook in web/src/hooks/useTags.ts with React Query
-- [x] T113 [US4] Create useFavorites hook in web/src/hooks/useFavorites.ts with React Query
-- [x] T114 [US4] Add tag API client methods in web/src/services/api.ts (list, add, remove)
-- [x] T115 [US4] Add favorites API client methods in web/src/services/api.ts (toggle, list)
-- [ ] T116 [US4] Add favorite button to ConversationCard component
-- [ ] T117 [US4] Add favorite button to conversation detail header
-- [ ] T118 [US4] Add tag badges to ConversationCard component
-- [ ] T119 [US4] Add tag editor to conversation detail page
-- [ ] T120 [US4] Add tag filter to sidebar (clickable tag list)
-- [x] T121 [US4] Add favorites link to sidebar navigation
-- [ ] T122 [US4] Implement optimistic updates for favorite toggle
-- [ ] T123 [US4] Add tag autocomplete with existing tags
+- [ ] T113 [P] [US4] Create favorites page in web/src/app/favorites/page.tsx (reuse ConversationCard, filter conversations where is_favorite=true)
+- [ ] T114 [P] [US4] Create FavoriteButton component in web/src/components/favorites/FavoriteButton.tsx (star icon toggle, optimistic updates)
+- [ ] T115 [P] [US4] Create TagList component in web/src/components/tags/TagList.tsx for sidebar (display all tags with counts, clickable to filter)
+- [ ] T116 [P] [US4] Create TagEditor component in web/src/components/tags/TagEditor.tsx (add/remove tags, uses Popover + Input with autocomplete)
+- [x] T117 [P] [US4] Add shadcn/ui Popover for tag editor
+- [x] T118 [P] [US4] Add shadcn/ui Input with autocomplete for tag input
+- [x] T119 [US4] Create useTags hook in web/src/hooks/useTags.ts with React Query
+- [x] T120 [US4] Create useFavorites hook in web/src/hooks/useFavorites.ts with React Query
+- [x] T121 [US4] Add tag API client methods in web/src/services/api.ts (list, add, remove)
+- [x] T122 [US4] Add favorites API client methods in web/src/services/api.ts (toggle, list)
+- [ ] T123 [US4] (depends on T114) Add favorite button to ConversationCard component
+- [ ] T124 [US4] (depends on T114) Add favorite button to conversation detail header
+- [ ] T125 [US4] (depends on T116) Add tag badges to ConversationCard component (display tags, click to filter)
+- [ ] T126 [US4] (depends on T116) Add tag editor to conversation detail page header
+- [ ] T127 [US4] (depends on T115) Add tag filter to sidebar (clickable tag list)
+- [x] T128 [US4] Add favorites link to sidebar navigation
+- [ ] T129 [US4] Implement optimistic updates for favorite toggle (update UI immediately, rollback on error)
+- [ ] T130 [US4] Add tag autocomplete with existing tags (filter taglist as user types)
+- [ ] T131 [P] [US4] Add error handling: display message when removing last tag from filtered view
+- [ ] T132 [P] [US4] Add "no tags" empty state in sidebar TagList component
+- [ ] T133 [P] [US4] Add tag limit validation: warn user if attempting to add more than 10 tags per conversation
 
 **Checkpoint**: All four user stories (US1-US4) should be independently functional. Run quickstart.md validation for US1-US4 scope.
 
@@ -251,31 +261,36 @@ Web application architecture:
 
 #### Backend API
 
-- [x] T124 [P] [US5] Create embeddings router in api/routers/embeddings.py with POST generate endpoint
-- [x] T125 [P] [US5] Add GET estimate endpoint for cost calculation in embeddings router
-- [x] T126 [US5] Integrate chatgpt_archive.embeddings module in archive_service.py
-- [x] T127 [US5] Add background task support for embedding generation (FastAPI BackgroundTasks — in-memory only, lost on server restart; acceptable for single-user deployment)
-- [ ] T128 [US5] Add SSE progress stream for embedding generation
-- [ ] T129 [US5] Add semantic search support to search endpoint (search_type parameter)
-- [ ] T130 [US5] Add OpenAI API key validation before starting embedding generation (make test API call to verify key validity and sufficient quota)
-- [ ] T131 [US5] Add error handling for API quota exceeded, invalid credentials
+- [x] T134 [P] [US5] Create embeddings router in api/routers/embeddings.py with POST generate endpoint
+- [x] T135 [P] [US5] Add GET estimate endpoint for cost calculation in embeddings router
+- [x] T136 [US5] Integrate chatgpt_archive.embeddings module in archive_service.py
+- [ ] T137 [US5] Add OpenAI API key validation in embeddings router before starting generation (make test API call to verify key validity and sufficient quota)
+- [x] T138 [US5] Add background task support for embedding generation (FastAPI BackgroundTasks — in-memory only, lost on server restart; acceptable for single-user deployment)
+- [ ] T139 [US5] (similar to T042) Add SSE progress stream for embedding generation in api/routers/embeddings.py (reuse pattern from import progress endpoint)
+- [ ] T140 [US5] Add semantic search support to search endpoint (search_type parameter: "keyword" | "semantic")
+- [ ] T141 [US5] Add error handling for API quota exceeded, invalid credentials, rate limits
+- [ ] T142 [P] [US5] Add cancel/pause endpoint for embedding generation in embeddings router (set cancellation flag, gracefully stop after current batch)
+- [ ] T143 [P] [US5] Add cost limit safeguard in embeddings router (accept max_cost param, stop if estimate exceeds limit)
+- [ ] T144 [P] [US5] Add OpenAI API key encryption for settings storage in api/services/settings_service.py (use cryptography.fernet with server-side key)
 
 #### Frontend UI
 
-- [ ] T132 [P] [US5] Create settings page in web/src/app/settings/page.tsx
-- [ ] T133 [P] [US5] Create SettingsForm component in web/src/components/settings/SettingsForm.tsx
-- [ ] T134 [P] [US5] Create ApiCredentials component in web/src/components/settings/ApiCredentials.tsx
-- [x] T135 [P] [US5] Add shadcn/ui Tabs for settings sections
-- [x] T136 [US5] Create useSettings hook in web/src/hooks/useSettings.ts with React Query
-- [x] T137 [US5] Add settings API client methods in web/src/services/api.ts (get, update)
-- [x] T138 [US5] Add embeddings API client methods in web/src/services/api.ts (estimate, generate, progress)
-- [ ] T139 [US5] Add embedding generation UI to settings page (start button, progress bar)
-- [ ] T140 [US5] Add cost estimate display before generation
-- [ ] T141 [US5] Add semantic search type option to SearchFilters component
-- [ ] T142 [US5] Add SSE listener for embedding progress in settings page
-- [ ] T143 [US5] Add OpenAI API key input with secure storage indication
-- [ ] T144 [US5] Persist user settings to backend settings service
-- [ ] T145 [US5] Add "Embeddings not generated" info message in semantic search mode
+- [ ] T145 [P] [US5] Create settings page in web/src/app/settings/page.tsx (client component for API key input)
+- [ ] T146 [P] [US5] Create SettingsForm component in web/src/components/settings/SettingsForm.tsx (tabbed interface for different settings)
+- [ ] T147 [P] [US5] Create ApiCredentials component in web/src/components/settings/ApiCredentials.tsx (password input for API key, test connection button)
+- [x] T148 [P] [US5] Add shadcn/ui Tabs for settings sections
+- [x] T149 [US5] Create useSettings hook in web/src/hooks/useSettings.ts with React Query
+- [x] T150 [US5] Add settings API client methods in web/src/services/api.ts (get, update)
+- [x] T151 [US5] Add embeddings API client methods in web/src/services/api.ts (estimate, generate, progress)
+- [ ] T152 [US5] Add embedding generation UI to settings page (start button, progress bar, cancel button)
+- [ ] T153 [US5] Add cost estimate display before generation (show: total messages, estimated tokens, cost in USD, confirm button)
+- [ ] T154 [US5] Add semantic search type option to SearchFilters component (radio group: keyword/semantic)
+- [ ] T155 [US5] (depends on T139) Add SSE listener for embedding progress in settings page (reuse useSSE hook pattern)
+- [ ] T156 [US5] Add OpenAI API key input with secure storage indication (show lock icon, "encrypted at rest" message)
+- [ ] T157 [US5] Persist user settings to backend settings service (save on change, optimistic updates)
+- [ ] T158 [US5] Add "Embeddings not generated" info message in semantic search mode (suggest going to settings)
+- [ ] T159 [P] [US5] Add cost limit input to embedding generation UI (max spend in USD, default $5.00)
+- [ ] T160 [P] [US5] Add resume support UI: detect incomplete embedding generation, offer "Resume" button
 
 **Checkpoint**: All five user stories should now be independently functional. Run quickstart.md validation for full feature scope.
 
@@ -285,38 +300,35 @@ Web application architecture:
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T146 [P] Update README.md with project overview, features, and deployment instructions
-- [ ] T147 [P] Update docs/API.md with complete API documentation (if not using OpenAPI docs)
-- [ ] T148 [P] Add environment variable documentation to docker-compose.yml comments
-- [ ] T149 [P] Add favicon and app metadata to web/src/app/layout.tsx
-- [ ] T150 Optimize Docker images (reduce size, multi-stage builds)
-- [x] T151 Add nginx configuration in docker/nginx.conf for production frontend serving
-- [ ] T152 [P] Add loading states and skeletons to all data-fetching components
-- [ ] T153 [P] Add responsive design breakpoints for mobile/tablet views
-- [ ] T154 [P] Add dark mode support using Next.js themes and Tailwind dark mode classes
-- [ ] T155 Add keyboard shortcuts for common actions (/, Ctrl+K for search)
-- [ ] T156 [P] Add toast notifications for all user actions (import success, tag added, etc.)
-- [ ] T157 Optimize conversation list with virtualization for 1000+ conversations (required for SC-009: up to 5000 conversations)
-- [ ] T158 Add rate limiting middleware to API to prevent abuse
-- [ ] T159 Add request logging middleware to API for debugging
-- [ ] T160 [P] Add analytics/telemetry hooks (optional, privacy-respecting)
-- [ ] T161 Run full quickstart.md validation on fresh Docker deployment
-- [ ] T162 [P] Add code comments and documentation for complex functions
-- [ ] T163 [P] Run linting and formatting on all code (ruff, black, eslint, prettier)
-- [ ] T164 Verify all shadcn/ui components follow accessibility guidelines (ARIA labels, keyboard nav)
-- [ ] T165 Add Content Security Policy headers for security
-- [ ] T166 [P] Create deployment guide in docs/DEPLOYMENT.md for production
-- [ ] T167 Verify data persistence across Docker container restarts
-- [ ] T168 Add health check endpoints to docker-compose.yml
-- [ ] T169 [P] Add troubleshooting section to docs/TROUBLESHOOTING.md
-- [ ] T170 Final review and cleanup of unused dependencies
-- [ ] T174 [P] Create docs/DEPLOYMENT.md with one-command Docker deployment guide and security notices
-- [ ] T175 [P] Add Browserslist config in web/ and verify Chrome, Firefox, Safari, Edge (last 2 versions)
-- [ ] T176 Write Playwright E2E test suite for US1 (import archive, list conversations, view detail)
-- [ ] T177 [P] Write Playwright E2E test suite for US2 (search, debounce, result navigation)
-- [ ] T178 [P] Write Playwright E2E test suite for US3-US5 (export, tags/favorites, embeddings)
-- [ ] T179 [P] Add structured error logging (JSON to stdout for Docker log aggregation)
-- [ ] T180 Conduct 3-user walkthrough test and document pain points for SC-010
+**Note**: Priority markers: P1 = critical for launch, P2 = nice-to-have, P3 = optional
+
+- [ ] T161 [P] Update README.md with project overview, features, and deployment instructions
+- [ ] T162 [P] Update docs/API.md with complete API documentation (if not using OpenAPI docs)
+- [ ] T163 [P] Add environment variable documentation to docker-compose.yml comments
+- [ ] T164 [P] Add favicon and app metadata to web/src/app/layout.tsx
+- [ ] T165 [P] Optimize Docker images (reduce size below 500MB total, multi-stage builds)
+- [x] T166 Add nginx configuration in docker/nginx.conf for production frontend serving
+- [ ] T167 [P] [Priority: P2] Add loading states and skeletons to all data-fetching components (nice-to-have UX polish)
+- [ ] T168 [P] [Priority: P2] Add responsive design breakpoints for mobile/tablet views (optional unless targeting mobile users)
+- [ ] T169 [P] [Priority: P2] Add dark mode support using Next.js themes and Tailwind dark mode classes (UX polish)
+- [ ] T170 [Priority: P2] Add keyboard shortcuts for common actions (/, Ctrl+K for search) (power user feature)
+- [ ] T171 [P] [Priority: P2] Add toast notifications for all remaining user actions (import success, tag added, etc.)
+- [ ] T172 [Priority: P1] Optimize conversation list with virtualization for 1000+ conversations (REQUIRED for SC-009: render 5000+ items with <16ms frame time, use react-window or @tanstack/react-virtual)
+- [ ] T173 [Priority: P1] Add rate limiting middleware in api/middleware/rate_limit.py (100 requests/minute per IP, 429 status on exceed)
+- [ ] T174 Add request logging middleware in api/middleware/logging.py (JSON format to stdout for Docker log aggregation: timestamp, method, path, status, duration_ms)
+- [ ] T175 [P] [Priority: P3] Add analytics/telemetry hooks (optional, privacy-respecting, disabled by default)
+- [ ] T176 [Priority: P1] Run full quickstart.md validation on fresh Docker deployment (checkpoint after each user story completion)
+- [ ] T177 [P] Add code comments and documentation for complex functions (focus on archive_service.py, embedding logic)
+- [ ] T178 [P] Run linting and formatting on all code (ruff, black, eslint, prettier)
+- [ ] T179 [Priority: P1] Verify all shadcn/ui components follow accessibility guidelines (test: all interactive elements have ARIA labels, verify VoiceOver/NVDA screen reader compatibility, ensure keyboard-only navigation works for all workflows)
+- [ ] T180 [Priority: P1] Add Content Security Policy headers in api/middleware/cors.py (restrict script-src, style-src to 'self', prevent inline scripts except for Next.js hydration)
+- [ ] T181 [P] Create deployment guide in docs/DEPLOYMENT.md (one-command Docker deployment with security notices: 0.0.0.0 exposure, default credentials warnings)
+- [ ] T182 [Priority: P1] Verify data persistence across Docker container restarts (test: stop/start containers, verify ~/.chatgpt-archive/archive.db and settings.json survive)
+- [ ] T183 Add health check endpoints to docker-compose.yml (api: wget http://localhost:8000/api/health, interval: 30s, timeout: 10s, retries: 3)
+- [ ] T184 [P] Add troubleshooting section to docs/TROUBLESHOOTING.md (common issues: port 3000/8000 conflicts, permission denied on volume mount, CORS errors)
+- [ ] T185 [P] Final review and cleanup of unused dependencies (check for orphaned imports, unused packages)
+- [ ] T186 [P] Add Browserslist config in web/package.json and verify Chrome, Firefox, Safari, Edge (last 2 versions)
+- [ ] T187 [Priority: P1] Conduct 3-user walkthrough test for SC-010 (document: task completion rates, avg time per task, user pain points, suggestions) and record findings for iteration
 
 ---
 
@@ -328,52 +340,69 @@ Web application architecture:
 
 ### Test Setup
 
-- [ ] T181 Add test dependencies to pyproject.toml: pytest>=8.0, pytest-asyncio>=0.23, pytest-cov>=4.1, httpx>=0.27, pytest-mock>=3.12
-- [ ] T182 [P] Add test dependencies to web/package.json: vitest, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, jsdom, msw
-- [ ] T183 [P] Create tests/conftest.py with shared fixtures: tmp_db, sample_conversation, api_client
-- [ ] T184 [P] Create tests/fixtures/sample_conversation.json with minimal valid conversation
-- [ ] T185 [P] Create tests/fixtures/sample_archive/ directory with conversations.json (3 conversations), user.json
-- [ ] T186 [P] Create web/vitest.config.ts with jsdom environment, react plugin, coverage settings
-- [ ] T187 [P] Create web/vitest.setup.ts with @testing-library/jest-dom matchers
-- [ ] T188 [P] Create web/__tests__/mocks/handlers.ts with MSW request handlers for all API endpoints
+- [ ] T188 Add test dependencies to pyproject.toml: pytest>=8.0, pytest-asyncio>=0.23, pytest-cov>=4.1, httpx>=0.27, pytest-mock>=3.12
+- [ ] T189 [P] Add test dependencies to web/package.json: vitest, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, jsdom, msw
+- [ ] T190 [P] Add Playwright dependencies to web/package.json: @playwright/test (for E2E tests)
+- [ ] T191 [P] Create tests/conftest.py with shared fixtures: tmp_db, sample_conversation, api_client, mock_openai_client
+- [ ] T192 [P] Create tests/fixtures/sample_conversation.json with minimal valid conversation (user + assistant messages)
+- [ ] T193 [P] Create tests/fixtures/sample_archive/ directory with conversations.json (3 conversations), user.json
+- [ ] T194 [P] Create tests/fixtures/test_archive.zip from sample_archive/ for import testing
+- [ ] T195 [P] Create test data generator script in tests/fixtures/generate_test_data.py (generate conversations with varying sizes: 10, 100, 1000 messages)
+- [ ] T196 [P] Create web/vitest.config.ts with jsdom environment, react plugin, coverage settings (target: 70%+)
+- [ ] T197 [P] Create web/vitest.setup.ts with @testing-library/jest-dom matchers
+- [ ] T198 [P] Create web/__tests__/mocks/handlers.ts with MSW request handlers for all API endpoints (conversations, search, tags, favorites, import, export, embeddings)
+- [ ] T199 [P] Create web/playwright.config.ts with browser configs (chromium, webkit), base URL, test timeout
+- [ ] T200 [P] Setup OpenAI API mocking in tests/conftest.py using pytest-mock (mock embeddings endpoint, return fake vectors)
+
+### End-to-End Tests (Playwright)
+
+- [ ] T201 Write Playwright E2E test for US1 import flow in web/__tests__/e2e/import.spec.ts (upload ZIP, wait for progress, verify conversations appear)
+- [ ] T202 [P] Write Playwright E2E test for US1 conversation list in web/__tests__/e2e/conversations.spec.ts (view list, pagination, sorting)
+- [ ] T203 [P] Write Playwright E2E test for US1 conversation detail in web/__tests__/e2e/conversation-detail.spec.ts (click conversation, view messages, navigate back)
+- [ ] T204 [P] Write Playwright E2E test for US2 search flow in web/__tests__/e2e/search.spec.ts (type query, verify debounce, check results, click result)
+- [ ] T205 [P] Write Playwright E2E test for US3 export flow in web/__tests__/e2e/export.spec.ts (open export dialog, select format, verify download)
+- [ ] T206 [P] Write Playwright E2E test for US4 favorites flow in web/__tests__/e2e/favorites.spec.ts (toggle favorite, filter favorites page)
+- [ ] T207 [P] Write Playwright E2E test for US4 tags flow in web/__tests__/e2e/tags.spec.ts (add tag, remove tag, filter by tag)
+- [ ] T208 [P] Write Playwright E2E test for US5 embeddings flow in web/__tests__/e2e/embeddings.spec.ts (add API key, view cost estimate, start generation)
+- [ ] T209 Write Playwright E2E test for data persistence in web/__tests__/e2e/persistence.spec.ts (import data, restart containers via docker-compose, verify data survives)
 
 ### Python Unit Tests (chatgpt_archive/)
 
 #### tests/unit/test_exporters.py — 14 tests
 
-- [ ] T189 [P] Implement EXP-001: test_markdown_export_single_conversation in tests/unit/test_exporters.py
-- [ ] T190 [P] Implement EXP-002: test_markdown_export_multipart_content in tests/unit/test_exporters.py
-- [ ] T191 [P] Implement EXP-003: test_json_export_structure in tests/unit/test_exporters.py
-- [ ] T192 [P] Implement EXP-004: test_json_export_special_chars in tests/unit/test_exporters.py
-- [ ] T193 [P] Implement EXP-005: test_yaml_export_structure in tests/unit/test_exporters.py
-- [ ] T194 [P] Implement EXP-006: test_html_export_structure in tests/unit/test_exporters.py
-- [ ] T195 [P] Implement EXP-007: test_html_export_xss_prevention in tests/unit/test_exporters.py
-- [ ] T196 [P] Implement EXP-008: test_xml_export_structure in tests/unit/test_exporters.py
-- [ ] T197 [P] Implement EXP-009: test_xml_export_special_chars in tests/unit/test_exporters.py
-- [ ] T198 [P] Implement EXP-010: test_csv_export_structure in tests/unit/test_exporters.py
-- [ ] T199 [P] Implement EXP-011: test_csv_export_commas_in_content in tests/unit/test_exporters.py
-- [ ] T200 [P] Implement EXP-012: test_excel_export_structure in tests/unit/test_exporters.py
-- [ ] T201 [P] Implement EXP-013: test_excel_export_binary in tests/unit/test_exporters.py
-- [ ] T202 [P] Implement EXP-014: test_export_empty_conversation in tests/unit/test_exporters.py
+- [ ] T210 [P] Implement EXP-001: test_markdown_export_single_conversation in tests/unit/test_exporters.py
+- [ ] T211 [P] Implement EXP-002: test_markdown_export_multipart_content in tests/unit/test_exporters.py
+- [ ] T212 [P] Implement EXP-003: test_json_export_structure in tests/unit/test_exporters.py
+- [ ] T213 [P] Implement EXP-004: test_json_export_special_chars in tests/unit/test_exporters.py
+- [ ] T214 [P] Implement EXP-005: test_yaml_export_structure in tests/unit/test_exporters.py
+- [ ] T215 [P] Implement EXP-006: test_html_export_structure in tests/unit/test_exporters.py
+- [ ] T216 [P] Implement EXP-007: test_html_export_xss_prevention in tests/unit/test_exporters.py
+- [ ] T217 [P] Implement EXP-008: test_xml_export_structure in tests/unit/test_exporters.py
+- [ ] T218 [P] Implement EXP-009: test_xml_export_special_chars in tests/unit/test_exporters.py
+- [ ] T219 [P] Implement EXP-010: test_csv_export_structure in tests/unit/test_exporters.py
+- [ ] T220 [P] Implement EXP-011: test_csv_export_commas_in_content in tests/unit/test_exporters.py
+- [ ] T221 [P] Implement EXP-012: test_excel_export_structure in tests/unit/test_exporters.py
+- [ ] T222 [P] Implement EXP-013: test_excel_export_binary in tests/unit/test_exporters.py
+- [ ] T223 [P] Implement EXP-014: test_export_empty_conversation in tests/unit/test_exporters.py
 
 #### tests/unit/test_search.py — 8 tests
 
-- [ ] T203 [P] Implement SCH-001: test_fts_search_basic in tests/unit/test_search.py
-- [ ] T204 [P] Implement SCH-002: test_fts_search_phrase in tests/unit/test_search.py
-- [ ] T205 [P] Implement SCH-003: test_fts_search_no_results in tests/unit/test_search.py
-- [ ] T206 [P] Implement SCH-004: test_fts_search_special_chars in tests/unit/test_search.py
-- [ ] T207 [P] Implement SCH-005: test_search_with_date_filter in tests/unit/test_search.py
-- [ ] T208 [P] Implement SCH-006: test_search_result_preview in tests/unit/test_search.py
-- [ ] T209 [P] Implement SCH-007: test_search_match_count in tests/unit/test_search.py
-- [ ] T210 [P] Implement SCH-008: test_search_performance in tests/unit/test_search.py (verify <500ms)
+- [ ] T224 [P] Implement SCH-001: test_fts_search_basic in tests/unit/test_search.py
+- [ ] T225 [P] Implement SCH-002: test_fts_search_phrase in tests/unit/test_search.py
+- [ ] T226 [P] Implement SCH-003: test_fts_search_no_results in tests/unit/test_search.py
+- [ ] T227 [P] Implement SCH-004: test_fts_search_special_chars in tests/unit/test_search.py
+- [ ] T228 [P] Implement SCH-005: test_search_with_date_filter in tests/unit/test_search.py
+- [ ] T229 [P] Implement SCH-006: test_search_result_preview in tests/unit/test_search.py
+- [ ] T230 [P] Implement SCH-007: test_search_match_count in tests/unit/test_search.py
+- [ ] T231 [P] Implement SCH-008: test_search_performance in tests/unit/test_search.py (verify <500ms)
 
 #### tests/unit/test_embeddings.py — 5 tests
 
-- [ ] T211 [P] Implement EMB-001: test_estimate_tokens in tests/unit/test_embeddings.py
-- [ ] T212 [P] Implement EMB-002: test_estimate_cost in tests/unit/test_embeddings.py
-- [ ] T213 [P] Implement EMB-003: test_batch_messages in tests/unit/test_embeddings.py
-- [ ] T214 [P] Implement EMB-004: test_store_embedding in tests/unit/test_embeddings.py
-- [ ] T215 [P] Implement EMB-005: test_embedding_mock_api in tests/unit/test_embeddings.py (mock OpenAI)
+- [ ] T232 [P] Implement EMB-001: test_estimate_tokens in tests/unit/test_embeddings.py
+- [ ] T233 [P] Implement EMB-002: test_estimate_cost in tests/unit/test_embeddings.py
+- [ ] T234 [P] Implement EMB-003: test_batch_messages in tests/unit/test_embeddings.py
+- [ ] T235 [P] Implement EMB-004: test_store_embedding in tests/unit/test_embeddings.py
+- [ ] T236 [P] Implement EMB-005: test_embedding_mock_api in tests/unit/test_embeddings.py (mock OpenAI)
 
 ### Python Integration Tests (api/)
 
@@ -546,9 +575,10 @@ Web application architecture:
 
 ### Test Dependencies
 
-- **Test Setup (T181-T188)**: Must complete before writing tests
-- **Python Unit Tests (T189-T215)**: Can run in parallel, no API dependencies
-- **Python Integration Tests (T216-T254)**: Requires API endpoints to be implemented
+- **Test Setup (T188-T200)**: Must complete before writing tests
+- **E2E Tests (T201-T209)**: Requires full application stack running
+- **Python Unit Tests (T210-T236)**: Can run in parallel, no API dependencies
+- **Python Integration Tests (T237-T254)**: Requires API endpoints to be implemented
 - **Frontend Tests (T255-T304)**: Requires frontend components to be implemented
 - **CI/CD Integration (T305-T310)**: Should complete after tests are passing locally
 
@@ -575,11 +605,11 @@ Within each user story, tasks marked [P] can run in parallel
 
 ```bash
 # After Foundational completes, launch all US1 backend tasks together:
-Task T034: "Create conversation router in api/routers/conversations.py"
-Task T035: "Add GET conversation by ID endpoint"
-Task T036: "Add DELETE conversation endpoint"
-Task T037: "Create import router in api/routers/import.py"
-Task T039: "Create SSE progress stream endpoint"
+Task T037: "Create conversation router in api/routers/conversations.py"
+Task T038: "Add GET conversation by ID endpoint"
+Task T039: "Add DELETE conversation endpoint"
+Task T040: "Create import router in api/routers/import.py"
+Task T042: "Create SSE progress stream endpoint"
 
 # All work on different files or independent functions
 ```
@@ -588,12 +618,12 @@ Task T039: "Create SSE progress stream endpoint"
 
 ```bash
 # After backend APIs are done, launch frontend components in parallel:
-Task T045: "Create conversation list page"
-Task T046: "Create ConversationCard component"
-Task T047: "Create Pagination component"
-Task T048: "Create conversation detail page"
-Task T049: "Create MessageBubble component"
-Task T050: "Create ConversationHeader component"
+Task T048: "Create conversation list page"
+Task T049: "Create ConversationCard component"
+Task T050: "Create Pagination component"
+Task T051: "Create conversation detail page"
+Task T052: "Create MessageBubble component"
+Task T053: "Create ConversationHeader component"
 
 # All create different component files
 ```
@@ -605,10 +635,10 @@ Task T050: "Create ConversationHeader component"
 ### MVP First (User Story 1 Only)
 
 1. Complete Phase 1: Setup (T001-T007)
-2. Complete Phase 2: Foundational (T008-T033) **← CRITICAL BLOCKER**
-3. Complete Phase 3: User Story 1 (T034-T061)
+2. Complete Phase 2: Foundational (T008-T036_NEW, T171-T173) **← CRITICAL BLOCKER**
+3. Complete Phase 3: User Story 1 (T037-T067)
 4. **STOP and VALIDATE**: Test User Story 1 independently
-5. Run quickstart validation (T161)
+5. Run quickstart validation (T176)
 6. Deploy via Docker and verify data persistence
 7. **Demo-ready MVP** ✅
 
@@ -628,7 +658,7 @@ Task T050: "Create ConversationHeader component"
 For teams preferring TDD, Phase 9 can be interleaved:
 
 1. Setup + Foundational → Foundation ready
-2. Test Setup (T181-T188) → Test infrastructure ready
+2. Test Setup (T188-T200) → Test infrastructure ready
 3. For each User Story:
    - Write integration tests first (API tests)
    - Implement API endpoints to pass tests
@@ -640,13 +670,13 @@ For teams preferring TDD, Phase 9 can be interleaved:
 
 With multiple developers:
 
-1. Team completes Setup + Foundational together (36 tasks)
+1. Team completes Setup + Foundational together (32 + 7 = 39 tasks)
 2. Once Foundational is done:
-   - **Developer A**: User Story 1 (Import & View) - 28 tasks
+   - **Developer A**: User Story 1 (Import & View) - 31 tasks
    - **Developer B**: User Story 2 (Search) - 19 tasks
-   - **Developer C**: User Story 4 (Tags & Favorites) - 28 tasks
-   - **Developer D**: Setup Docker + Polish - 32 tasks
-   - **Developer E**: Test Coverage (Phase 9) - 130 tasks
+   - **Developer C**: User Story 4 (Tags & Favorites) - 31 tasks
+   - **Developer D**: Setup Docker + Polish - 27 tasks
+   - **Developer E**: Test Coverage (Phase 9) - 143 tasks
 3. Integrate and test together
 4. Add User Stories 3 and 5 as needed
 
@@ -654,29 +684,30 @@ With multiple developers:
 
 ## Task Count Summary
 
-| Phase | Task Count | Parallelizable |
-|-------|-----------|----------------|
-| Phase 1: Setup | 7 | 5 (71%) |
-| Phase 2: Foundational | 29 | 24 (83%) |
-| Phase 3: User Story 1 (MVP) | 28 | 21 (75%) |
-| Phase 4: User Story 2 | 19 | 13 (68%) |
-| Phase 5: User Story 3 | 15 | 8 (53%) |
-| Phase 6: User Story 4 | 28 | 15 (54%) |
-| Phase 7: User Story 5 | 22 | 10 (45%) |
-| Phase 8: Polish | 32 | 22 (69%) |
-| Phase 9: Test Coverage | 130 | 124 (95%) |
-| **TOTAL** | **310** | **242 (78%)** |
+| Phase | Task Count | Parallelizable | Notes |
+|-------|-----------|----------------|-------|
+| Phase 1: Setup | 7 | 5 (71%) | Unchanged |
+| Phase 2: Foundational | 32 | 26 (81%) | +3 new security tasks, +3 improved specs |
+| Phase 3: User Story 1 (MVP) | 31 | 23 (74%) | +3 error handling tasks (split T061) |
+| Phase 4: User Story 2 | 19 | 13 (68%) | Reorganized, added dependencies |
+| Phase 5: User Story 3 | 16 | 9 (56%) | +1 validation task, reorganized multi-export |
+| Phase 6: User Story 4 | 31 | 17 (55%) | +3 error handling/validation tasks |
+| Phase 7: User Story 5 | 27 | 12 (44%) | +5 safeguard tasks (cancel, cost limit, encryption) |
+| Phase 8: Polish | 27 | 19 (70%) | Moved E2E tests to Phase 9, added priorities |
+| Phase 9: Test Coverage | 143 | 136 (95%) | +13 tasks (E2E tests, test data generation, mocking) |
+| **TOTAL** | **333** | **260 (78%)** | +23 tasks added overall |
 
-**MVP Tasks** (Phases 1-3): 64 tasks  
-**Full Feature Set** (Phases 1-7): 148 tasks  
-**Full Feature + Tests** (Phases 1-7, 9): 278 tasks  
-**Production Ready** (All phases): 310 tasks
+**MVP Tasks** (Phases 1-3): 70 tasks (+6)  
+**Full Feature Set** (Phases 1-7): 163 tasks (+15)  
+**Full Feature + Tests** (Phases 1-7, 9): 306 tasks (+28)  
+**Production Ready** (All phases): 333 tasks (+23)
 
 ### Phase 9 Test Breakdown
 
 | Category | Test Count |
 |----------|------------|
-| Test Setup | 8 |
+| Test Setup & Infrastructure | 13 (+5 new: Playwright, test data gen, mocking) |
+| E2E Tests (Playwright) | 9 (NEW: moved from Phase 8 + added persistence test) |
 | Python Unit Tests (exporters) | 14 |
 | Python Unit Tests (search) | 8 |
 | Python Unit Tests (embeddings) | 5 |
@@ -685,16 +716,63 @@ With multiple developers:
 | Frontend Hook Tests | 17 |
 | Frontend Component Tests | 18 |
 | CI/CD Integration | 6 |
-| **Total Test Tasks** | **130** |
+| **Total Test Tasks** | **143** | (+13 from original 130)
+
+---
+
+## Improvements Summary
+
+### Security Enhancements (Phase 2)
+- **T034_NEW**: Input validation middleware (sanitize query params, validate request bodies)
+- **T035_NEW**: Content Security Policy headers (prevent XSS)
+- **T036_NEW**: Environment variable validation on startup
+
+### Specifications Added
+- **T171**: SQLite schema validation with specific column checks
+- **T172**: Settings loading with error handling for corrupted files
+- **T173**: Security warning logs with specific format
+- **T051-T053**: Import UI with file type/size limits
+- **T055-T056**: Import components with detailed specs
+- **T077**: Search highlighting using react-highlight-words
+- **T082-T083**: Debounce implementation details
+- **T091-T092**: Multi-export with combined generation
+- **T111-T112**: Tag filtering and validation rules
+- **T137**: OpenAI API key validation before embedding generation
+- **T144**: API key encryption using cryptography.fernet
+- **T172**: Virtualization with performance targets (<16ms frame time)
+- **T179**: Accessibility with specific testing requirements
+
+### Error Handling & Edge Cases
+- **T064-T067**: Split from T061 - specific error states per component
+- **T098-T101**: Export UI with comprehensive error messages
+- **T131-T133**: Tag/favorite error scenarios and limits
+- **T141-T143**: Embedding safeguards (cancel, cost limits)
+
+### Test Infrastructure
+- **T190**: Playwright setup for E2E tests
+- **T194-T195**: Test data generation (ZIP files, varying sizes)
+- **T200**: OpenAI API mocking setup
+- **T201-T209**: Comprehensive E2E test suite covering all user stories
 
 ---
 
 ## Notes
 
+**📋 Task List Version**: 2.0 (Updated with comprehensive improvements)
+
+**Recent Improvements** (23 new tasks added):
+- ✅ Security: Input validation, CSP headers, environment validation
+- ✅ Specifications: Detailed implementation approaches for 20+ tasks
+- ✅ Error Handling: Split generic tasks into specific error scenarios
+- ✅ Testing: E2E tests, test data generation, API mocking setup
+- ✅ Safeguards: Embedding cost limits, cancellation, API key encryption
+- ✅ Priorities: P1/P2/P3 markers on Polish tasks
+
+**Task Format Requirements**:
 - [P] tasks work on different files or independent functions - safe to parallelize
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
-- **Tests ARE included** in Phase 9 (130 tasks, 118 test cases) — see [contracts/test-specs.md](contracts/test-specs.md)
+- **Tests ARE included** in Phase 9 (143 tasks, 131 test cases) — see [contracts/test-specs.md](contracts/test-specs.md)
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Tasks reference exact file paths from plan.md structure
