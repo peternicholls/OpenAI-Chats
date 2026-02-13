@@ -8,8 +8,9 @@ A CLI tool to import, search, view, and export your ChatGPT conversation archive
 - **Search** - Full-text search across all conversations with FTS5
 - **Semantic Search** (Optional) - AI-powered semantic search using OpenAI embeddings
 - **View** - Display conversations in readable format
-- **Export** - Export to Markdown, JSON, YAML, HTML, or XML
+- **Export** - Export to Markdown, JSON, YAML, HTML, XML, CSV, or Excel
 - **List** - Browse all imported conversations with metadata
+- **Web UI** - Browser-based interface with tagging, favorites, and import via Docker
 
 ## Installation
 
@@ -349,6 +350,46 @@ chatgpt-archive import ./archive
 
 - Python 3.8+
 - No external services required (fully offline)
+
+## Web UI (Docker)
+
+A browser-based interface is available via Docker:
+
+```bash
+# Start the web UI
+docker-compose up -d
+
+# Access at http://localhost:3000
+# API available at http://localhost:8000
+```
+
+### Features
+
+- Browse and search conversations
+- Tag and favorite conversations for organization
+- Import archives via drag-and-drop
+- Export to multiple formats
+- Real-time import progress tracking
+
+### Configuration
+
+Environment variables (set in `.env` or `docker-compose.yml`):
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DB_PATH` | Database file path (inside container) | `/data/archive.db` |
+| `CORS_ORIGINS` | Allowed origins (JSON array) | `["http://localhost:3000"]` |
+| `API_HOST` | API bind address | `0.0.0.0` |
+
+### Security
+
+The API includes security headers:
+- Content Security Policy (CSP) to prevent XSS
+- X-Frame-Options to prevent clickjacking
+- Input validation and sanitization
+- Environment variable validation on startup
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#web-ui-issues) for common issues.
 
 ## License
 

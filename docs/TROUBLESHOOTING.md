@@ -11,6 +11,7 @@ Common issues and solutions for ChatGPT Archive Search & Export.
 - [Database Issues](#database-issues)
 - [Semantic Search Problems](#semantic-search-problems)
 - [Performance Issues](#performance-issues)
+- [Web UI Issues](#web-ui-issues)
 - [General Debugging](#general-debugging)
 
 ---
@@ -514,6 +515,145 @@ chatgpt-archive embed
 ```bash
 chatgpt-archive search "query" --hybrid
 ```
+
+---
+
+## Web UI Issues
+
+### Port 3000 or 8000 already in use
+
+**Problem**: When starting the web UI, you get "address already in use" error.
+
+**Solutions**:
+1. Find and kill the process using the port:
+   ```bash
+   # Find process on port 3000
+   lsof -i :3000
+   # Kill it
+   kill -9 <PID>
+   
+   # Same for port 8000
+   lsof -i :8000
+   kill -9 <PID>
+   ```
+
+2. Or change the ports in docker-compose.yml:
+   ```yaml
+   services:
+     web:
+       ports:
+         - "3001:3000"  # Use 3001 instead
+     api:
+       ports:
+         - "8001:8000"  # Use 8001 instead
+   ```
+
+### CORS errors in browser console
+
+**Problem**: Browser shows "Cross-Origin Request Blocked" or similar CORS errors.
+
+**Solutions**:
+1. Ensure CORS_ORIGINS environment variable includes your frontend URL:
+   ```bash
+   # In .env or docker-compose.yml
+   CORS_ORIGINS='["http://localhost:3000"]'
+   ```
+
+2. For production, include all allowed origins:
+   ```bash
+   CORS_ORIGINS='["http://localhost:3000", "https://your-domain.com"]'
+   ```
+
+3. Verify the API is running and accessible:
+   ```bash
+   curl http://localhost:8000/api/health
+   ```
+
+### Permission denied on volume mount
+
+**Problem**: Docker container can't access `~/.chatgpt-archive/` directory.
+
+**Solutions**:
+1. Ensure the directory exists and has correct permissions:
+   ```bash
+   mkdir -p ~/.chatgpt-archive
+   chmod 755 ~/.chatgpt-archive
+   ```
+
+2. On Linux, you may need to run with your user ID:
+   ```yaml
+   # In docker-compose.yml
+   services:
+     api:
+       user: "${UID}:${GID}"
+   ```
+
+3. Check SELinux (on Fedora/RHEL):
+   ```bash
+   # Allow Docker to access home directory
+   chcon -Rt svirt_sandbox_file_t ~/.chatgpt-archive
+   ```
+
+### API returns 500 errors
+
+**Problem**: API endpoints return internal server errors.
+
+**Solutions**:
+1. Check API logs for detailed error:
+   ```bash
+   docker-compose logs api
+   ```
+
+2. Verify environment variables are set correctly:
+   ```bash
+   # Required variables
+   DB_PATH=/data/archive.db
+   CORS_ORIGINS='["http://localhost:3000"]'
+   ```
+
+3. Check database file exists and has correct schema:
+   ```bash
+   sqlite3 ~/.chatgpt-archive/archive.db "PRAGMA integrity_check;"
+   ```
+
+### Security warning: "API exposed on all interfaces"
+
+**Problem**: Startup shows "Security: API exposed on all interfaces (0.0.0.0)"
+
+**Explanation**: This warning appears when the API binds to `0.0.0.0`, making it accessible from any network interface. This is expected for Docker deployments but may be a security concern.
+
+**Solutions**:
+1. For local-only access, set the host:
+   ```bash
+   API_HOST=127.0.0.1
+   ```
+
+2. In Docker, use network isolation:
+   ```yaml
+   # In docker-compose.yml
+   services:
+     api:
+       networks:
+         - internal
+       # Don't expose port directly
+   ```
+
+3. Use a reverse proxy (nginx) to control access.
+
+### Content Security Policy blocking resources
+
+**Problem**: Browser blocks scripts or styles due to CSP headers.
+
+**Solutions**:
+1. Check browser console for specific CSP violations.
+
+2. The API includes CSP headers that allow:
+   - Scripts from 'self' and inline (for Next.js hydration)
+   - Styles from 'self' and inline (for Tailwind)
+   - Images from 'self', data:, and blob:
+   - Connections to 'self' only
+
+3. If you need additional sources, modify `api/middleware/cors.py`.
 
 ---
 
