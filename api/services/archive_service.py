@@ -133,6 +133,7 @@ def search_conversations(
     from_date: str | None = None,
     to_date: str | None = None,
     limit: int = 20,
+    offset: int = 0,
     search_type: str = "keyword",
 ) -> dict:
     """Search conversations using keyword, semantic, or hybrid search.
@@ -142,17 +143,19 @@ def search_conversations(
     """
     conn = get_connection()
     try:
+        fetch_limit = limit + offset
+
         if search_type == "semantic":
             results = search_module.execute_semantic_search(
-                conn, query, from_date=from_date, to_date=to_date, limit=limit
+                conn, query, from_date=from_date, to_date=to_date, limit=fetch_limit
             )
         elif search_type == "hybrid":
             results = search_module.execute_hybrid_search(
-                conn, query, from_date=from_date, to_date=to_date, limit=limit
+                conn, query, from_date=from_date, to_date=to_date, limit=fetch_limit
             )
         else:
             results = search_module.execute_search(
-                conn, query, from_date=from_date, to_date=to_date, limit=limit
+                conn, query, from_date=from_date, to_date=to_date, limit=fetch_limit
             )
 
         items = [
@@ -166,8 +169,14 @@ def search_conversations(
             }
             for r in results.results
         ]
+        paged_items = items[offset : offset + limit]
 
-        return {"total": results.total_results, "offset": 0, "limit": limit, "items": items}
+        return {
+            "total": results.total_results,
+            "offset": offset,
+            "limit": limit,
+            "items": paged_items,
+        }
     finally:
         conn.close()
 
@@ -238,6 +247,11 @@ def import_archive_from_zip(zip_path: str) -> None:
             "percent": 0.0,
             "message": str(e),
         }
+    finally:
+        try:
+            os.unlink(zip_path)
+        except OSError:
+            pass
 
 
 def get_import_progress() -> dict[str, Any]:

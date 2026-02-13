@@ -76,6 +76,7 @@ class APIClient {
         fromDate?: string;
         toDate?: string;
         limit?: number;
+        offset?: number;
         searchType?: SearchType;
     }): Promise<PaginatedResponse<SearchResult>> {
         return this.request("/api/search", {
@@ -85,6 +86,7 @@ class APIClient {
                 from_date: params.fromDate,
                 to_date: params.toDate,
                 limit: params.limit || 20,
+                offset: params.offset || 0,
                 search_type: params.searchType || "keyword",
             }),
         });

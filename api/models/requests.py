@@ -10,6 +10,7 @@ class SearchRequest(BaseModel):
     from_date: str | None = Field(None, description="ISO date or YYYY-MM-DD")
     to_date: str | None = Field(None, description="ISO date or YYYY-MM-DD")
     limit: int = Field(20, ge=1, le=100, description="Max results")
+    offset: int = Field(0, ge=0, description="Pagination offset")
     search_type: str = Field("keyword", description="keyword, semantic, hybrid")
 
 

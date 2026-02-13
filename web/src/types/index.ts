@@ -66,6 +66,7 @@ export interface APIError {
 }
 
 export type ExportFormat = "markdown" | "json" | "yaml" | "html" | "xml" | "csv" | "excel";
+export type ExportFormatCode = "md" | "json" | "yaml" | "html" | "xml" | "csv" | "xlsx";
 export type SearchType = "keyword" | "semantic" | "hybrid";
 export type SortField = "date" | "title" | "messages";
 export type SortOrder = "asc" | "desc";
@@ -88,9 +89,11 @@ export interface ListFilters {
 }
 
 export interface UserSettings {
-    openai_api_key?: string;
-    default_export_format: ExportFormat;
+    openai_api_key: string;
+    default_export_format: ExportFormatCode;
     theme: "light" | "dark" | "system";
+    sidebar_open: boolean;
+    embedding_model: string;
 }
 
 export interface EmbeddingEstimate {

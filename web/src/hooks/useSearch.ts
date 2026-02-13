@@ -12,6 +12,7 @@ export function useSearch(filters: SearchFilters & { enabled?: boolean }) {
             fromDate: searchFilters.fromDate,
             toDate: searchFilters.toDate,
             limit: searchFilters.limit,
+            offset: searchFilters.offset,
             searchType: searchFilters.searchType,
         }),
         enabled: enabled && !!searchFilters.query,

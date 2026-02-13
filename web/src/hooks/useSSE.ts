@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api } from "@/services/api";
 import type { ImportProgress } from "@/types";
 
@@ -8,12 +8,19 @@ export function useSSE(url?: string) {
     const [progress, setProgress] = useState<ImportProgress | null>(null);
     const [error, setError] = useState<string | null>(null);
     const eventSourceRef = useRef<EventSource | null>(null);
+    const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const connect = useCallback(() => {
+    function openConnection() {
         if (!url) return;
+
+        if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
 
         const eventSource = new EventSource(url);
         eventSourceRef.current = eventSource;
+        setError(null);
 
         eventSource.onmessage = (event) => {
             try {
@@ -30,19 +37,37 @@ export function useSSE(url?: string) {
         eventSource.onerror = () => {
             setError("Connection lost, retrying...");
             eventSource.close();
+            eventSourceRef.current = null;
             // Auto-reconnect after 3 seconds
-            setTimeout(connect, 3000);
+            reconnectTimerRef.current = setTimeout(() => {
+                openConnection();
+            }, 3000);
         };
-    }, [url]);
+    }
 
-    const disconnect = useCallback(() => {
+    const connect = () => {
+        openConnection();
+    };
+
+    const disconnect = () => {
         eventSourceRef.current?.close();
         eventSourceRef.current = null;
-    }, []);
+        if (reconnectTimerRef.current) {
+            clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
+    };
 
     useEffect(() => {
-        return () => disconnect();
-    }, [disconnect]);
+        return () => {
+            eventSourceRef.current?.close();
+            eventSourceRef.current = null;
+            if (reconnectTimerRef.current) {
+                clearTimeout(reconnectTimerRef.current);
+                reconnectTimerRef.current = null;
+            }
+        };
+    }, []);
 
     return { progress, error, connect, disconnect };
 }

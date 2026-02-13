@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/services/api";
 import { queryKeys } from "./queryKeys";
-import type { Tag } from "@/types";
 
 export function useTags() {
     return useQuery({

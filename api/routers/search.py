@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 
+from chatgpt_archive.search import InvalidQueryError
 from api.models.requests import SearchRequest
 from api.models.responses import PaginatedResponse, SearchResult
 from api.services import archive_service
@@ -18,6 +19,7 @@ async def search_conversations(request: SearchRequest) -> PaginatedResponse:
             from_date=request.from_date,
             to_date=request.to_date,
             limit=request.limit,
+            offset=request.offset,
             search_type=request.search_type,
         )
         items = [SearchResult(**r) for r in results["items"]]
@@ -27,5 +29,7 @@ async def search_conversations(request: SearchRequest) -> PaginatedResponse:
             limit=results.get("limit", request.limit),
             items=items,
         )
-    except Exception as e:
+    except InvalidQueryError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

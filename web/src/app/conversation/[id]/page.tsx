@@ -38,7 +38,7 @@ export default function ConversationDetailPage() {
             queryClient.invalidateQueries({ queryKey: queryKeys.conversations.all });
             toast.success("Conversation deleted");
             router.push("/");
-        } catch (err) {
+        } catch {
             toast.error("Failed to delete conversation");
         }
     };
