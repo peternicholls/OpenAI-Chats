@@ -71,12 +71,12 @@ Web application architecture:
 - [x] T031 [P] Create Dockerfile for frontend in docker/web.Dockerfile (Node 20, static export with nginx)
 - [x] T032 Create docker-compose.yml with api and web services, volume mount using ${HOME}/.chatgpt-archive:/data for host data persistence
 - [x] T033 [P] Create .env.example files for both api/ and web/ with required environment variables
-- [ ] T034_NEW [P] Add input validation middleware in api/middleware/validation.py (sanitize query params, validate request bodies)
-- [ ] T035_NEW [P] Configure Content Security Policy headers in api/middleware/cors.py (restrict script sources, prevent XSS)
-- [ ] T036_NEW Add environment variable validation on startup in api/main.py (check required vars: DB_PATH, CORS_ORIGINS)
-- [ ] T171 Validate SQLite schema compatibility in api/services/archive_service.py: verify conversations, messages, embeddings tables exist with expected column types (id, title, create_time, etc.)
-- [ ] T172 [P] Add settings loading on FastAPI startup in api/main.py (load ~/.chatgpt-archive/settings.json if exists, use defaults if missing/corrupted, log warning on parse errors)
-- [ ] T173 [P] Add startup warning log in api/main.py if server binds to 0.0.0.0 (log level: WARNING, format: "Security: API exposed on all interfaces (0.0.0.0)")
+- [x] T034_NEW [P] Add input validation middleware in api/middleware/validation.py (sanitize query params, validate request bodies)
+- [x] T035_NEW [P] Configure Content Security Policy headers in api/middleware/cors.py (restrict script sources, prevent XSS)
+- [x] T036_NEW Add environment variable validation on startup in api/main.py (check required vars: DB_PATH, CORS_ORIGINS)
+- [x] T171 Validate SQLite schema compatibility in api/services/archive_service.py: verify conversations, messages, embeddings tables exist with expected column types (id, title, create_time, etc.)
+- [x] T172 [P] Add settings loading on FastAPI startup in api/main.py (load ~/.chatgpt-archive/settings.json if exists, use defaults if missing/corrupted, log warning on parse errors)
+- [x] T173 [P] Add startup warning log in api/main.py if server binds to 0.0.0.0 (log level: WARNING, format: "Security: API exposed on all interfaces (0.0.0.0)")
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

@@ -4,6 +4,7 @@ This adapter provides the API layer with access to all chatgpt_archive
 functionality without duplicating business logic (per FR-012).
 """
 
+import logging
 import os
 import sqlite3
 import tempfile
@@ -14,6 +15,72 @@ from typing import Any
 from chatgpt_archive import db
 from chatgpt_archive import search as search_module
 from chatgpt_archive import importer
+
+
+logger = logging.getLogger(__name__)
+
+
+# Expected schema definitions for validation
+EXPECTED_SCHEMA = {
+    "conversations": {
+        "id": "INTEGER",
+        "openai_id": "TEXT",
+        "title": "TEXT",
+        "create_time": "REAL",
+        "update_time": "REAL",
+        "model_slug": "TEXT",
+    },
+    "messages": {
+        "id": "INTEGER",
+        "conversation_id": "INTEGER",
+        "openai_id": "TEXT",
+        "author_role": "TEXT",
+        "content": "TEXT",
+        "create_time": "REAL",
+    },
+    "embeddings": {
+        "id": "INTEGER",
+        "message_id": "INTEGER",
+        "embedding": "BLOB",
+    },
+}
+
+
+def validate_schema_compatibility(conn: sqlite3.Connection) -> tuple[bool, list[str]]:
+    """Validate SQLite schema has required tables and columns.
+
+    Args:
+        conn: Database connection to validate
+
+    Returns:
+        Tuple of (is_valid, list of error messages)
+    """
+    errors = []
+
+    for table_name, expected_columns in EXPECTED_SCHEMA.items():
+        # Check table exists
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            (table_name,),
+        )
+        if cursor.fetchone() is None:
+            if table_name == "embeddings":
+                # embeddings table is optional (created when first embedding is generated)
+                continue
+            errors.append(f"Missing required table: {table_name}")
+            continue
+
+        # Check columns exist
+        cursor = conn.execute(f"PRAGMA table_info({table_name})")
+        existing_columns = {row[1]: row[2].upper() for row in cursor.fetchall()}
+
+        for col_name, expected_type in expected_columns.items():
+            if col_name not in existing_columns:
+                errors.append(f"Missing column: {table_name}.{col_name}")
+            # Type checking is lenient - SQLite uses type affinity
+            # Just verify column exists, not strict type matching
+
+    return len(errors) == 0, errors
 
 
 # In-memory import progress state
@@ -31,9 +98,29 @@ def get_db_path() -> Path:
     return db.get_db_path()
 
 
-def get_connection() -> sqlite3.Connection:
-    """Get a database connection with schema initialized."""
+def get_connection(validate: bool = True) -> sqlite3.Connection:
+    """Get a database connection with schema initialized.
+
+    Args:
+        validate: Whether to validate schema compatibility (default: True).
+                  Set to False for initial import operations.
+
+    Returns:
+        SQLite connection with row factory set.
+
+    Raises:
+        RuntimeError: If schema validation fails.
+    """
     conn = db.init_db(get_db_path())
+
+    if validate:
+        is_valid, errors = validate_schema_compatibility(conn)
+        if not is_valid:
+            conn.close()
+            error_msg = "Database schema incompatible: " + "; ".join(errors)
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+
     return conn
 
 

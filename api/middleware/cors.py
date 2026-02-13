@@ -1,13 +1,45 @@
-"""CORS middleware configuration for the API."""
+"""CORS and security middleware configuration for the API."""
 
 import os
 import json
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Middleware to add security headers including Content Security Policy."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response = await call_next(request)
+
+        # Content Security Policy
+        # Allow 'self' for scripts/styles, Next.js requires 'unsafe-inline' for hydration
+        csp_directives = [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",  # Next.js requires these
+            "style-src 'self' 'unsafe-inline'",  # Tailwind/shadcn inline styles
+            "img-src 'self' data: blob:",
+            "font-src 'self' data:",
+            "connect-src 'self'",
+            "frame-ancestors 'none'",
+            "form-action 'self'",
+            "base-uri 'self'",
+        ]
+        response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
+
+        # Additional security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+
+        return response
 
 
 def setup_cors(app: FastAPI) -> None:
-    """Configure CORS middleware for the FastAPI application.
+    """Configure CORS and security middleware for the FastAPI application.
 
     Reads allowed origins from CORS_ORIGINS environment variable (JSON array string).
     Defaults to http://localhost:3000 for local development.
@@ -28,3 +60,6 @@ def setup_cors(app: FastAPI) -> None:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Add security headers middleware
+    app.add_middleware(SecurityHeadersMiddleware)
