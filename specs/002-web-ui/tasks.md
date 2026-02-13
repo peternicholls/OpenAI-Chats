@@ -3,7 +3,7 @@
 **Input**: Design documents from `/specs/002-web-ui/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
 
-**Tests**: Tests are NOT included (not requested in specification).
+**Tests**: Tests ARE included — see Phase 9 for comprehensive test coverage (118 test cases).
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -320,6 +320,210 @@ Web application architecture:
 
 ---
 
+## Phase 9: Test Coverage (Priority: P1) 🧪
+
+**Purpose**: Comprehensive test suite for all layers — Python library, API backend, and frontend
+
+**Reference**: [contracts/test-specs.md](contracts/test-specs.md) for detailed test case specifications
+
+### Test Setup
+
+- [ ] T181 Add test dependencies to pyproject.toml: pytest>=8.0, pytest-asyncio>=0.23, pytest-cov>=4.1, httpx>=0.27, pytest-mock>=3.12
+- [ ] T182 [P] Add test dependencies to web/package.json: vitest, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, jsdom, msw
+- [ ] T183 [P] Create tests/conftest.py with shared fixtures: tmp_db, sample_conversation, api_client
+- [ ] T184 [P] Create tests/fixtures/sample_conversation.json with minimal valid conversation
+- [ ] T185 [P] Create tests/fixtures/sample_archive/ directory with conversations.json (3 conversations), user.json
+- [ ] T186 [P] Create web/vitest.config.ts with jsdom environment, react plugin, coverage settings
+- [ ] T187 [P] Create web/vitest.setup.ts with @testing-library/jest-dom matchers
+- [ ] T188 [P] Create web/__tests__/mocks/handlers.ts with MSW request handlers for all API endpoints
+
+### Python Unit Tests (chatgpt_archive/)
+
+#### tests/unit/test_exporters.py — 14 tests
+
+- [ ] T189 [P] Implement EXP-001: test_markdown_export_single_conversation in tests/unit/test_exporters.py
+- [ ] T190 [P] Implement EXP-002: test_markdown_export_multipart_content in tests/unit/test_exporters.py
+- [ ] T191 [P] Implement EXP-003: test_json_export_structure in tests/unit/test_exporters.py
+- [ ] T192 [P] Implement EXP-004: test_json_export_special_chars in tests/unit/test_exporters.py
+- [ ] T193 [P] Implement EXP-005: test_yaml_export_structure in tests/unit/test_exporters.py
+- [ ] T194 [P] Implement EXP-006: test_html_export_structure in tests/unit/test_exporters.py
+- [ ] T195 [P] Implement EXP-007: test_html_export_xss_prevention in tests/unit/test_exporters.py
+- [ ] T196 [P] Implement EXP-008: test_xml_export_structure in tests/unit/test_exporters.py
+- [ ] T197 [P] Implement EXP-009: test_xml_export_special_chars in tests/unit/test_exporters.py
+- [ ] T198 [P] Implement EXP-010: test_csv_export_structure in tests/unit/test_exporters.py
+- [ ] T199 [P] Implement EXP-011: test_csv_export_commas_in_content in tests/unit/test_exporters.py
+- [ ] T200 [P] Implement EXP-012: test_excel_export_structure in tests/unit/test_exporters.py
+- [ ] T201 [P] Implement EXP-013: test_excel_export_binary in tests/unit/test_exporters.py
+- [ ] T202 [P] Implement EXP-014: test_export_empty_conversation in tests/unit/test_exporters.py
+
+#### tests/unit/test_search.py — 8 tests
+
+- [ ] T203 [P] Implement SCH-001: test_fts_search_basic in tests/unit/test_search.py
+- [ ] T204 [P] Implement SCH-002: test_fts_search_phrase in tests/unit/test_search.py
+- [ ] T205 [P] Implement SCH-003: test_fts_search_no_results in tests/unit/test_search.py
+- [ ] T206 [P] Implement SCH-004: test_fts_search_special_chars in tests/unit/test_search.py
+- [ ] T207 [P] Implement SCH-005: test_search_with_date_filter in tests/unit/test_search.py
+- [ ] T208 [P] Implement SCH-006: test_search_result_preview in tests/unit/test_search.py
+- [ ] T209 [P] Implement SCH-007: test_search_match_count in tests/unit/test_search.py
+- [ ] T210 [P] Implement SCH-008: test_search_performance in tests/unit/test_search.py (verify <500ms)
+
+#### tests/unit/test_embeddings.py — 5 tests
+
+- [ ] T211 [P] Implement EMB-001: test_estimate_tokens in tests/unit/test_embeddings.py
+- [ ] T212 [P] Implement EMB-002: test_estimate_cost in tests/unit/test_embeddings.py
+- [ ] T213 [P] Implement EMB-003: test_batch_messages in tests/unit/test_embeddings.py
+- [ ] T214 [P] Implement EMB-004: test_store_embedding in tests/unit/test_embeddings.py
+- [ ] T215 [P] Implement EMB-005: test_embedding_mock_api in tests/unit/test_embeddings.py (mock OpenAI)
+
+### Python Integration Tests (api/)
+
+#### tests/integration/test_api_conversations.py — 8 tests
+
+- [ ] T216 [P] Implement API-CONV-001: test_list_conversations_empty in tests/integration/test_api_conversations.py
+- [ ] T217 [P] Implement API-CONV-002: test_list_conversations_paginated in tests/integration/test_api_conversations.py
+- [ ] T218 [P] Implement API-CONV-003: test_list_conversations_sorted_date in tests/integration/test_api_conversations.py
+- [ ] T219 [P] Implement API-CONV-004: test_list_conversations_sorted_title in tests/integration/test_api_conversations.py
+- [ ] T220 [P] Implement API-CONV-005: test_get_conversation_exists in tests/integration/test_api_conversations.py
+- [ ] T221 [P] Implement API-CONV-006: test_get_conversation_not_found in tests/integration/test_api_conversations.py
+- [ ] T222 [P] Implement API-CONV-007: test_delete_conversation in tests/integration/test_api_conversations.py
+- [ ] T223 [P] Implement API-CONV-008: test_delete_conversation_not_found in tests/integration/test_api_conversations.py
+
+#### tests/integration/test_api_search.py — 4 tests
+
+- [ ] T224 [P] Implement API-SCH-001: test_search_keyword in tests/integration/test_api_search.py
+- [ ] T225 [P] Implement API-SCH-002: test_search_empty_query in tests/integration/test_api_search.py
+- [ ] T226 [P] Implement API-SCH-003: test_search_date_filter in tests/integration/test_api_search.py
+- [ ] T227 [P] Implement API-SCH-004: test_search_limit in tests/integration/test_api_search.py
+
+#### tests/integration/test_api_export.py — 9 tests
+
+- [ ] T228 [P] Implement API-EXP-001: test_export_markdown in tests/integration/test_api_export.py
+- [ ] T229 [P] Implement API-EXP-002: test_export_json in tests/integration/test_api_export.py
+- [ ] T230 [P] Implement API-EXP-003: test_export_yaml in tests/integration/test_api_export.py
+- [ ] T231 [P] Implement API-EXP-004: test_export_html in tests/integration/test_api_export.py
+- [ ] T232 [P] Implement API-EXP-005: test_export_xml in tests/integration/test_api_export.py
+- [ ] T233 [P] Implement API-EXP-006: test_export_csv in tests/integration/test_api_export.py
+- [ ] T234 [P] Implement API-EXP-007: test_export_excel in tests/integration/test_api_export.py
+- [ ] T235 [P] Implement API-EXP-008: test_export_invalid_format in tests/integration/test_api_export.py
+- [ ] T236 [P] Implement API-EXP-009: test_export_not_found in tests/integration/test_api_export.py
+
+#### tests/integration/test_api_tags.py — 6 tests
+
+- [ ] T237 [P] Implement API-TAG-001: test_list_tags_empty in tests/integration/test_api_tags.py
+- [ ] T238 [P] Implement API-TAG-002: test_list_tags_with_counts in tests/integration/test_api_tags.py
+- [ ] T239 [P] Implement API-TAG-003: test_add_tag in tests/integration/test_api_tags.py
+- [ ] T240 [P] Implement API-TAG-004: test_add_tag_duplicate in tests/integration/test_api_tags.py
+- [ ] T241 [P] Implement API-TAG-005: test_remove_tag in tests/integration/test_api_tags.py
+- [ ] T242 [P] Implement API-TAG-006: test_remove_tag_not_found in tests/integration/test_api_tags.py
+
+#### tests/integration/test_api_favorites.py — 4 tests
+
+- [ ] T243 [P] Implement API-FAV-001: test_toggle_favorite_on in tests/integration/test_api_favorites.py
+- [ ] T244 [P] Implement API-FAV-002: test_toggle_favorite_off in tests/integration/test_api_favorites.py
+- [ ] T245 [P] Implement API-FAV-003: test_list_favorites in tests/integration/test_api_favorites.py
+- [ ] T246 [P] Implement API-FAV-004: test_list_favorites_empty in tests/integration/test_api_favorites.py
+
+#### tests/integration/test_api_import.py — 4 tests
+
+- [ ] T247 [P] Implement API-IMP-001: test_import_valid_zip in tests/integration/test_api_import.py
+- [ ] T248 [P] Implement API-IMP-002: test_import_invalid_file in tests/integration/test_api_import.py
+- [ ] T249 [P] Implement API-IMP-003: test_import_progress in tests/integration/test_api_import.py
+- [ ] T250 [P] Implement API-IMP-004: test_import_corrupted_zip in tests/integration/test_api_import.py
+
+#### tests/integration/test_api_settings.py — 4 tests
+
+- [ ] T251 [P] Implement API-SET-001: test_get_settings in tests/integration/test_api_settings.py
+- [ ] T252 [P] Implement API-SET-002: test_update_theme in tests/integration/test_api_settings.py
+- [ ] T253 [P] Implement API-SET-003: test_update_openai_key in tests/integration/test_api_settings.py
+- [ ] T254 [P] Implement API-SET-004: test_update_invalid in tests/integration/test_api_settings.py
+
+### Frontend Tests (web/)
+
+#### web/__tests__/services/api.test.ts — 15 tests
+
+- [ ] T255 [P] Implement FE-API-001: test_listConversations in web/__tests__/services/api.test.ts
+- [ ] T256 [P] Implement FE-API-002: test_listConversations_params in web/__tests__/services/api.test.ts
+- [ ] T257 [P] Implement FE-API-003: test_getConversation in web/__tests__/services/api.test.ts
+- [ ] T258 [P] Implement FE-API-004: test_getConversation_error in web/__tests__/services/api.test.ts
+- [ ] T259 [P] Implement FE-API-005: test_search in web/__tests__/services/api.test.ts
+- [ ] T260 [P] Implement FE-API-006: test_search_filters in web/__tests__/services/api.test.ts
+- [ ] T261 [P] Implement FE-API-007: test_listTags in web/__tests__/services/api.test.ts
+- [ ] T262 [P] Implement FE-API-008: test_addTag in web/__tests__/services/api.test.ts
+- [ ] T263 [P] Implement FE-API-009: test_removeTag in web/__tests__/services/api.test.ts
+- [ ] T264 [P] Implement FE-API-010: test_toggleFavorite in web/__tests__/services/api.test.ts
+- [ ] T265 [P] Implement FE-API-011: test_uploadArchive in web/__tests__/services/api.test.ts
+- [ ] T266 [P] Implement FE-API-012: test_getImportProgress in web/__tests__/services/api.test.ts
+- [ ] T267 [P] Implement FE-API-013: test_exportConversation in web/__tests__/services/api.test.ts
+- [ ] T268 [P] Implement FE-API-014: test_healthCheck in web/__tests__/services/api.test.ts
+- [ ] T269 [P] Implement FE-API-015: test_error_handling in web/__tests__/services/api.test.ts
+
+#### web/__tests__/hooks/useConversations.test.ts — 5 tests
+
+- [ ] T270 [P] Implement FE-HOOK-001: test_useConversations_loading in web/__tests__/hooks/useConversations.test.ts
+- [ ] T271 [P] Implement FE-HOOK-002: test_useConversations_success in web/__tests__/hooks/useConversations.test.ts
+- [ ] T272 [P] Implement FE-HOOK-003: test_useConversations_refetch in web/__tests__/hooks/useConversations.test.ts
+- [ ] T273 [P] Implement FE-HOOK-004: test_useConversations_error in web/__tests__/hooks/useConversations.test.ts
+- [ ] T274 [P] Implement FE-HOOK-005: test_useConversation_detail in web/__tests__/hooks/useConversations.test.ts
+
+#### web/__tests__/hooks/useSearch.test.ts — 5 tests
+
+- [ ] T275 [P] Implement FE-HOOK-006: test_useSearch_idle in web/__tests__/hooks/useSearch.test.ts
+- [ ] T276 [P] Implement FE-HOOK-007: test_useSearch_debounce in web/__tests__/hooks/useSearch.test.ts
+- [ ] T277 [P] Implement FE-HOOK-008: test_useSearch_results in web/__tests__/hooks/useSearch.test.ts
+- [ ] T278 [P] Implement FE-HOOK-009: test_useSearch_error in web/__tests__/hooks/useSearch.test.ts
+- [ ] T279 [P] Implement FE-HOOK-010: test_useSearch_clear in web/__tests__/hooks/useSearch.test.ts
+
+#### web/__tests__/hooks/useFavorites.test.ts — 3 tests
+
+- [ ] T280 [P] Implement FE-HOOK-011: test_useFavorites_list in web/__tests__/hooks/useFavorites.test.ts
+- [ ] T281 [P] Implement FE-HOOK-012: test_useFavorites_toggle in web/__tests__/hooks/useFavorites.test.ts
+- [ ] T282 [P] Implement FE-HOOK-013: test_useFavorites_invalidate in web/__tests__/hooks/useFavorites.test.ts
+
+#### web/__tests__/hooks/useTags.test.ts — 4 tests
+
+- [ ] T283 [P] Implement FE-HOOK-014: test_useTags_list in web/__tests__/hooks/useTags.test.ts
+- [ ] T284 [P] Implement FE-HOOK-015: test_useTags_add in web/__tests__/hooks/useTags.test.ts
+- [ ] T285 [P] Implement FE-HOOK-016: test_useTags_remove in web/__tests__/hooks/useTags.test.ts
+- [ ] T286 [P] Implement FE-HOOK-017: test_useTags_invalidate in web/__tests__/hooks/useTags.test.ts
+
+#### web/__tests__/components/ConversationCard.test.tsx — 7 tests
+
+- [ ] T287 [P] Implement FE-COMP-001: test_renders_title in web/__tests__/components/ConversationCard.test.tsx
+- [ ] T288 [P] Implement FE-COMP-002: test_renders_untitled in web/__tests__/components/ConversationCard.test.tsx
+- [ ] T289 [P] Implement FE-COMP-003: test_renders_date in web/__tests__/components/ConversationCard.test.tsx
+- [ ] T290 [P] Implement FE-COMP-004: test_renders_message_count in web/__tests__/components/ConversationCard.test.tsx
+- [ ] T291 [P] Implement FE-COMP-005: test_click_navigates in web/__tests__/components/ConversationCard.test.tsx
+- [ ] T292 [P] Implement FE-COMP-006: test_favorite_icon in web/__tests__/components/ConversationCard.test.tsx
+- [ ] T293 [P] Implement FE-COMP-007: test_tags_displayed in web/__tests__/components/ConversationCard.test.tsx
+
+#### web/__tests__/components/MessageBubble.test.tsx — 6 tests
+
+- [ ] T294 [P] Implement FE-COMP-008: test_user_message_style in web/__tests__/components/MessageBubble.test.tsx
+- [ ] T295 [P] Implement FE-COMP-009: test_assistant_message_style in web/__tests__/components/MessageBubble.test.tsx
+- [ ] T296 [P] Implement FE-COMP-010: test_content_rendered in web/__tests__/components/MessageBubble.test.tsx
+- [ ] T297 [P] Implement FE-COMP-011: test_markdown_rendered in web/__tests__/components/MessageBubble.test.tsx
+- [ ] T298 [P] Implement FE-COMP-012: test_code_highlighted in web/__tests__/components/MessageBubble.test.tsx
+- [ ] T299 [P] Implement FE-COMP-013: test_empty_content in web/__tests__/components/MessageBubble.test.tsx
+
+#### web/__tests__/components/SearchBar.test.tsx — 5 tests
+
+- [ ] T300 [P] Implement FE-COMP-014: test_renders_input in web/__tests__/components/SearchBar.test.tsx
+- [ ] T301 [P] Implement FE-COMP-015: test_typing_calls_onChange in web/__tests__/components/SearchBar.test.tsx
+- [ ] T302 [P] Implement FE-COMP-016: test_clear_button in web/__tests__/components/SearchBar.test.tsx
+- [ ] T303 [P] Implement FE-COMP-017: test_loading_spinner in web/__tests__/components/SearchBar.test.tsx
+- [ ] T304 [P] Implement FE-COMP-018: test_placeholder in web/__tests__/components/SearchBar.test.tsx
+
+### Test CI/CD Integration
+
+- [ ] T305 Add npm test script to web/package.json: "test": "vitest run"
+- [ ] T306 [P] Add npm test:coverage script to web/package.json: "test:coverage": "vitest run --coverage"
+- [ ] T307 [P] Add npm test:watch script to web/package.json: "test:watch": "vitest"
+- [ ] T308 Create .github/workflows/test.yml with Python and frontend test jobs
+- [ ] T309 [P] Add pytest.ini with asyncio_mode = auto and coverage settings
+- [ ] T310 Run full test suite and verify 70%+ coverage on Python, all frontend tests pass
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -330,6 +534,7 @@ Web application architecture:
   - User stories can then proceed in parallel (if staffed)
   - Or sequentially in priority order (US1 → US2 → US3 → US4 → US5)
 - **Polish (Phase 8)**: Depends on all desired user stories being complete
+- **Test Coverage (Phase 9)**: Can begin after Foundational phase; tests can be written alongside implementation
 
 ### User Story Dependencies
 
@@ -338,6 +543,14 @@ Web application architecture:
 - **User Story 3 (P3)**: Can start after Foundational (Phase 2) - Independent but requires conversations to export
 - **User Story 4 (P3)**: Can start after Foundational (Phase 2) - Independent of US1-3
 - **User Story 5 (P4)**: Can start after Foundational (Phase 2) - Enhances US2 (search) but is independent
+
+### Test Dependencies
+
+- **Test Setup (T181-T188)**: Must complete before writing tests
+- **Python Unit Tests (T189-T215)**: Can run in parallel, no API dependencies
+- **Python Integration Tests (T216-T254)**: Requires API endpoints to be implemented
+- **Frontend Tests (T255-T304)**: Requires frontend components to be implemented
+- **CI/CD Integration (T305-T310)**: Should complete after tests are passing locally
 
 ### Within Each User Story
 
@@ -352,6 +565,7 @@ Web application architecture:
 **Phase 1 (Setup)**: All tasks marked [P] can run in parallel
 **Phase 2 (Foundational)**: All tasks marked [P] can run in parallel (max parallelism ~25 tasks)
 **Phase 3+ (User Stories)**: Once Foundational phase completes, all user stories can start in parallel if team capacity allows
+**Phase 9 (Tests)**: All unit tests can run in parallel; integration tests can run in parallel per endpoint group
 
 Within each user story, tasks marked [P] can run in parallel
 
@@ -407,6 +621,20 @@ Task T050: "Create ConversationHeader component"
 5. Add User Story 4 → Test independently → Deploy/Demo
 6. Add User Story 5 (optional) → Test independently → Deploy/Demo
 7. Polish (Phase 8) → Final production release
+8. Test Coverage (Phase 9) → CI/CD ready
+
+### Test-Driven Development (TDD) Option
+
+For teams preferring TDD, Phase 9 can be interleaved:
+
+1. Setup + Foundational → Foundation ready
+2. Test Setup (T181-T188) → Test infrastructure ready
+3. For each User Story:
+   - Write integration tests first (API tests)
+   - Implement API endpoints to pass tests
+   - Write frontend tests
+   - Implement frontend components to pass tests
+4. Continuous coverage monitoring via pytest-cov and vitest coverage
 
 ### Parallel Team Strategy
 
@@ -418,6 +646,7 @@ With multiple developers:
    - **Developer B**: User Story 2 (Search) - 19 tasks
    - **Developer C**: User Story 4 (Tags & Favorites) - 28 tasks
    - **Developer D**: Setup Docker + Polish - 32 tasks
+   - **Developer E**: Test Coverage (Phase 9) - 130 tasks
 3. Integrate and test together
 4. Add User Stories 3 and 5 as needed
 
@@ -435,11 +664,28 @@ With multiple developers:
 | Phase 6: User Story 4 | 28 | 15 (54%) |
 | Phase 7: User Story 5 | 22 | 10 (45%) |
 | Phase 8: Polish | 32 | 22 (69%) |
-| **TOTAL** | **180** | **118 (66%)** |
+| Phase 9: Test Coverage | 130 | 124 (95%) |
+| **TOTAL** | **310** | **242 (78%)** |
 
 **MVP Tasks** (Phases 1-3): 64 tasks  
 **Full Feature Set** (Phases 1-7): 148 tasks  
-**Production Ready** (All phases): 180 tasks
+**Full Feature + Tests** (Phases 1-7, 9): 278 tasks  
+**Production Ready** (All phases): 310 tasks
+
+### Phase 9 Test Breakdown
+
+| Category | Test Count |
+|----------|------------|
+| Test Setup | 8 |
+| Python Unit Tests (exporters) | 14 |
+| Python Unit Tests (search) | 8 |
+| Python Unit Tests (embeddings) | 5 |
+| Python Integration Tests (API) | 39 |
+| Frontend Service Tests | 15 |
+| Frontend Hook Tests | 17 |
+| Frontend Component Tests | 18 |
+| CI/CD Integration | 6 |
+| **Total Test Tasks** | **130** |
 
 ---
 
@@ -448,8 +694,32 @@ With multiple developers:
 - [P] tasks work on different files or independent functions - safe to parallelize
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
-- No tests included (not explicitly requested in specification)
+- **Tests ARE included** in Phase 9 (130 tasks, 118 test cases) — see [contracts/test-specs.md](contracts/test-specs.md)
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Tasks reference exact file paths from plan.md structure
 - All tasks are specific and actionable - ready for LLM execution
+
+### Test Coverage Targets
+
+| Layer | Target | Tool |
+|-------|--------|------|
+| Python unit tests | 80%+ | pytest-cov |
+| Python integration | 100% endpoints | pytest |
+| Frontend services | 100% methods | vitest |
+| Frontend hooks | 80%+ | vitest |
+| Frontend components | 70%+ | vitest |
+
+### Running Tests
+
+```bash
+# Python tests
+pytest tests/unit -v                     # Unit tests only
+pytest tests/integration -v              # Integration tests
+pytest --cov --cov-report=term-missing   # With coverage
+
+# Frontend tests
+cd web && npm test                       # Run all
+cd web && npm run test:coverage          # With coverage
+cd web && npm run test:watch             # Watch mode
+```
