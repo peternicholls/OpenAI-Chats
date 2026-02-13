@@ -194,6 +194,32 @@ docker-compose up -d
 
 ## Testing
 
+### Test Setup
+
+#### Install Python Test Dependencies
+
+```bash
+source venv/bin/activate
+
+# Install dev dependencies (pytest, httpx, etc.)
+pip install -e ".[dev]"
+cd api && pip install -e ".[dev]"
+```
+
+#### Install Frontend Test Dependencies
+
+```bash
+cd web
+
+# Install Vitest, React Testing Library, MSW
+npm install --save-dev \
+  vitest @vitejs/plugin-react \
+  @testing-library/react @testing-library/jest-dom @testing-library/user-event \
+  jsdom msw
+```
+
+---
+
 ### Backend Tests (pytest)
 
 ```bash
@@ -203,14 +229,35 @@ source venv/bin/activate
 # Run all tests
 pytest
 
+# Run unit tests only
+pytest tests/unit -v
+
+# Run integration tests
+pytest tests/integration -v
+
 # Run with coverage
-pytest --cov=api --cov-report=html
+pytest --cov=chatgpt_archive --cov=api --cov-report=html
 
 # Run specific test file
-pytest tests/test_conversations.py
+pytest tests/integration/test_api_conversations.py -v
 
-# Run with verbose output
-pytest -v
+# Run tests matching pattern
+pytest -k "test_export" -v
+```
+
+#### Test Structure
+```
+tests/
+├── conftest.py              # Shared fixtures (db, client)
+├── fixtures/                # Sample data
+├── unit/                    # Fast, isolated tests
+│   ├── test_exporters.py
+│   ├── test_search.py
+│   └── test_embeddings.py
+└── integration/             # API endpoint tests
+    ├── test_api_conversations.py
+    ├── test_api_search.py
+    └── test_api_export.py
 ```
 
 ---
@@ -230,6 +277,21 @@ npm run test:watch
 
 # Run with coverage
 npm run test:coverage
+
+# Run specific file
+npm test -- api.test.ts
+```
+
+#### Test Structure
+```
+web/
+├── __tests__/
+│   ├── mocks/handlers.ts    # MSW request handlers
+│   ├── services/api.test.ts
+│   ├── hooks/               # Hook tests
+│   └── components/          # Component tests
+├── vitest.config.ts
+└── vitest.setup.ts
 ```
 
 #### E2E Tests (Playwright)
@@ -248,6 +310,38 @@ npm run test:e2e:ui
 
 # Run specific test
 npx playwright test search.spec.ts
+```
+
+---
+
+### CI/CD Test Pipeline
+
+```yaml
+# .github/workflows/test.yml
+test:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install Python deps
+      run: |
+        pip install -e ".[dev]"
+        cd api && pip install -e ".[dev]"
+    
+    - name: Run Python tests
+      run: pytest --cov --cov-fail-under=70
+    
+    - name: Install Node deps
+      run: cd web && npm ci
+    
+    - name: Run frontend tests
+      run: cd web && npm test
 ```
 
 ---
