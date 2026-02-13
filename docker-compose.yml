@@ -1,0 +1,42 @@
+# ChatGPT Archive Web UI
+# Run with: docker-compose up -d
+# Access at: http://localhost:3000
+
+services:
+  # Backend API (FastAPI + Python)
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount host data directory for database persistence
+      - ${HOME}/.chatgpt-archive:/data
+    environment:
+      - CHATGPT_ARCHIVE_DB=/data/chats.db
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - CORS_ORIGINS=["http://localhost:3000"]
+      # Uncomment for semantic search:
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (Next.js)
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped

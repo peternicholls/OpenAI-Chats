@@ -3,6 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
+- SQLite (existing - single file database from feature 001), no changes required (002-web-ui)
 
 - Python 3.8+ (cross-platform, no compilation) + click (CLI), pyyaml (YAML export), sqlite3 (stdlib), json (stdlib), xml.etree (stdlib) (001-archive-search-export)
 
@@ -22,6 +23,7 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.8+ (cross-platform, no compilation): Follow standard conventions
 
 ## Recent Changes
+- 002-web-ui: Added SQLite (existing - single file database from feature 001), no changes required
 
 - 001-archive-search-export: Added Python 3.8+ (cross-platform, no compilation) + click (CLI), pyyaml (YAML export), sqlite3 (stdlib), json (stdlib), xml.etree (stdlib)
 
