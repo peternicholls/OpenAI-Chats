@@ -112,9 +112,9 @@ Web application architecture:
 - [x] T051 [P] [US1] Create conversation detail page in web/src/app/conversation/[id]/page.tsx
 - [x] T052 [P] [US1] Create MessageBubble component in web/src/components/conversations/MessageBubble.tsx
 - [x] T053 [P] [US1] Create ConversationHeader component in web/src/components/conversations/ConversationHeader.tsx
-- [ ] T054 [P] [US1] Create import page in web/src/app/import/page.tsx
-- [ ] T055 [US1] Create ImportDialog component in web/src/components/import/ImportDialog.tsx (client component with file upload: accept .zip only, max 500MB, show upload progress bar)
-- [ ] T056 [US1] Create ImportProgress component in web/src/components/import/ImportProgress.tsx with progress bar (display: file name, progress %, current step, error recovery UI)
+- [x] T054 [P] [US1] Create import page in web/src/app/import/page.tsx
+- [x] T055 [US1] Create ImportDialog component in web/src/components/import/ImportDialog.tsx (client component with file upload: accept .zip only, max 500MB, show upload progress bar)
+- [x] T056 [US1] Create ImportProgress component in web/src/components/import/ImportProgress.tsx with progress bar (display: file name, progress %, current step, error recovery UI)
 - [x] T057 [US1] (depends on T042) Implement SSE listener hook in web/src/hooks/useSSE.ts for import progress (EventSource with auto-reconnect on connection drop)
 - [x] T058 [US1] Create useConversations hook in web/src/hooks/useConversations.ts with React Query
 - [x] T059 [US1] Add API client methods for conversations in web/src/services/api.ts (list, getById, delete)
@@ -122,10 +122,10 @@ Web application architecture:
 - [x] T061 [US1] Add list filtering UI (sort dropdown, order toggle) in conversation list page
 - [x] T062 [US1] Add delete confirmation dialog using shadcn/ui AlertDialog
 - [x] T063 [US1] Add navigation between list and detail views
-- [ ] T064 [P] [US1] Add error states for conversation list in web/src/app/page.tsx (empty state, network error, retry button)
-- [ ] T065 [P] [US1] Add loading skeletons for conversation list using shadcn/ui Skeleton in web/src/components/conversations/ConversationListSkeleton.tsx
-- [ ] T066 [P] [US1] Add error states for conversation detail in web/src/app/conversation/[id]/page.tsx (not found, network error, retry button)
-- [ ] T067 [P] [US1] Add error states for import in ImportDialog component (invalid file type, file too large, upload failed, corrupted ZIP)
+- [x] T064 [P] [US1] Add error states for conversation list in web/src/app/page.tsx (empty state, network error, retry button)
+- [x] T065 [P] [US1] Add loading skeletons for conversation list using shadcn/ui Skeleton in web/src/components/conversations/ConversationListSkeleton.tsx
+- [x] T066 [P] [US1] Add error states for conversation detail in web/src/app/conversation/[id]/page.tsx (not found, network error, retry button)
+- [x] T067 [P] [US1] Add error states for import in ImportDialog component (invalid file type, file too large, upload failed, corrupted ZIP)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. Run quickstart.md validation for US1 scope.
 

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationCard } from "@/components/conversations/ConversationCard";
 import { Pagination } from "@/components/common/Pagination";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { ConversationListSkeleton } from "@/components/conversations/ConversationListSkeleton";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -23,7 +24,7 @@ export default function ConversationsPage() {
   const [order, setOrder] = useState<SortOrder>("desc");
   const [offset, setOffset] = useState(0);
 
-  const { data, isLoading, error } = useConversations({
+  const { data, isLoading, error, refetch } = useConversations({
     sortBy,
     order,
     limit: PAGE_SIZE,
@@ -31,10 +32,22 @@ export default function ConversationsPage() {
   });
 
   if (error) {
+    const message = (error as Error).message;
+    const isNetworkError =
+      message.toLowerCase().includes("fetch") ||
+      message.toLowerCase().includes("network");
+
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-        <p className="text-destructive">Failed to load conversations</p>
-        <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
+        <p className="text-destructive">
+          {isNetworkError
+            ? "Network error while loading conversations"
+            : "Failed to load conversations"}
+        </p>
+        <p className="text-sm text-muted-foreground text-center max-w-md">{message}</p>
+        <Button onClick={() => refetch()} variant="outline">
+          Retry
+        </Button>
       </div>
     );
   }
@@ -66,7 +79,7 @@ export default function ConversationsPage() {
       </div>
 
       {isLoading ? (
-        <LoadingSpinner className="min-h-[50vh]" />
+        <ConversationListSkeleton />
       ) : data && data.items.length > 0 ? (
         <>
           <div className="grid gap-3">
@@ -90,9 +103,9 @@ export default function ConversationsPage() {
           <p className="text-sm text-muted-foreground">
             Import a ChatGPT archive to get started
           </p>
-          <a href="/import">
+          <Link href="/import">
             <Button>Import Archive</Button>
-          </a>
+          </Link>
         </div>
       )}
     </div>

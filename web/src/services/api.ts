@@ -137,20 +137,56 @@ class APIClient {
 
     // Import
     async uploadArchive(file: File): Promise<ImportProgress> {
+        return this.uploadArchiveWithProgress(file);
+    }
+
+    async uploadArchiveWithProgress(
+        file: File,
+        onProgress?: (percent: number) => void
+    ): Promise<ImportProgress> {
         const formData = new FormData();
         formData.append("file", file);
 
-        const res = await fetch(`${this.baseUrl}/api/import`, {
-            method: "POST",
-            body: formData,
+        return new Promise<ImportProgress>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", `${this.baseUrl}/api/import`);
+
+            xhr.upload.onprogress = (event) => {
+                if (!onProgress || !event.lengthComputable) return;
+                const percent = (event.loaded / event.total) * 100;
+                onProgress(percent);
+            };
+
+            xhr.onload = () => {
+                let payload: unknown = null;
+                try {
+                    payload = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                } catch {
+                    payload = null;
+                }
+
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    onProgress?.(100);
+                    resolve(payload as ImportProgress);
+                    return;
+                }
+
+                const errorPayload = payload as { detail?: string; message?: string } | null;
+                reject(
+                    new Error(
+                        errorPayload?.detail ||
+                            errorPayload?.message ||
+                            `Upload failed: ${xhr.status}`
+                    )
+                );
+            };
+
+            xhr.onerror = () => {
+                reject(new Error("Network error while uploading archive"));
+            };
+
+            xhr.send(formData);
         });
-
-        if (!res.ok) {
-            const error = await res.json().catch(() => ({ message: res.statusText }));
-            throw new Error(error.detail || error.message || `Upload failed: ${res.status}`);
-        }
-
-        return res.json();
     }
 
     async getImportProgress(): Promise<ImportProgress> {
