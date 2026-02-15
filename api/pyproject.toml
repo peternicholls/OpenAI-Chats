@@ -27,10 +27,44 @@ dev = [
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+exclude = [
+    ".venv",
+    "__pycache__",
+    ".git",
+    "build",
+    "dist",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "B", "UP"]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "W",      # pycodestyle warnings
+    "I",      # isort
+    "N",      # pep8-naming
+    "B",      # flake8-bugbear
+    "UP",     # pyupgrade
+    "S",      # flake8-bandit (security)
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "S101",   # assert detected (OK in tests)
+    "B008",   # function-call-in-default-argument (FastAPI Depends pattern)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["api", "chatgpt_archive"]
 
 [tool.black]
 target-version = ["py311"]
 line-length = 100
+exclude = '''
+/(
+    \.venv
+  | __pycache__
+  | \.git
+  | build
+  | dist
+)/
+'''
