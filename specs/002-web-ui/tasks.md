@@ -32,7 +32,7 @@ Web application architecture:
 - [x] T001 Create project structure per plan.md (api/, web/, docker/ directories)
 - [x] T002 Initialize Python FastAPI project with dependencies in api/pyproject.toml
 - [x] T003 [P] Initialize Next.js 14+ (React/TypeScript) project in web/ using `npx create-next-app@latest`
-- [ ] T004 [P] Configure Python linting (ruff) and formatting (black) in api/
+- [x] T004 [P] Configure Python linting (ruff) and formatting (black) in api/
 - [x] T005 [P] Configure TypeScript/ESLint/Prettier in web/
 - [x] T006 [P] Add .gitignore for api/ (venv, __pycache__, .env)
 - [x] T007 [P] Add .gitignore for web/ (node_modules, .next, .env.local)
@@ -329,6 +329,17 @@ Web application architecture:
 - [ ] T185 [P] Final review and cleanup of unused dependencies (check for orphaned imports, unused packages)
 - [ ] T186 [P] Add Browserslist config in web/package.json and verify Chrome, Firefox, Safari, Edge (last 2 versions)
 - [ ] T187 [Priority: P1] Conduct 3-user walkthrough test for SC-010 (document: task completion rates, avg time per task, user pain points, suggestions) and record findings for iteration
+
+### Code Review Fixes (from Phase 1-3 Review)
+
+**Purpose**: Address issues identified during code review of Phase 1-3 implementation
+
+- [ ] T_CR001 [Priority: P1] Apply validation middleware functions to API routes — functions in api/middleware/validation.py exist but are not called in route handlers (validate_query_param, validate_tag_name, validate_conversation_id)
+- [ ] T_CR002 [P] [Priority: P2] Add loading state during delete operation in web/src/app/conversation/[id]/page.tsx — handleDelete() should show spinner/disable button while awaiting API response
+- [ ] T_CR003 [P] [Priority: P3] Standardize Python type annotations across api/ — replace mixed `Optional[str]` and `str | None` syntax with consistent `str | None` (Python 3.10+)
+- [ ] T_CR004 [P] [Priority: P2] Handle SSE client disconnection in api/routers/progress.py — check for client disconnect in event_generator() loop to avoid orphaned async tasks
+- [ ] T_CR005 [P] [Priority: P3] Make page size configurable in web/src/app/page.tsx — move PAGE_SIZE to user settings or environment variable instead of hardcoded constant
+- [ ] T_CR006 [P] [Priority: P3] Add warning log in api/services/archive_service.py if temp file cleanup fails in import_archive_from_zip() finally block
 
 ---
 
@@ -693,14 +704,14 @@ With multiple developers:
 | Phase 5: User Story 3 | 16 | 9 (56%) | +1 validation task, reorganized multi-export |
 | Phase 6: User Story 4 | 31 | 17 (55%) | +3 error handling/validation tasks |
 | Phase 7: User Story 5 | 27 | 12 (44%) | +5 safeguard tasks (cancel, cost limit, encryption) |
-| Phase 8: Polish | 27 | 19 (70%) | Moved E2E tests to Phase 9, added priorities |
+| Phase 8: Polish | 33 | 24 (73%) | +6 code review fixes (T_CR001-T_CR006) |
 | Phase 9: Test Coverage | 143 | 136 (95%) | +13 tasks (E2E tests, test data generation, mocking) |
-| **TOTAL** | **333** | **260 (78%)** | +23 tasks added overall |
+| **TOTAL** | **339** | **265 (78%)** | +29 tasks added overall |
 
 **MVP Tasks** (Phases 1-3): 70 tasks (+6)  
 **Full Feature Set** (Phases 1-7): 163 tasks (+15)  
 **Full Feature + Tests** (Phases 1-7, 9): 306 tasks (+28)  
-**Production Ready** (All phases): 333 tasks (+23)
+**Production Ready** (All phases): 339 tasks (+29)
 
 ### Phase 9 Test Breakdown
 
@@ -758,15 +769,16 @@ With multiple developers:
 
 ## Notes
 
-**📋 Task List Version**: 2.0 (Updated with comprehensive improvements)
+**📋 Task List Version**: 2.1 (Updated with code review fixes)
 
-**Recent Improvements** (23 new tasks added):
+**Recent Improvements** (29 new tasks added):
 - ✅ Security: Input validation, CSP headers, environment validation
 - ✅ Specifications: Detailed implementation approaches for 20+ tasks
 - ✅ Error Handling: Split generic tasks into specific error scenarios
 - ✅ Testing: E2E tests, test data generation, API mocking setup
 - ✅ Safeguards: Embedding cost limits, cancellation, API key encryption
 - ✅ Priorities: P1/P2/P3 markers on Polish tasks
+- ✅ Code Review: Phase 1-3 review findings added as T_CR001-T_CR006 (validation middleware integration, loading states, type standardization, SSE cleanup)
 
 **Task Format Requirements**:
 - [P] tasks work on different files or independent functions - safe to parallelize
