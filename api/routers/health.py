@@ -16,8 +16,8 @@ async def health_check() -> HealthResponse:
         conn.execute("SELECT 1")
         conn.close()
         return HealthResponse(status="ok", database="connected")
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Database unavailable",
-        )
+        ) from e

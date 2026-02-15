@@ -1,8 +1,6 @@
 """Input validation middleware for sanitizing query params and request bodies."""
 
 import re
-from typing import Any
-
 
 # Patterns for common injection attacks
 SQL_INJECTION_PATTERN = re.compile(
@@ -54,9 +52,8 @@ def validate_query_param(name: str, value: str, max_length: int = 200) -> str:
     sanitized = sanitize_string(value, max_length)
 
     # Check for SQL injection patterns in critical fields
-    if name in ("query", "tag", "search", "q"):
-        if SQL_INJECTION_PATTERN.search(sanitized):
-            raise ValueError(f"Invalid characters in {name}")
+    if name in ("query", "tag", "search", "q") and SQL_INJECTION_PATTERN.search(sanitized):
+        raise ValueError(f"Invalid characters in {name}")
 
     # Check for XSS patterns
     if XSS_PATTERN.search(sanitized):

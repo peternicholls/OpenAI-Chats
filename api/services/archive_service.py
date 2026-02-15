@@ -4,6 +4,7 @@ This adapter provides the API layer with access to all chatgpt_archive
 functionality without duplicating business logic (per FR-012).
 """
 
+import contextlib
 import logging
 import os
 import sqlite3
@@ -12,10 +13,8 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-from chatgpt_archive import db
+from chatgpt_archive import db, importer
 from chatgpt_archive import search as search_module
-from chatgpt_archive import importer
-
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +73,7 @@ def validate_schema_compatibility(conn: sqlite3.Connection) -> tuple[bool, list[
         cursor = conn.execute(f"PRAGMA table_info({table_name})")
         existing_columns = {row[1]: row[2].upper() for row in cursor.fetchall()}
 
-        for col_name, expected_type in expected_columns.items():
+        for col_name, _expected_type in expected_columns.items():
             if col_name not in existing_columns:
                 errors.append(f"Missing column: {table_name}.{col_name}")
             # Type checking is lenient - SQLite uses type affinity
@@ -335,10 +334,8 @@ def import_archive_from_zip(zip_path: str) -> None:
             "message": str(e),
         }
     finally:
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(zip_path)
-        except OSError:
-            pass
 
 
 def get_import_progress() -> dict[str, Any]:
@@ -402,9 +399,7 @@ def toggle_favorite(conversation_id: str) -> bool:
         ).fetchone()
         new_val = 0 if (current and current[0]) else 1
 
-        conn.execute(
-            "UPDATE conversations SET is_favorite = ? WHERE id = ?", (new_val, row["id"])
-        )
+        conn.execute("UPDATE conversations SET is_favorite = ? WHERE id = ?", (new_val, row["id"]))
         conn.commit()
         return bool(new_val)
     finally:
@@ -424,10 +419,11 @@ def list_favorites(
         order_clause = "DESC" if order.lower() == "desc" else "ASC"
         null_handling = "NULLS LAST" if order_clause == "DESC" else "NULLS FIRST"
 
-        total = conn.execute(
-            "SELECT COUNT(*) FROM conversations WHERE is_favorite = 1"
-        ).fetchone()[0]
+        total = conn.execute("SELECT COUNT(*) FROM conversations WHERE is_favorite = 1").fetchone()[
+            0
+        ]
 
+        # Safe: sort_column, order_clause, null_handling are from hardcoded maps
         query = f"""
             SELECT c.id, c.openai_id, c.title, c.create_time, c.update_time,
                    c.model_slug, c.is_archived,
@@ -436,7 +432,7 @@ def list_favorites(
             WHERE c.is_favorite = 1
             ORDER BY {sort_column} {order_clause} {null_handling}
             LIMIT ? OFFSET ?
-        """
+        """  # noqa: S608
         rows = conn.execute(query, (limit, offset)).fetchall()
 
         conversations = []
@@ -466,11 +462,15 @@ def export_conversation(conversation_id: str, format: str) -> tuple[str | bytes,
     Returns:
         Tuple of (content, content_type, filename).
     """
-    from chatgpt_archive.exporters import markdown, json_export, yaml_export
+    from chatgpt_archive.exporters import (
+        csv_export,
+        excel_export,
+        json_export,
+        markdown,
+        yaml_export,
+    )
     from chatgpt_archive.exporters import html as html_export
     from chatgpt_archive.exporters import xml_export as xml_exp
-    from chatgpt_archive.exporters import csv_export
-    from chatgpt_archive.exporters import excel_export
 
     conv_data = get_conversation(conversation_id)
     if conv_data is None:

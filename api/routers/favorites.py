@@ -1,7 +1,6 @@
 """Favorites management endpoints."""
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Optional
 
 from api.models.responses import ConversationSummary, PaginatedResponse
 from api.services import archive_service

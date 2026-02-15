@@ -1,6 +1,6 @@
 """Embedding generation endpoints."""
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 
 from api.models.requests import EmbeddingRequest
 from api.models.responses import ImportProgress
@@ -23,14 +23,14 @@ async def estimate_embeddings(
             return result
         finally:
             conn.close()
-    except ImportError:
+    except ImportError as e:
         raise HTTPException(
             status_code=400,
             detail="Semantic search dependencies not installed. "
             "Install with: pip install 'chatgpt-archive[semantic]'",
-        )
+        ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/api/embeddings/generate", status_code=202, response_model=ImportProgress)
@@ -71,10 +71,10 @@ async def generate_embeddings(
             percent=0.0,
             message="Embedding generation started...",
         )
-    except ImportError:
+    except ImportError as e:
         raise HTTPException(
             status_code=400,
             detail="Semantic search dependencies not installed.",
-        )
+        ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

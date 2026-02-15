@@ -9,8 +9,19 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from api.middleware.cors import setup_cors
-from api.routers import health, conversations, search, export, tags, favorites, embeddings, progress, import_ as import_router, settings
-from api.services.settings_service import load_settings, get_settings_path
+from api.routers import (
+    conversations,
+    embeddings,
+    export,
+    favorites,
+    health,
+    progress,
+    search,
+    settings,
+    tags,
+)
+from api.routers import import_ as import_router
+from api.services.settings_service import get_settings_path, load_settings
 
 # Configure logging
 logging.basicConfig(
@@ -84,7 +95,7 @@ async def startup_event() -> None:
     # Load settings on startup
     settings_path = get_settings_path()
     try:
-        user_settings = load_settings()
+        load_settings()  # Validates settings file, we use defaults via service
         if settings_path.exists():
             logger.info("Settings loaded from %s", settings_path)
         else:
@@ -93,6 +104,6 @@ async def startup_event() -> None:
         logger.warning("Failed to load settings, using defaults: %s", e)
 
     # Warn if binding to 0.0.0.0
-    host = os.environ.get("API_HOST", "0.0.0.0")
-    if host == "0.0.0.0":
+    host = os.environ.get("API_HOST", "0.0.0.0")  # noqa: S104
+    if host == "0.0.0.0":  # noqa: S104
         logger.warning("Security: API exposed on all interfaces (0.0.0.0)")

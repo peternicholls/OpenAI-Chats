@@ -1,7 +1,6 @@
 """Pydantic response models for the ChatGPT Archive API."""
 
 from pydantic import BaseModel, Field
-from typing import List, Optional
 
 
 class ConversationSummary(BaseModel):
@@ -13,7 +12,7 @@ class ConversationSummary(BaseModel):
     update_time: float | None = Field(None, description="Unix timestamp")
     message_count: int = Field(..., description="Number of messages")
     model: str | None = Field(None, description="Model used")
-    tags: List[str] = Field(default_factory=list, description="Associated tags")
+    tags: list[str] = Field(default_factory=list, description="Associated tags")
     is_favorite: bool = Field(False, description="Whether conversation is favorited")
 
 
@@ -35,8 +34,8 @@ class ConversationDetail(BaseModel):
     update_time: float | None
     model: str | None
     message_count: int
-    messages: List[Message]
-    tags: List[str] = Field(default_factory=list)
+    messages: list[Message]
+    tags: list[str] = Field(default_factory=list)
     is_favorite: bool = False
 
 

@@ -2,10 +2,10 @@
 
 from fastapi import APIRouter, HTTPException
 
-from chatgpt_archive.search import InvalidQueryError
 from api.models.requests import SearchRequest
 from api.models.responses import PaginatedResponse, SearchResult
 from api.services import archive_service
+from chatgpt_archive.search import InvalidQueryError
 
 router = APIRouter(tags=["Search"])
 
@@ -30,6 +30,6 @@ async def search_conversations(request: SearchRequest) -> PaginatedResponse:
             items=items,
         )
     except InvalidQueryError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

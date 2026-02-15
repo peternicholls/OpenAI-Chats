@@ -10,7 +10,6 @@ import os
 from pathlib import Path
 from typing import Any
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -44,7 +43,7 @@ def load_settings() -> dict[str, Any]:
 
     if settings_path.exists():
         try:
-            with open(settings_path, "r", encoding="utf-8") as f:
+            with open(settings_path, encoding="utf-8") as f:
                 stored = json.load(f)
             settings.update(stored)
         except json.JSONDecodeError as e:

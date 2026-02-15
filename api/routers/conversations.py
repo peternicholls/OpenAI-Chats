@@ -1,9 +1,8 @@
 """Conversation CRUD endpoints."""
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Optional
 
-from api.models.responses import ConversationSummary, ConversationDetail, PaginatedResponse, Message
+from api.models.responses import ConversationDetail, ConversationSummary, Message, PaginatedResponse
 from api.services import archive_service
 
 router = APIRouter(tags=["Conversations"])
@@ -15,7 +14,7 @@ async def list_conversations(
     order: str = Query("desc", enum=["asc", "desc"]),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    tag: Optional[str] = Query(None, description="Filter by tag name"),
+    tag: str | None = Query(None, description="Filter by tag name"),
 ) -> PaginatedResponse:
     """List conversations with pagination, sorting, and optional tag filtering."""
     try:
@@ -25,7 +24,7 @@ async def list_conversations(
         items = [ConversationSummary(**c) for c in conversations]
         return PaginatedResponse(total=total, offset=offset, limit=limit, items=items)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/api/conversations/{conversation_id}", response_model=ConversationDetail)

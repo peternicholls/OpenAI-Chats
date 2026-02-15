@@ -1,7 +1,8 @@
 """CORS and security middleware configuration for the API."""
 
-import os
 import json
+import os
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
