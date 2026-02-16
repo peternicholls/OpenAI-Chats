@@ -60,4 +60,11 @@
 
 **Retroactive Creation**: This specification was created after the plan phase to correct workflow. The plan.md already exists and contains implementation details, which is appropriate for that phase.
 
+**Post-Implementation Test Checklist Update (2026-02-16)**:
+- [x] API integration tests for conversations/search/export use strict assertions (no permissive multi-status pass conditions on core paths).
+- [x] Empty query validation behavior is explicitly asserted (`422`) in API search tests.
+- [x] Invalid export format behavior is explicitly asserted (`404`, current router behavior).
+- [x] Conversation and export tests verify concrete payload semantics (IDs/order/content/types), not only status codes.
+- [x] Empty-database conversation test uses an isolated client/environment to avoid fixture contamination.
+
 **Status**: ✅ **READY FOR NEXT PHASE** - All checklist items pass. The specification is complete and ready for `/speckit.clarify` or re-planning if needed.

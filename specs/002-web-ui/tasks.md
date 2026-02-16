@@ -182,8 +182,8 @@ Web application architecture:
 - [x] T088 [US3] Integrate chatgpt_archive.exporters in archive_service.py export method
 - [x] T089 [US3] Add file response handling for each format (md, json, yaml, html, xml, csv, xlsx)
 - [x] T090 [US3] Add Content-Disposition headers for download filenames
-- [ ] T091 [US3] Add multi-conversation export support in export endpoint (accept comma-separated conversation IDs, generate combined export)
-- [ ] T092 [US3] Add error handling for unsupported formats and missing conversations
+- [x] T091 [US3] Add multi-conversation export support in export endpoint (accept comma-separated conversation IDs, generate combined export)
+- [x] T092 [US3] Add error handling for unsupported formats and missing conversations
 
 #### Frontend UI
 
@@ -192,10 +192,10 @@ Web application architecture:
 - [x] T095 [US3] Add export button to conversation detail header
 - [x] T096 [US3] Add export API client method in web/src/services/api.ts
 - [x] T097 [US3] Implement file download trigger in ExportDialog
-- [ ] T098 [P] [US3] Create multi-select UI in conversation list: add checkbox to ConversationCard, track selected IDs in page state
-- [ ] T099 [P] [US3] Add batch export button to conversation list toolbar (visible when conversations selected)
-- [ ] T100 [P] [US3] Add export success toast notification using shadcn/ui Toast (generate and add via CLI)
-- [ ] T101 [P] [US3] Add export error handling with user-friendly messages (format not supported, conversation not found, server error)
+- [x] T098 [P] [US3] Create multi-select UI in conversation list: add checkbox to ConversationCard, track selected IDs in page state
+- [x] T099 [P] [US3] Add batch export button to conversation list toolbar (visible when conversations selected)
+- [x] T100 [P] [US3] Add export success toast notification using shadcn/ui Toast (generate and add via CLI)
+- [x] T101 [P] [US3] Add export error handling with user-friendly messages (format not supported, conversation not found, server error)
 - [ ] T102 [US3] Add validation test: export all 7 formats (md, json, yaml, html, xml, csv, xlsx) with multi-conversation selection, verify each downloads correctly
 
 **Checkpoint**: All three user stories (US1, US2, US3) should now be independently functional. Run quickstart.md validation for US1-US3 scope.
@@ -220,32 +220,32 @@ Web application architecture:
 - [x] T108 [P] [US4] Add GET favorites list endpoint in favorites router (WHERE is_favorite = 1)
 - [x] T109 [US4] Extend ConversationSummary model with is_favorite: bool field in api/models/responses.py
 - [x] T110 [US4] Add favorite status to conversation list query in archive_service.py
-- [ ] T111 [US4] Add tag filtering to conversation list endpoint in api/routers/conversations.py (filter by tag name via query param: ?tag=work)
-- [ ] T112 [US4] Add tag validation in tags router: alphanumeric + hyphens/underscores only, max 50 chars, case-insensitive uniqueness
+- [x] T111 [US4] Add tag filtering to conversation list endpoint in api/routers/conversations.py (filter by tag name via query param: ?tag=work)
+- [x] T112 [US4] Add tag validation in tags router: alphanumeric + hyphens/underscores only, max 50 chars, case-insensitive uniqueness
 
 #### Frontend UI
 
-- [ ] T113 [P] [US4] Create favorites page in web/src/app/favorites/page.tsx (reuse ConversationCard, filter conversations where is_favorite=true)
-- [ ] T114 [P] [US4] Create FavoriteButton component in web/src/components/favorites/FavoriteButton.tsx (star icon toggle, optimistic updates)
-- [ ] T115 [P] [US4] Create TagList component in web/src/components/tags/TagList.tsx for sidebar (display all tags with counts, clickable to filter)
-- [ ] T116 [P] [US4] Create TagEditor component in web/src/components/tags/TagEditor.tsx (add/remove tags, uses Popover + Input with autocomplete)
+- [x] T113 [P] [US4] Create favorites page in web/src/app/favorites/page.tsx (reuse ConversationCard, filter conversations where is_favorite=true)
+- [x] T114 [P] [US4] Create FavoriteButton component in web/src/components/favorites/FavoriteButton.tsx (star icon toggle, optimistic updates)
+- [x] T115 [P] [US4] Create TagList component in web/src/components/tags/TagList.tsx for sidebar (display all tags with counts, clickable to filter)
+- [x] T116 [P] [US4] Create TagEditor component in web/src/components/tags/TagEditor.tsx (add/remove tags, uses Popover + Input with autocomplete)
 - [x] T117 [P] [US4] Add shadcn/ui Popover for tag editor
 - [x] T118 [P] [US4] Add shadcn/ui Input with autocomplete for tag input
 - [x] T119 [US4] Create useTags hook in web/src/hooks/useTags.ts with React Query
 - [x] T120 [US4] Create useFavorites hook in web/src/hooks/useFavorites.ts with React Query
 - [x] T121 [US4] Add tag API client methods in web/src/services/api.ts (list, add, remove)
 - [x] T122 [US4] Add favorites API client methods in web/src/services/api.ts (toggle, list)
-- [ ] T123 [US4] (depends on T114) Add favorite button to ConversationCard component
-- [ ] T124 [US4] (depends on T114) Add favorite button to conversation detail header
-- [ ] T125 [US4] (depends on T116) Add tag badges to ConversationCard component (display tags, click to filter)
-- [ ] T126 [US4] (depends on T116) Add tag editor to conversation detail page header
-- [ ] T127 [US4] (depends on T115) Add tag filter to sidebar (clickable tag list)
+- [x] T123 [US4] (depends on T114) Add favorite button to ConversationCard component
+- [x] T124 [US4] (depends on T114) Add favorite button to conversation detail header
+- [x] T125 [US4] (depends on T116) Add tag badges to ConversationCard component (display tags, click to filter)
+- [x] T126 [US4] (depends on T116) Add tag editor to conversation detail page header
+- [x] T127 [US4] (depends on T115) Add tag filter to sidebar (clickable tag list)
 - [x] T128 [US4] Add favorites link to sidebar navigation
-- [ ] T129 [US4] Implement optimistic updates for favorite toggle (update UI immediately, rollback on error)
-- [ ] T130 [US4] Add tag autocomplete with existing tags (filter taglist as user types)
+- [x] T129 [US4] Implement optimistic updates for favorite toggle (update UI immediately, rollback on error)
+- [x] T130 [US4] Add tag autocomplete with existing tags (filter taglist as user types)
 - [ ] T131 [P] [US4] Add error handling: display message when removing last tag from filtered view
-- [ ] T132 [P] [US4] Add "no tags" empty state in sidebar TagList component
-- [ ] T133 [P] [US4] Add tag limit validation: warn user if attempting to add more than 10 tags per conversation
+- [x] T132 [P] [US4] Add "no tags" empty state in sidebar TagList component
+- [x] T133 [P] [US4] Add tag limit validation: warn user if attempting to add more than 10 tags per conversation
 
 **Checkpoint**: All four user stories (US1-US4) should be independently functional. Run quickstart.md validation for US1-US4 scope.
 
@@ -267,7 +267,7 @@ Web application architecture:
 - [ ] T137 [US5] Add OpenAI API key validation in embeddings router before starting generation (make test API call to verify key validity and sufficient quota)
 - [x] T138 [US5] Add background task support for embedding generation (FastAPI BackgroundTasks — in-memory only, lost on server restart; acceptable for single-user deployment)
 - [ ] T139 [US5] (similar to T042) Add SSE progress stream for embedding generation in api/routers/embeddings.py (reuse pattern from import progress endpoint)
-- [ ] T140 [US5] Add semantic search support to search endpoint (search_type parameter: "keyword" | "semantic")
+- [x] T140 [US5] Add semantic search support to search endpoint (search_type parameter: "keyword" | "semantic")
 - [ ] T141 [US5] Add error handling for API quota exceeded, invalid credentials, rate limits
 - [ ] T142 [P] [US5] Add cancel/pause endpoint for embedding generation in embeddings router (set cancellation flag, gracefully stop after current batch)
 - [ ] T143 [P] [US5] Add cost limit safeguard in embeddings router (accept max_cost param, stop if estimate exceeds limit)
@@ -275,7 +275,7 @@ Web application architecture:
 
 #### Frontend UI
 
-- [ ] T145 [P] [US5] Create settings page in web/src/app/settings/page.tsx (client component for API key input)
+- [x] T145 [P] [US5] Create settings page in web/src/app/settings/page.tsx (client component for API key input)
 - [ ] T146 [P] [US5] Create SettingsForm component in web/src/components/settings/SettingsForm.tsx (tabbed interface for different settings)
 - [ ] T147 [P] [US5] Create ApiCredentials component in web/src/components/settings/ApiCredentials.tsx (password input for API key, test connection button)
 - [x] T148 [P] [US5] Add shadcn/ui Tabs for settings sections
@@ -284,7 +284,7 @@ Web application architecture:
 - [x] T151 [US5] Add embeddings API client methods in web/src/services/api.ts (estimate, generate, progress)
 - [ ] T152 [US5] Add embedding generation UI to settings page (start button, progress bar, cancel button)
 - [ ] T153 [US5] Add cost estimate display before generation (show: total messages, estimated tokens, cost in USD, confirm button)
-- [ ] T154 [US5] Add semantic search type option to SearchFilters component (radio group: keyword/semantic)
+- [x] T154 [US5] Add semantic search type option to SearchFilters component (radio group: keyword/semantic)
 - [ ] T155 [US5] (depends on T139) Add SSE listener for embedding progress in settings page (reuse useSSE hook pattern)
 - [ ] T156 [US5] Add OpenAI API key input with secure storage indication (show lock icon, "encrypted at rest" message)
 - [ ] T157 [US5] Persist user settings to backend settings service (save on change, optimistic updates)
@@ -310,7 +310,7 @@ Web application architecture:
 - [x] T166 Add nginx configuration in docker/nginx.conf for production frontend serving
 - [ ] T167 [P] [Priority: P2] Add loading states and skeletons to all data-fetching components (nice-to-have UX polish)
 - [ ] T168 [P] [Priority: P2] Add responsive design breakpoints for mobile/tablet views (optional unless targeting mobile users)
-- [ ] T169 [P] [Priority: P2] Add dark mode support using Next.js themes and Tailwind dark mode classes (UX polish)
+- [x] T169 [P] [Priority: P2] Add dark mode support using Next.js themes and Tailwind dark mode classes (UX polish)
 - [ ] T170 [Priority: P2] Add keyboard shortcuts for common actions (/, Ctrl+K for search) (power user feature)
 - [ ] T171 [P] [Priority: P2] Add toast notifications for all remaining user actions (import success, tag added, etc.)
 - [ ] T172 [Priority: P1] Optimize conversation list with virtualization for 1000+ conversations (REQUIRED for SC-009: render 5000+ items with <16ms frame time, use react-window or @tanstack/react-virtual)
