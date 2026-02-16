@@ -515,6 +515,185 @@ def export_conversation(conversation_id: str, format: str) -> tuple[str | bytes,
     return content, content_type, filename
 
 
+def export_multiple_conversations(
+    conversation_ids: list[str], format: str
+) -> tuple[str | bytes, str, str]:
+    """Export multiple conversations in the specified format as a combined file.
+
+    Returns:
+        Tuple of (content, content_type, filename).
+    """
+    from chatgpt_archive.exporters import (
+        csv_export,
+        excel_export,
+        json_export,
+        markdown,
+        yaml_export,
+    )
+    from chatgpt_archive.exporters import html as html_export
+    from chatgpt_archive.exporters import xml_export as xml_exp
+
+    if not conversation_ids:
+        raise ValueError("No conversation IDs provided")
+
+    # Collect all conversations
+    conversations_data = []
+    missing_ids = []
+    for conv_id in conversation_ids:
+        conv_data = get_conversation(conv_id)
+        if conv_data is None:
+            missing_ids.append(conv_id)
+        else:
+            conversations_data.append(conv_data)
+
+    if missing_ids:
+        raise ValueError(f"Conversations not found: {', '.join(missing_ids)}")
+
+    if not conversations_data:
+        raise ValueError("No valid conversations to export")
+
+    # Build combined content based on format
+    timestamp = int(conversations_data[0]["create_time"] or 0)
+    filename_base = f"export_{len(conversations_data)}_conversations"
+
+    format_info = {
+        "md": ("text/markdown", f"{filename_base}.md"),
+        "json": ("application/json", f"{filename_base}.json"),
+        "yaml": ("application/x-yaml", f"{filename_base}.yaml"),
+        "html": ("text/html", f"{filename_base}.html"),
+        "xml": ("application/xml", f"{filename_base}.xml"),
+        "csv": ("text/csv", f"{filename_base}.csv"),
+        "xlsx": (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            f"{filename_base}.xlsx",
+        ),
+    }
+
+    if format not in format_info:
+        raise ValueError(f"Unsupported export format: {format}")
+
+    content_type, filename = format_info[format]
+
+    # Export each conversation and combine
+    if format == "json":
+        import json
+
+        combined = []
+        for conv_data in conversations_data:
+            conv_dict = {
+                "id": conv_data["id"],
+                "title": conv_data["title"],
+                "create_time": conv_data["create_time"],
+                "update_time": conv_data["update_time"],
+                "model": conv_data["model"],
+                "messages": conv_data["messages"],
+            }
+            combined.append(conv_dict)
+        content = json.dumps(combined, indent=2, ensure_ascii=False)
+
+    elif format == "md":
+        parts = []
+        exporter = markdown.MarkdownExporter()
+        for conv_data in conversations_data:
+            conv_dict = _build_conv_dict(conv_data)
+            parts.append(exporter.export(conv_dict, conv_data["messages"]))
+        content = "\n\n---\n\n".join(parts)
+
+    elif format == "yaml":
+        import yaml
+
+        combined = []
+        for conv_data in conversations_data:
+            conv_dict = {
+                "id": conv_data["id"],
+                "title": conv_data["title"],
+                "create_time": conv_data["create_time"],
+                "update_time": conv_data["update_time"],
+                "model": conv_data["model"],
+                "messages": conv_data["messages"],
+            }
+            combined.append(conv_dict)
+        content = yaml.dump(combined, allow_unicode=True, default_flow_style=False)
+
+    elif format == "html":
+        parts = []
+        for conv_data in conversations_data:
+            exporter = html_export.HTMLExporter()
+            conv_dict = _build_conv_dict(conv_data)
+            parts.append(exporter.export(conv_dict, conv_data["messages"]))
+        content = "\n<hr/>\n".join(parts)
+
+    elif format == "xml":
+        parts = ["<?xml version='1.0' encoding='UTF-8'?>\n<conversations>"]
+        for conv_data in conversations_data:
+            exporter = xml_exp.XMLExporter()
+            conv_dict = _build_conv_dict(conv_data)
+            xml_content = exporter.export(conv_dict, conv_data["messages"])
+            # Remove XML declaration from individual exports
+            if xml_content.startswith("<?xml"):
+                xml_content = xml_content.split("?>", 1)[-1].strip()
+            parts.append(xml_content)
+        parts.append("</conversations>")
+        content = "\n".join(parts)
+
+    elif format == "csv":
+        import csv
+        import io
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(
+            ["conversation_id", "title", "role", "content", "create_time"]
+        )
+        for conv_data in conversations_data:
+            for msg in conv_data["messages"]:
+                writer.writerow(
+                    [
+                        conv_data["id"],
+                        conv_data["title"],
+                        msg["role"],
+                        msg["content"],
+                        msg.get("create_time", ""),
+                    ]
+                )
+        content = output.getvalue()
+
+    elif format == "xlsx":
+        # For Excel, combine all messages with conversation context
+        exporter = excel_export.ExcelExporter()
+        # Create combined data structure
+        all_messages = []
+        for conv_data in conversations_data:
+            for msg in conv_data["messages"]:
+                msg_with_context = dict(msg)
+                msg_with_context["conversation_id"] = conv_data["id"]
+                msg_with_context["conversation_title"] = conv_data["title"]
+                all_messages.append(msg_with_context)
+        combined_conv = {
+            "id": "combined",
+            "title": f"{len(conversations_data)} Conversations",
+            "create_time": timestamp,
+            "update_time": timestamp,
+            "model": "various",
+            "message_count": len(all_messages),
+        }
+        content = exporter.export(combined_conv, all_messages)
+
+    return content, content_type, filename
+
+
+def _build_conv_dict(conv_data: dict) -> dict:
+    """Build a conversation dict for exporters."""
+    return {
+        "id": conv_data["id"],
+        "title": conv_data["title"],
+        "create_time": conv_data["create_time"],
+        "update_time": conv_data["update_time"],
+        "model": conv_data["model"],
+        "message_count": conv_data["message_count"],
+    }
+
+
 def _ensure_favorite_column(conn: sqlite3.Connection) -> None:
     """Ensure the is_favorite column exists on conversations table."""
     try:

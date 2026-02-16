@@ -43,16 +43,16 @@ def setup_cors(app: FastAPI) -> None:
     """Configure CORS and security middleware for the FastAPI application.
 
     Reads allowed origins from CORS_ORIGINS environment variable (JSON array string).
-    Defaults to http://localhost:3000 for local development.
+    Defaults to http://localhost:3000 and http://localhost:3001 for local development.
 
     Args:
         app: FastAPI application instance
     """
-    origins_str = os.environ.get("CORS_ORIGINS", '["http://localhost:3000"]')
+    origins_str = os.environ.get("CORS_ORIGINS", '["http://localhost:3000","http://localhost:3001"]')
     try:
         origins = json.loads(origins_str)
     except (json.JSONDecodeError, TypeError):
-        origins = ["http://localhost:3000"]
+        origins = ["http://localhost:3000", "http://localhost:3001"]
 
     app.add_middleware(
         CORSMiddleware,
