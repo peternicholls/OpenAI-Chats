@@ -8,43 +8,54 @@ test.describe('Import Functionality', () => {
     })
 
     test('should open import dialog', async ({ page }) => {
-        await page.goto('/')
-        const importButton = page.locator('[data-testid="import-button"], button:has-text("import"), a:has-text("import")').first()
+        // Navigate to import page
+        await page.goto('/import')
 
-        if (await importButton.isVisible()) {
-            await importButton.click()
+        // Click the trigger button to open the dialog
+        const dialogTrigger = page.locator('button:has-text("Choose Archive"), button:has-text("Import Archive")').first()
+        await expect(dialogTrigger).toBeVisible()
+        await dialogTrigger.click()
 
-            // Dialog or import area should appear
-            const importArea = page.locator('[data-testid="import-dialog"], [role="dialog"], input[type="file"]').first()
-            await expect(importArea).toBeVisible()
-        }
+        // Dialog should appear
+        const dialog = page.locator('[role="dialog"]')
+        await expect(dialog).toBeVisible({ timeout: 5000 })
     })
 
     test('should have file input for archive upload', async ({ page }) => {
-        await page.goto('/')
-        const importButton = page.locator('[data-testid="import-button"], button:has-text("import"), a:has-text("import")').first()
+        // Navigate to import page
+        await page.goto('/import')
 
-        if (await importButton.isVisible()) {
-            await importButton.click()
+        // Click the trigger button to open the dialog
+        const dialogTrigger = page.locator('button:has-text("Choose Archive"), button:has-text("Import Archive")').first()
+        await expect(dialogTrigger).toBeVisible()
+        await dialogTrigger.click()
 
-            // Should have a file input
-            const fileInput = page.locator('input[type="file"]')
-            await expect(fileInput).toBeAttached()
-        }
+        // Wait for dialog to open
+        const dialog = page.locator('[role="dialog"]')
+        await expect(dialog).toBeVisible({ timeout: 5000 })
+
+        // Should have a file input
+        const fileInput = page.locator('input[type="file"]')
+        await expect(fileInput).toBeAttached()
     })
 
     test('should accept zip files', async ({ page }) => {
-        await page.goto('/')
-        const importButton = page.locator('[data-testid="import-button"], button:has-text("import"), a:has-text("import")').first()
+        // Navigate to import page
+        await page.goto('/import')
 
-        if (await importButton.isVisible()) {
-            await importButton.click()
+        // Click the trigger button to open the dialog
+        const dialogTrigger = page.locator('button:has-text("Choose Archive"), button:has-text("Import Archive")').first()
+        await expect(dialogTrigger).toBeVisible()
+        await dialogTrigger.click()
 
-            const fileInput = page.locator('input[type="file"]')
-            // Check accept attribute includes zip
-            const accept = await fileInput.getAttribute('accept')
-            expect(accept).toContain('zip')
-        }
+        // Wait for dialog to open
+        const dialog = page.locator('[role="dialog"]')
+        await expect(dialog).toBeVisible({ timeout: 5000 })
+
+        const fileInput = page.locator('input[type="file"]')
+        // Check accept attribute includes zip
+        const accept = await fileInput.getAttribute('accept')
+        expect(accept).toContain('zip')
     })
 
     test('should show progress during import', async ({ page }) => {
