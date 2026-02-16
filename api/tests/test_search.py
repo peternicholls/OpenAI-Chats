@@ -21,6 +21,8 @@ class TestSearch:
         data = response.json()
         assert "items" in data
         assert "total" in data
+        assert "limit" in data
+        assert "offset" in data
 
     @pytest.mark.asyncio
     async def test_search_finds_matching_content(self, client):
@@ -29,9 +31,8 @@ class TestSearch:
 
         data = response.json()
         assert data["total"] > 0
-        # Should find conversation about Python
-        titles = [item["title"] for item in data["items"]]
-        assert any("Python" in title or "Test Conversation 2" in title for title in titles)
+        ids = [item["conversation_id"] for item in data["items"]]
+        assert "conv-002-test" in ids
 
     @pytest.mark.asyncio
     async def test_search_empty_results(self, client):
@@ -45,30 +46,30 @@ class TestSearch:
     @pytest.mark.asyncio
     async def test_search_with_limit(self, client):
         """Test search respects limit parameter."""
-        response = await client.post("/api/search", json={"query": "test", "limit": 1})
+        response = await client.post("/api/search", json={"query": "Python", "limit": 1})
 
         data = response.json()
-        assert len(data["items"]) <= 1
+        assert data["limit"] == 1
+        assert len(data["items"]) == 1
 
     @pytest.mark.asyncio
     async def test_search_result_has_required_fields(self, client):
         """Test that search results include required fields."""
-        response = await client.post("/api/search", json={"query": "hello"})
+        response = await client.post("/api/search", json={"query": "Python"})
 
         data = response.json()
-        if data["items"]:
-            item = data["items"][0]
-            assert "conversation_id" in item
-            assert "title" in item
-            assert "preview" in item
+        item = data["items"][0]
+        assert "conversation_id" in item
+        assert "title" in item
+        assert "preview" in item
+        assert "match_count" in item
 
     @pytest.mark.asyncio
     async def test_search_empty_query_handled(self, client):
-        """Test that empty query is handled gracefully."""
+        """Test that empty query is rejected by request validation."""
         response = await client.post("/api/search", json={"query": ""})
 
-        # Should return 400 or empty results, not error
-        assert response.status_code in [200, 400, 422]
+        assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_search_missing_query_returns_422(self, client):
@@ -92,10 +93,11 @@ class TestSearchTypes:
 
     @pytest.mark.asyncio
     async def test_search_invalid_type_handled(self, client):
-        """Test that invalid search type is handled."""
-        response = await client.post(
+        """Test invalid search_type falls back to keyword behavior."""
+        invalid = await client.post(
             "/api/search", json={"query": "test", "search_type": "invalid_type"}
         )
+        keyword = await client.post("/api/search", json={"query": "test", "search_type": "keyword"})
 
-        # Should either return 400/422 or fall back to keyword
-        assert response.status_code in [200, 400, 422]
+        assert invalid.status_code == 200
+        assert invalid.json() == keyword.json()

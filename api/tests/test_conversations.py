@@ -32,6 +32,11 @@ class TestListConversations:
         data = response.json()
         assert data["total"] == 3  # We have 3 sample conversations
         assert len(data["items"]) == 3
+        assert {item["id"] for item in data["items"]} == {
+            "conv-001-test",
+            "conv-002-test",
+            "conv-003-test",
+        }
 
     @pytest.mark.asyncio
     async def test_list_conversations_pagination_limit(self, client):
@@ -41,6 +46,8 @@ class TestListConversations:
         data = response.json()
         assert len(data["items"]) == 2
         assert data["limit"] == 2
+        # Default ordering is date desc: conv-003 then conv-002.
+        assert [item["id"] for item in data["items"]] == ["conv-003-test", "conv-002-test"]
 
     @pytest.mark.asyncio
     async def test_list_conversations_pagination_offset(self, client):
@@ -50,6 +57,7 @@ class TestListConversations:
         data = response.json()
         assert len(data["items"]) == 1  # 3 total - 2 offset = 1 remaining
         assert data["offset"] == 2
+        assert data["items"][0]["id"] == "conv-001-test"
 
     @pytest.mark.asyncio
     async def test_list_conversations_sorted_by_date(self, client):
@@ -72,6 +80,8 @@ class TestListConversations:
         assert "title" in item
         assert "create_time" in item
         assert "message_count" in item
+        assert "tags" in item
+        assert "is_favorite" in item
 
 
 class TestGetConversation:
@@ -94,7 +104,7 @@ class TestGetConversation:
 
         data = response.json()
         assert "messages" in data
-        assert len(data["messages"]) >= 2
+        assert len(data["messages"]) == 2
 
     @pytest.mark.asyncio
     async def test_get_conversation_messages_have_required_fields(self, client):
@@ -102,10 +112,13 @@ class TestGetConversation:
         response = await client.get("/api/conversations/conv-001-test")
 
         data = response.json()
-        message = data["messages"][0]
-        assert "id" in message
-        assert "role" in message
-        assert "content" in message
+        first, second = data["messages"]
+        assert first["id"] == "msg-001"
+        assert first["role"] == "user"
+        assert first["content"] == "Hello, how are you?"
+        assert second["id"] == "msg-002"
+        assert second["role"] == "assistant"
+        assert "thank you" in second["content"]
 
     @pytest.mark.asyncio
     async def test_get_conversation_not_found(self, client):
@@ -127,8 +140,10 @@ class TestListConversationsEmpty:
     """Tests for empty database scenarios."""
 
     @pytest.mark.asyncio
-    async def test_list_empty_database(self, client, monkeypatch, tmp_path):
+    async def test_list_empty_database(self, monkeypatch, tmp_path):
         """Test listing conversations when database is empty."""
+        from httpx import ASGITransport, AsyncClient
+
         from chatgpt_archive import db
 
         empty_db = tmp_path / "empty.db"
@@ -138,7 +153,11 @@ class TestListConversationsEmpty:
         monkeypatch.setenv("CHATGPT_ARCHIVE_DB", str(empty_db))
         monkeypatch.setenv("DB_PATH", str(empty_db))
 
-        response = await client.get("/api/conversations")
+        from api.main import app
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get("/api/conversations")
 
         # Should still return 200 with empty items
         assert response.status_code == 200

@@ -26,7 +26,8 @@ class TestExport:
         response = await client.get("/api/conversations/conv-001-test/export?format=md")
 
         content = response.text
-        assert "Test Conversation 1" in content or "Hello" in content
+        assert "Test Conversation 1" in content
+        assert "Hello, how are you?" in content
 
     @pytest.mark.asyncio
     async def test_export_json_returns_200(self, client):
@@ -40,9 +41,9 @@ class TestExport:
         """Test JSON export is valid JSON."""
         response = await client.get("/api/conversations/conv-001-test/export?format=json")
 
-        # Should not raise
         data = response.json()
-        assert data is not None
+        assert data["id"] == "conv-001-test"
+        assert len(data["messages"]) == 2
 
     @pytest.mark.asyncio
     async def test_export_json_content_type(self, client):
@@ -53,32 +54,37 @@ class TestExport:
 
     @pytest.mark.asyncio
     async def test_export_yaml_returns_200(self, client):
-        """Test exporting as YAML returns 200."""
+        """Test exporting as YAML returns expected type and content."""
         response = await client.get("/api/conversations/conv-001-test/export?format=yaml")
 
         assert response.status_code == 200
+        assert "application/x-yaml" in response.headers.get("content-type", "")
+        assert "id: conv-001-test" in response.text
 
     @pytest.mark.asyncio
     async def test_export_html_returns_200(self, client):
-        """Test exporting as HTML returns 200."""
+        """Test exporting as HTML returns expected type and content."""
         response = await client.get("/api/conversations/conv-001-test/export?format=html")
 
         assert response.status_code == 200
+        assert "text/html" in response.headers.get("content-type", "")
+        assert "<html" in response.text.lower()
 
     @pytest.mark.asyncio
     async def test_export_csv_returns_200(self, client):
-        """Test exporting as CSV returns 200."""
+        """Test exporting as CSV returns expected type and content."""
         response = await client.get("/api/conversations/conv-001-test/export?format=csv")
 
         assert response.status_code == 200
+        assert "text/csv" in response.headers.get("content-type", "")
+        assert "message_id,role,content" in response.text
 
     @pytest.mark.asyncio
     async def test_export_invalid_format_returns_error(self, client):
         """Test invalid export format returns error."""
         response = await client.get("/api/conversations/conv-001-test/export?format=invalid")
 
-        # FastAPI returns 422 for invalid enum value
-        assert response.status_code in [400, 404, 422]
+        assert response.status_code == 404
 
     @pytest.mark.asyncio
     async def test_export_nonexistent_conversation_returns_404(self, client):
@@ -95,3 +101,4 @@ class TestExport:
         assert response.status_code == 200
         assert "content-disposition" in response.headers
         assert "attachment" in response.headers["content-disposition"]
+        assert response.headers["content-disposition"].endswith(".md\"")
