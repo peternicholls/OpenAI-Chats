@@ -657,6 +657,63 @@ chatgpt-archive search "query" --hybrid
 
 ---
 
+## Test Issues
+
+### API tests fail with "OPENAI_API_KEY not set"
+
+**Problem**: Some tests require mocked API credentials.
+
+**Solution**: Tests use mocked clients and shouldn't require real API keys. If tests are failing:
+```bash
+# Ensure you're in the virtual environment
+source .venv/bin/activate
+
+# Run with verbose output to see the actual error
+pytest api/tests/ -v --tb=long
+```
+
+### Frontend tests fail with "Cannot find module"
+
+**Problem**: Dependencies not installed or path aliases not configured.
+
+**Solution**:
+```bash
+cd web
+npm install
+npm test
+```
+
+### E2E tests fail to start server
+
+**Problem**: Port 3030 already in use or server startup timeout.
+
+**Solutions**:
+1. Check if port is in use:
+   ```bash
+   lsof -i :3030
+   kill -9 <PID>
+   ```
+
+2. Increase timeout in playwright.config.ts if needed.
+
+3. Run the dev server manually first:
+   ```bash
+   npm run dev -- -p 3030
+   # In another terminal
+   npx playwright test
+   ```
+
+### Tests pass locally but fail in CI
+
+**Problem**: Environment differences between local and CI.
+
+**Solutions**:
+1. Ensure all dependencies are in package.json/pyproject.toml
+2. Check Node.js and Python versions match CI
+3. Run tests with `--no-cache` to avoid stale test results
+
+---
+
 ## General Debugging
 
 ### Enable verbose output

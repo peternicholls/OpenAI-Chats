@@ -371,6 +371,20 @@ docker-compose up -d
 - Export to multiple formats
 - Real-time import progress tracking
 
+### Development & Testing
+
+```bash
+# Run API tests (62 tests)
+source .venv/bin/activate
+pytest api/tests/ -v
+
+# Run frontend tests (55 tests)
+cd web && npm test
+
+# Run E2E tests with Playwright
+cd web && npm run test:e2e
+```
+
 ### Configuration
 
 Environment variables (set in `.env` or `docker-compose.yml`):

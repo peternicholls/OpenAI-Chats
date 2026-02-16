@@ -1,158 +1,104 @@
-# Implementation Plan: Comprehensive Test Coverage
+# Implementation Plan: [FEATURE]
 
-**Branch**: `002-web-ui` | **Date**: 2026-02-13 | **Spec**: [spec.md](spec.md)  
-**Input**: User request: "Plan tests to ensure coverage"
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Add comprehensive test coverage across all layers of the ChatGPT Archive application:
-- **Python Library** (chatgpt_archive): Expand existing tests for search, embeddings, exporters
-- **API Backend** (api): New test suite for all REST endpoints
-- **Web Frontend** (web): New test suite for React components, hooks, and API client
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-**Language/Version**: Python 3.11, TypeScript 5.4, Node 20.x  
-**Primary Dependencies**: pytest, httpx, Vitest, React Testing Library, MSW  
-**Storage**: SQLite (in-memory for tests)  
-**Testing**: pytest (Python), Vitest (TypeScript)  
-**Target Platform**: macOS/Linux development, Docker production  
-**Project Type**: Web application (frontend + backend)  
-**Performance Goals**: Tests complete in <60s (unit), <5m (integration)  
-**Constraints**: No external API calls during tests (mock OpenAI)  
-**Scale/Scope**: ~150 test cases total (50 Python + 100 TypeScript)
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
+
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
-*GATE: Pass ✅*
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-| Principle | Compliance | Notes |
-|-----------|------------|-------|
-| I. Data-First Architecture | ✅ | Tests use real JSON fixtures from archive format |
-| II. CLI-First Interface | ✅ | CLI tests already exist (test_cli.py) |
-| III. Fast Search & Retrieval | ✅ | Search tests will verify <500ms |
-| IV. Format-Agnostic Export | ✅ | New exporter tests cover all 7 formats |
-| V. Simplicity & Composability | ✅ | Tests use temp SQLite, no infrastructure |
-
-## Test Coverage Gap Analysis
-
-### Current State
-
-| Module | Existing Tests | Coverage |
-|--------|----------------|----------|
-| chatgpt_archive/db.py | ✅ test_db.py | Good |
-| chatgpt_archive/importer.py | ✅ test_importer.py | Good |
-| chatgpt_archive/models.py | ✅ test_models.py | Good |
-| chatgpt_archive/cli.py | ✅ test_cli.py | Partial |
-| chatgpt_archive/search.py | ❌ | **NONE** |
-| chatgpt_archive/embeddings.py | ❌ | **NONE** |
-| chatgpt_archive/exporters/* | ❌ | **NONE** |
-| api/routers/* | ❌ | **NONE** |
-| api/services/* | ❌ | **NONE** |
-| web/src/services/* | ❌ | **NONE** |
-| web/src/hooks/* | ❌ | **NONE** |
-| web/src/components/* | ❌ | **NONE** |
-
-### Target State (100% endpoint coverage)
-
-| Module | Tests Needed | Priority |
-|--------|--------------|----------|
-| Python exporters (7 formats) | 14 tests | P1 |
-| Python search module | 8 tests | P1 |
-| API conversations endpoint | 6 tests | P1 |
-| API search endpoint | 4 tests | P1 |
-| API export endpoint | 8 tests | P1 |
-| API tags endpoint | 6 tests | P1 |
-| API favorites endpoint | 4 tests | P1 |
-| API import endpoint | 4 tests | P2 |
-| API settings endpoint | 4 tests | P2 |
-| Frontend API client | 15 tests | P1 |
-| Frontend hooks | 20 tests | P2 |
-| Frontend components | 30 tests | P2 |
+[Gates determined based on constitution file]
 
 ## Project Structure
 
-### Test Files to Create
+### Documentation (this feature)
 
 ```text
-# Python Tests (pytest)
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+```
+
+### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
+
+```text
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
+
 tests/
-├── conftest.py                    # Shared fixtures
-├── fixtures/
-│   ├── sample_conversation.json   # Minimal conversation
-│   └── sample_archive/            # Complete archive structure
-├── unit/
-│   ├── test_exporters.py          # All 7 export formats
-│   ├── test_search.py             # FTS5 search module
-│   └── test_embeddings.py         # Embedding generation
-└── integration/
-    ├── test_api_conversations.py  # Conversation CRUD
-    ├── test_api_search.py         # Search endpoint
-    ├── test_api_export.py         # Export endpoint
-    ├── test_api_import.py         # Import endpoint
-    ├── test_api_tags.py           # Tags endpoint
-    ├── test_api_favorites.py      # Favorites endpoint
-    └── test_api_settings.py       # Settings endpoint
+├── contract/
+├── integration/
+└── unit/
 
-# TypeScript Tests (Vitest)
-web/
-├── vitest.config.ts
-├── vitest.setup.ts
-├── __tests__/
-│   ├── mocks/
-│   │   └── handlers.ts            # MSW request handlers
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
 │   ├── services/
-│   │   └── api.test.ts            # API client tests
-│   ├── hooks/
-│   │   ├── useConversations.test.ts
-│   │   ├── useSearch.test.ts
-│   │   ├── useFavorites.test.ts
-│   │   └── useTags.test.ts
-│   └── components/
-│       ├── ConversationCard.test.tsx
-│       ├── MessageBubble.test.tsx
-│       └── SearchBar.test.tsx
-└── package.json                   # Add test dependencies
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-## Dependencies to Add
-
-### Python (pyproject.toml)
-```toml
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-asyncio>=0.23",
-    "pytest-cov>=4.1",
-    "httpx>=0.27",
-    "pytest-mock>=3.12",
-]
-```
-
-### TypeScript (web/package.json)
-```json
-{
-  "devDependencies": {
-    "@testing-library/react": "^16.0.0",
-    "@testing-library/jest-dom": "^6.4.0",
-    "@testing-library/user-event": "^14.5.0",
-    "vitest": "^2.0.0",
-    "@vitejs/plugin-react": "^4.3.0",
-    "jsdom": "^24.0.0",
-    "msw": "^2.3.0"
-  }
-}
-```
-
-## Test Specifications
-
-See [contracts/test-specs.md](contracts/test-specs.md) for detailed test case specifications covering:
-- **118 test cases** across Python and TypeScript
-- Unit tests for exporters, search, embeddings
-- Integration tests for all API endpoints
-- Frontend component, hook, and service tests
-- Test fixtures and sample data
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 
-*No violations - tests follow existing project patterns*
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |

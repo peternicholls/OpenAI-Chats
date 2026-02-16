@@ -1,0 +1,147 @@
+"""Tests for the conversations endpoints."""
+
+import pytest
+
+
+class TestListConversations:
+    """Tests for GET /api/conversations endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_list_conversations_returns_200(self, client):
+        """Test that listing conversations returns 200."""
+        response = await client.get("/api/conversations")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_list_conversations_returns_items(self, client):
+        """Test that listing returns the expected structure."""
+        response = await client.get("/api/conversations")
+
+        data = response.json()
+        assert "items" in data
+        assert "total" in data
+        assert "limit" in data
+        assert "offset" in data
+
+    @pytest.mark.asyncio
+    async def test_list_conversations_contains_sample_data(self, client):
+        """Test that sample conversations are returned."""
+        response = await client.get("/api/conversations")
+
+        data = response.json()
+        assert data["total"] == 3  # We have 3 sample conversations
+        assert len(data["items"]) == 3
+
+    @pytest.mark.asyncio
+    async def test_list_conversations_pagination_limit(self, client):
+        """Test pagination with limit parameter."""
+        response = await client.get("/api/conversations?limit=2")
+
+        data = response.json()
+        assert len(data["items"]) == 2
+        assert data["limit"] == 2
+
+    @pytest.mark.asyncio
+    async def test_list_conversations_pagination_offset(self, client):
+        """Test pagination with offset parameter."""
+        response = await client.get("/api/conversations?offset=2")
+
+        data = response.json()
+        assert len(data["items"]) == 1  # 3 total - 2 offset = 1 remaining
+        assert data["offset"] == 2
+
+    @pytest.mark.asyncio
+    async def test_list_conversations_sorted_by_date(self, client):
+        """Test sorting by date descending (default)."""
+        response = await client.get("/api/conversations?sort_by=date&order=desc")
+
+        data = response.json()
+        items = data["items"]
+        # Most recent first (conv-003 has highest create_time)
+        assert items[0]["id"] == "conv-003-test"
+
+    @pytest.mark.asyncio
+    async def test_list_conversations_includes_required_fields(self, client):
+        """Test that conversation items include all required fields."""
+        response = await client.get("/api/conversations")
+
+        data = response.json()
+        item = data["items"][0]
+        assert "id" in item
+        assert "title" in item
+        assert "create_time" in item
+        assert "message_count" in item
+
+
+class TestGetConversation:
+    """Tests for GET /api/conversations/{id} endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_by_id(self, client):
+        """Test getting a single conversation by ID."""
+        response = await client.get("/api/conversations/conv-001-test")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == "conv-001-test"
+        assert data["title"] == "Test Conversation 1"
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_includes_messages(self, client):
+        """Test that conversation detail includes messages."""
+        response = await client.get("/api/conversations/conv-001-test")
+
+        data = response.json()
+        assert "messages" in data
+        assert len(data["messages"]) >= 2
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_messages_have_required_fields(self, client):
+        """Test that messages have required fields."""
+        response = await client.get("/api/conversations/conv-001-test")
+
+        data = response.json()
+        message = data["messages"][0]
+        assert "id" in message
+        assert "role" in message
+        assert "content" in message
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_not_found(self, client):
+        """Test getting a non-existent conversation returns 404."""
+        response = await client.get("/api/conversations/non-existent-id")
+
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_404_has_error_detail(self, client):
+        """Test that 404 response includes error detail."""
+        response = await client.get("/api/conversations/non-existent-id")
+
+        data = response.json()
+        assert "detail" in data
+
+
+class TestListConversationsEmpty:
+    """Tests for empty database scenarios."""
+
+    @pytest.mark.asyncio
+    async def test_list_empty_database(self, client, monkeypatch, tmp_path):
+        """Test listing conversations when database is empty."""
+        from chatgpt_archive import db
+
+        empty_db = tmp_path / "empty.db"
+        conn = db.init_db(empty_db)
+        conn.close()
+
+        monkeypatch.setenv("CHATGPT_ARCHIVE_DB", str(empty_db))
+        monkeypatch.setenv("DB_PATH", str(empty_db))
+
+        response = await client.get("/api/conversations")
+
+        # Should still return 200 with empty items
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == 0
+        assert data["items"] == []

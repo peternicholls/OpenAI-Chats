@@ -151,15 +151,15 @@ Web application architecture:
 #### Frontend UI
 
 - [x] T074 [P] [US2] Create search page in web/src/app/search/page.tsx
-- [ ] T075 [P] [US2] Generate shadcn/ui DatePicker components via CLI: `npx shadcn-ui add calendar popover` into web/src/components/ui/
-- [ ] T076 [US2] (depends on T075) Create SearchFilters component in web/src/components/search/SearchFilters.tsx (date range using DatePicker, search type dropdown)
-- [ ] T077 [US2] (depends on T075) Create SearchBar component in web/src/components/search/SearchBar.tsx (client component with 500ms debounce using lodash.debounce or custom useDebounce hook)
-- [ ] T078 [P] [US2] Create SearchResults component in web/src/components/search/SearchResults.tsx
+- [x] T075 [P] [US2] Generate shadcn/ui DatePicker components via CLI: `npx shadcn-ui add calendar popover` into web/src/components/ui/
+- [x] T076 [US2] (depends on T075) Create SearchFilters component in web/src/components/search/SearchFilters.tsx (date range using DatePicker, search type dropdown)
+- [x] T077 [US2] (depends on T075) Create SearchBar component in web/src/components/search/SearchBar.tsx (client component with 500ms debounce using lodash.debounce or custom useDebounce hook)
+- [x] T078 [P] [US2] Create SearchResults component in web/src/components/search/SearchResults.tsx
 - [x] T079 [P] [US2] Add shadcn/ui Select component for search type selector
 - [x] T080 [US2] Create useSearch hook in web/src/hooks/useSearch.ts with React Query and debounce
 - [x] T081 [US2] Add search API client method in web/src/services/api.ts
-- [ ] T082 [P] [US2] Implement search term highlighting in SearchResults using react-highlight-words library (highlight matched keywords in result snippets)
-- [ ] T083 [US2] Implement 500ms debounce logic in SearchBar input (use useDebounce custom hook)
+- [x] T082 [P] [US2] Implement search term highlighting in SearchResults using react-highlight-words library (highlight matched keywords in result snippets)
+- [x] T083 [US2] Implement 500ms debounce logic in SearchBar input (use useDebounce custom hook)
 - [x] T084 [US2] Add search result click navigation to conversation detail
 - [x] T085 [US2] Add empty state for no results
 - [x] T086 [US2] Add global search bar in Header component linking to search page
@@ -351,27 +351,27 @@ Web application architecture:
 
 ### Test Setup
 
-- [ ] T188 Add test dependencies to pyproject.toml: pytest>=8.0, pytest-asyncio>=0.23, pytest-cov>=4.1, httpx>=0.27, pytest-mock>=3.12
-- [ ] T189 [P] Add test dependencies to web/package.json: vitest, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, jsdom, msw
-- [ ] T190 [P] Add Playwright dependencies to web/package.json: @playwright/test (for E2E tests)
-- [ ] T191 [P] Create tests/conftest.py with shared fixtures: tmp_db, sample_conversation, api_client, mock_openai_client
+- [x] T188 Add test dependencies to pyproject.toml: pytest>=8.0, pytest-asyncio>=0.23, pytest-cov>=4.1, httpx>=0.27, pytest-mock>=3.12
+- [x] T189 [P] Add test dependencies to web/package.json: vitest, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, jsdom, msw
+- [x] T190 [P] Add Playwright dependencies to web/package.json: @playwright/test (for E2E tests)
+- [x] T191 [P] Create tests/conftest.py with shared fixtures: tmp_db, sample_conversation, api_client, mock_openai_client
 - [ ] T192 [P] Create tests/fixtures/sample_conversation.json with minimal valid conversation (user + assistant messages)
 - [ ] T193 [P] Create tests/fixtures/sample_archive/ directory with conversations.json (3 conversations), user.json
 - [ ] T194 [P] Create tests/fixtures/test_archive.zip from sample_archive/ for import testing
 - [ ] T195 [P] Create test data generator script in tests/fixtures/generate_test_data.py (generate conversations with varying sizes: 10, 100, 1000 messages)
-- [ ] T196 [P] Create web/vitest.config.ts with jsdom environment, react plugin, coverage settings (target: 70%+)
-- [ ] T197 [P] Create web/vitest.setup.ts with @testing-library/jest-dom matchers
-- [ ] T198 [P] Create web/__tests__/mocks/handlers.ts with MSW request handlers for all API endpoints (conversations, search, tags, favorites, import, export, embeddings)
-- [ ] T199 [P] Create web/playwright.config.ts with browser configs (chromium, webkit), base URL, test timeout
+- [x] T196 [P] Create web/vitest.config.ts with jsdom environment, react plugin, coverage settings (target: 70%+)
+- [x] T197 [P] Create web/vitest.setup.ts with @testing-library/jest-dom matchers
+- [x] T198 [P] Create web/__tests__/mocks/handlers.ts with MSW request handlers for all API endpoints (conversations, search, tags, favorites, import, export, embeddings)
+- [x] T199 [P] Create web/playwright.config.ts with browser configs (chromium, webkit), base URL, test timeout
 - [ ] T200 [P] Setup OpenAI API mocking in tests/conftest.py using pytest-mock (mock embeddings endpoint, return fake vectors)
 
 ### End-to-End Tests (Playwright)
 
-- [ ] T201 Write Playwright E2E test for US1 import flow in web/__tests__/e2e/import.spec.ts (upload ZIP, wait for progress, verify conversations appear)
-- [ ] T202 [P] Write Playwright E2E test for US1 conversation list in web/__tests__/e2e/conversations.spec.ts (view list, pagination, sorting)
-- [ ] T203 [P] Write Playwright E2E test for US1 conversation detail in web/__tests__/e2e/conversation-detail.spec.ts (click conversation, view messages, navigate back)
-- [ ] T204 [P] Write Playwright E2E test for US2 search flow in web/__tests__/e2e/search.spec.ts (type query, verify debounce, check results, click result)
-- [ ] T205 [P] Write Playwright E2E test for US3 export flow in web/__tests__/e2e/export.spec.ts (open export dialog, select format, verify download)
+- [x] T201 Write Playwright E2E test for US1 import flow in web/__tests__/e2e/import.spec.ts (upload ZIP, wait for progress, verify conversations appear)
+- [x] T202 [P] Write Playwright E2E test for US1 conversation list in web/__tests__/e2e/conversations.spec.ts (view list, pagination, sorting)
+- [x] T203 [P] Write Playwright E2E test for US1 conversation detail in web/__tests__/e2e/conversation-detail.spec.ts (click conversation, view messages, navigate back)
+- [x] T204 [P] Write Playwright E2E test for US2 search flow in web/__tests__/e2e/search.spec.ts (type query, verify debounce, check results, click result)
+- [x] T205 [P] Write Playwright E2E test for US3 export flow in web/__tests__/e2e/export.spec.ts (open export dialog, select format, verify download)
 - [ ] T206 [P] Write Playwright E2E test for US4 favorites flow in web/__tests__/e2e/favorites.spec.ts (toggle favorite, filter favorites page)
 - [ ] T207 [P] Write Playwright E2E test for US4 tags flow in web/__tests__/e2e/tags.spec.ts (add tag, remove tag, filter by tag)
 - [ ] T208 [P] Write Playwright E2E test for US5 embeddings flow in web/__tests__/e2e/embeddings.spec.ts (add API key, view cost estimate, start generation)
