@@ -44,14 +44,6 @@ export function Header() {
                         />
                     </div>
                 </form>
-
-                <div className="flex items-center gap-2 ml-auto">
-                    <Link href="/import">
-                        <Button variant="outline" size="sm">
-                            Import
-                        </Button>
-                    </Link>
-                </div>
             </div>
         </header>
     );

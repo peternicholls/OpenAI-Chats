@@ -175,8 +175,8 @@ class APIClient {
                 reject(
                     new Error(
                         errorPayload?.detail ||
-                            errorPayload?.message ||
-                            `Upload failed: ${xhr.status}`
+                        errorPayload?.message ||
+                        `Upload failed: ${xhr.status}`
                     )
                 );
             };
@@ -198,6 +198,10 @@ class APIClient {
         return `${this.baseUrl}/api/conversations/${conversationId}/export?format=${format}`;
     }
 
+    getBatchExportUrl(conversationIds: string[], format: ExportFormat): string {
+        return `${this.baseUrl}/api/export/batch?ids=${conversationIds.join(",")}&format=${format}`;
+    }
+
     async exportConversation(conversationId: string, format: string): Promise<Blob> {
         const formatMap: Record<string, string> = {
             markdown: "md", json: "json", html: "html",
@@ -205,7 +209,24 @@ class APIClient {
         };
         const apiFormat = formatMap[format] || format;
         const res = await fetch(this.getExportUrl(conversationId, apiFormat as ExportFormat));
-        if (!res.ok) throw new Error(`Export failed: ${res.status}`);
+        if (!res.ok) {
+            const error = await res.json().catch(() => ({ detail: res.statusText }));
+            throw new Error(error.detail || `Export failed: ${res.status}`);
+        }
+        return res.blob();
+    }
+
+    async exportBatch(conversationIds: string[], format: string): Promise<Blob> {
+        const formatMap: Record<string, string> = {
+            markdown: "md", json: "json", html: "html",
+            csv: "csv", yaml: "yaml", xml: "xml", excel: "xlsx"
+        };
+        const apiFormat = formatMap[format] || format;
+        const res = await fetch(this.getBatchExportUrl(conversationIds, apiFormat as ExportFormat));
+        if (!res.ok) {
+            const error = await res.json().catch(() => ({ detail: res.statusText }));
+            throw new Error(error.detail || `Batch export failed: ${res.status}`);
+        }
         return res.blob();
     }
 

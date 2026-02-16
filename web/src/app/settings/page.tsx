@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,11 +20,17 @@ import { toast } from "sonner";
 export default function SettingsPage() {
   const { data, isLoading } = useSettings();
   const updateSettings = useUpdateSettings();
+  const { theme: currentTheme, setTheme } = useTheme();
   const [draft, setDraft] = useState<Partial<UserSettings>>({});
 
-  const theme = draft.theme ?? data?.theme ?? "light";
+  const theme = draft.theme ?? currentTheme ?? "system";
   const defaultExportFormat = draft.default_export_format ?? data?.default_export_format ?? "md";
   const openaiApiKey = draft.openai_api_key ?? data?.openai_api_key ?? "";
+
+  const handleThemeChange = (value: string) => {
+    setDraft((current) => ({ ...current, theme: value as "light" | "dark" | "system" }));
+    setTheme(value); // Apply theme immediately
+  };
 
   const handleSave = async () => {
     try {
@@ -55,9 +62,7 @@ export default function SettingsPage() {
             <label className="text-sm font-medium">Theme</label>
             <Select
               value={theme}
-              onValueChange={(value) =>
-                setDraft((current) => ({ ...current, theme: value as "light" | "dark" | "system" }))
-              }
+              onValueChange={handleThemeChange}
             >
               <SelectTrigger>
                 <SelectValue />

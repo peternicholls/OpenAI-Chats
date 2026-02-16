@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, Trash2, Star } from "lucide-react";
+import { TagEditor } from "@/components/tags/TagEditor";
 import type { ConversationDetail } from "@/types";
 
 function formatDate(timestamp: number | null): string {
@@ -21,12 +21,16 @@ interface ConversationHeaderProps {
     conversation: ConversationDetail;
     onExport?: () => void;
     onDelete?: () => void;
+    onToggleFavorite?: () => void;
+    isFavorite?: boolean;
 }
 
 export function ConversationHeader({
     conversation,
     onExport,
     onDelete,
+    onToggleFavorite,
+    isFavorite,
 }: ConversationHeaderProps) {
     return (
         <div className="flex flex-col gap-3 mb-6">
@@ -40,6 +44,17 @@ export function ConversationHeader({
                     {conversation.title || "[Untitled]"}
                 </h1>
                 <div className="flex items-center gap-2">
+                    {onToggleFavorite && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onToggleFavorite}
+                            className={isFavorite ? "text-yellow-500" : ""}
+                        >
+                            <Star className={`h-4 w-4 mr-1 ${isFavorite ? "fill-current" : ""}`} />
+                            {isFavorite ? "Favorited" : "Favorite"}
+                        </Button>
+                    )}
                     {onExport && (
                         <Button variant="outline" size="sm" onClick={onExport}>
                             <Download className="h-4 w-4 mr-1" />
@@ -59,15 +74,10 @@ export function ConversationHeader({
                 <span>{conversation.message_count} messages</span>
                 {conversation.model && <span>{conversation.model}</span>}
             </div>
-            {conversation.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                    {conversation.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary">
-                            {tag}
-                        </Badge>
-                    ))}
-                </div>
-            )}
+            <TagEditor
+                conversationId={conversation.id}
+                tags={conversation.tags}
+            />
         </div>
     );
 }
