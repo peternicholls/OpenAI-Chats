@@ -1,28 +1,36 @@
 # Backend API Dockerfile - Multi-stage build
+# Stage 1: Install all dependencies
 FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
-# Copy the entire project for editable install
+# Copy source needed for installation
 COPY pyproject.toml README.md ./
 COPY chatgpt_archive/ chatgpt_archive/
 COPY api/ api/
 
-# Install dependencies
-RUN pip install --no-cache-dir -e "." && \
-    pip install --no-cache-dir fastapi uvicorn[standard] python-multipart pydantic
+# Install root chatgpt_archive package first (makes it findable for api/ install),
+# then install the API package which reads its pyproject.toml for all deps.
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir "." && \
+    pip install --no-cache-dir "./api/"
 
 # ---
+# Stage 2: Lean runtime image — no build tools, no test files
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy installed packages and source
+# Copy installed packages from builder (excludes build tools — those weren't in
+# python:3.11-slim to begin with, so this is already lean)
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
-COPY --from=builder /build /app
 
-# Create data directory
+# Copy only the source code needed at runtime (tests excluded via .dockerignore)
+COPY chatgpt_archive/ chatgpt_archive/
+COPY api/ api/
+
+# Create data directory for SQLite database
 RUN mkdir -p /data
 
 ENV CHATGPT_ARCHIVE_DB=/data/chats.db

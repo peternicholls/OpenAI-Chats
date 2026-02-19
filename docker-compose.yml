@@ -31,7 +31,7 @@ services:
       
       # CORS_ORIGINS: JSON array of allowed origins for CORS
       # Must include the frontend URL. Add production domains as needed.
-      - CORS_ORIGINS=["http://localhost:3000"]
+      - CORS_ORIGINS=["http://localhost:3001"]
       
       # OPENAI_API_KEY: Required for semantic search / embeddings
       # Uncomment and set to enable semantic search:
@@ -49,12 +49,14 @@ services:
     build:
       context: .
       dockerfile: docker/web.Dockerfile
+      args:
+        # Baked at build time — must point to a URL the browser can reach
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
-      # NEXT_PUBLIC_API_URL: Backend API URL (internal Docker network)
-      # Use the service name 'api' for container-to-container communication
-      - NEXT_PUBLIC_API_URL=http://api:8000
+      # Runtime env (informational only — NEXT_PUBLIC_* is baked at build time via build args above)
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       api:
         condition: service_healthy

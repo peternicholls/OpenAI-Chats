@@ -1,0 +1,77 @@
+# Docker build context exclusions
+# Keeps images lean by omitting files never needed at runtime
+
+# Git
+.git/
+.gitignore
+
+# Python caches  
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+.eggs/
+dist/
+build/
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test files (not needed in production images)
+tests/
+test_*.py
+*_test.py
+api/tests/
+web/__tests__/
+pytest.ini
+.pytest_cache/
+coverage/
+.coverage
+htmlcov/
+
+# Node.js (excluded from API image; web image only needs web/)
+web/node_modules/
+web/.next/
+web/coverage/
+web/playwright-report/
+web/test-results/
+
+# Development & editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+specs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+
+# Local data
+*.db
+*.sqlite
+*.sqlite3
+~/.chatgpt-archive/
+
+# Environment files (secrets should come from env vars at runtime)
+.env
+.env.*
+!.env.example
+
+# Inspection/analysis scripts
+inspect_archive.py
+analyze_export.py
+test_phases_1_2.py

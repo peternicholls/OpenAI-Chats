@@ -12,6 +12,10 @@ RUN npm ci
 # Copy source
 COPY web/ .
 
+# NEXT_PUBLIC_* vars are baked at build time — accept as ARG
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Build Next.js app (standalone output)
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
