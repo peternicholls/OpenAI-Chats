@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useConversations } from "@/hooks/useConversations";
@@ -34,7 +34,7 @@ const EXPORT_FORMATS: { value: ExportFormatCode; label: string }[] = [
   { value: "xlsx", label: "Excel" },
 ];
 
-export default function ConversationsPage() {
+function ConversationsContent() {
   const searchParams = useSearchParams();
   const tagFilter = searchParams.get("tag") || undefined;
 
@@ -273,5 +273,13 @@ export default function ConversationsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ConversationsPage() {
+  return (
+    <Suspense fallback={<ConversationListSkeleton />}>
+      <ConversationsContent />
+    </Suspense>
   );
 }

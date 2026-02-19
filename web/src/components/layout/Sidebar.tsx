@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 import { Search, MessageSquare, Upload, Star, Settings } from "lucide-react";
 import { TagList } from "@/components/tags/TagList";
 
@@ -47,7 +48,9 @@ export function Sidebar() {
                     })}
                 </nav>
                 <div className="mt-4 px-3 border-t pt-4">
-                    <TagList />
+                    <Suspense fallback={null}>
+                        <TagList />
+                    </Suspense>
                 </div>
             </div>
         </aside>
