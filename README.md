@@ -374,16 +374,29 @@ docker-compose up -d
 ### Development & Testing
 
 ```bash
-# Run API tests (62 tests)
+# Run backend API tests (70 tests)
 source .venv/bin/activate
 pytest api/tests/ -v
 
-# Run frontend tests (55 tests)
+# Run frontend unit tests with Vitest
 cd web && npm test
 
 # Run E2E tests with Playwright
 cd web && npm run test:e2e
 ```
+
+### Web UI Features
+
+The web interface includes:
+
+- **Conversation Browser** - List, sort, and paginate through conversations
+- **Full-Text Search** - Real-time search with result highlighting
+- **Semantic Search** - AI-powered search (requires OpenAI API key)
+- **Tags & Favorites** - Organize conversations with tags and favorites
+- **Batch Export** - Export multiple conversations at once
+- **Import Progress** - Real-time SSE progress during archive import  
+- **Dark Mode** - System-aware theme switching
+- **Embedding Management** - Generate and manage semantic search embeddings with cost controls
 
 ### Configuration
 
@@ -397,11 +410,13 @@ Environment variables (set in `.env` or `docker-compose.yml`):
 
 ### Security
 
-The API includes security headers:
-- Content Security Policy (CSP) to prevent XSS
-- X-Frame-Options to prevent clickjacking
-- Input validation and sanitization
-- Environment variable validation on startup
+The API includes comprehensive security:
+- **Content Security Policy** (CSP) to prevent XSS
+- **X-Frame-Options** to prevent clickjacking
+- **Input validation** and sanitization on all endpoints
+- **Environment variable validation** on startup
+- **API key encryption** at rest using Fernet
+- **0.0.0.0 binding warning** logged when exposed to network
 
 See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#web-ui-issues) for common issues.
 
