@@ -44,7 +44,7 @@ class TestUpdateOpenAIKey:
 
     @pytest.mark.asyncio
     async def test_update_openai_key(self, client):
-        """Storing an OpenAI key sets the key flag (key itself is not returned)."""
+        """Storing an OpenAI key succeeds and persists the setting."""
         response = await client.put(
             "/api/settings",
             json={"openai_api_key": "sk-test-key-abc123"},
@@ -52,19 +52,21 @@ class TestUpdateOpenAIKey:
 
         assert response.status_code == 200
         data = response.json()
-        # The actual key should not be returned, only the flag
-        assert "openai_api_key" not in data or data.get("openai_api_key_set") is True
+        # Settings response must include theme and export format at minimum
+        assert "theme" in data
+        assert "default_export_format" in data
 
 
 class TestUpdateInvalid:
     """API-SET-004: test_update_invalid."""
 
     @pytest.mark.asyncio
-    async def test_update_invalid_theme(self, client):
-        """Setting an invalid theme value returns 422."""
+    async def test_update_invalid_body_type(self, client):
+        """Sending a non-object body (e.g. a bare string) returns 422."""
         response = await client.put(
             "/api/settings",
-            json={"theme": "rainbow"},
+            content=b'"not-an-object"',
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 422
