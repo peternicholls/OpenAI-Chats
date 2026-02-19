@@ -199,9 +199,11 @@ def validate_conversation_id(conversation_id: str) -> str:
 
     conversation_id = str(conversation_id).strip()
 
-    # UUID format or OpenAI format
-    uuid_pattern = r"^[a-f0-9-]{36}$"
-    if not re.match(uuid_pattern, conversation_id, re.IGNORECASE):
+    if len(conversation_id) > 100:
+        raise ValueError("Conversation ID too long")
+
+    # Allow alphanumeric characters plus hyphens and underscores
+    if not re.match(r"^[a-zA-Z0-9_-]+$", conversation_id):
         raise ValueError("Invalid conversation ID format")
 
     return conversation_id

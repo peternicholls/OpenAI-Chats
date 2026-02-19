@@ -9,6 +9,8 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from api.middleware.cors import setup_cors
+from api.middleware.logging import add_request_logging
+from api.middleware.rate_limit import add_rate_limiting
 from api.routers import (
     conversations,
     embeddings,
@@ -73,8 +75,14 @@ app = FastAPI(
     description="REST API for ChatGPT Archive Web UI",
 )
 
-# Setup CORS
+# Setup CORS and security headers
 setup_cors(app)
+
+# Setup request logging (JSON format for Docker log aggregation)
+add_request_logging(app)
+
+# Setup rate limiting (100 requests/minute per IP)
+add_rate_limiting(app, requests_per_minute=100)
 
 # Include routers
 app.include_router(health.router)

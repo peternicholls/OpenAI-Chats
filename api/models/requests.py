@@ -34,3 +34,6 @@ class EmbeddingRequest(BaseModel):
     model: str = Field("text-embedding-3-small", description="OpenAI embedding model")
     batch_size: int = Field(100, ge=1, le=500, description="Messages per batch")
     estimate_only: bool = Field(False, description="Return cost estimate only")
+    max_cost: float | None = Field(
+        5.00, ge=0.0, le=1000.0, description="Maximum cost in USD (default $5.00, None=unlimited)"
+    )
