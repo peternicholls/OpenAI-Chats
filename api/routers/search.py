@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 
+from api.middleware.validation import validate_query_param, validate_pagination
 from api.models.requests import SearchRequest
 from api.models.responses import PaginatedResponse, SearchResult
 from api.services import archive_service
@@ -13,13 +14,22 @@ router = APIRouter(tags=["Search"])
 @router.post("/api/search", response_model=PaginatedResponse)
 async def search_conversations(request: SearchRequest) -> PaginatedResponse:
     """Search conversations with keyword, semantic, or hybrid search."""
+    # Validate query parameter for injection attacks
+    try:
+        validated_query = validate_query_param("query", request.query, max_length=500)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    
+    # Validate pagination
+    validated_offset, validated_limit = validate_pagination(request.offset, request.limit)
+    
     try:
         results = archive_service.search_conversations(
-            query=request.query,
+            query=validated_query,
             from_date=request.from_date,
             to_date=request.to_date,
-            limit=request.limit,
-            offset=request.offset,
+            limit=validated_limit,
+            offset=validated_offset,
             search_type=request.search_type,
         )
         items = [SearchResult(**r) for r in results["items"]]

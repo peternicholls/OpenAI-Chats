@@ -1,37 +1,31 @@
 """Tag management endpoints."""
 
-import re
-
 from fastapi import APIRouter, HTTPException
 
+from api.middleware.validation import validate_tag_name as validate_tag, validate_conversation_id
 from api.models.requests import TagRequest
 from api.models.responses import Tag
 from api.services import archive_service
 
 router = APIRouter(tags=["Tags"])
 
-# Tag validation pattern: alphanumeric, hyphens, underscores
-TAG_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
-MAX_TAG_LENGTH = 50
 
+def validate_tag_name(tag_name: str) -> str:
+    """Validate tag name format using middleware validation.
 
-def validate_tag_name(tag_name: str) -> None:
-    """Validate tag name format.
+    Args:
+        tag_name: Tag name to validate.
+
+    Returns:
+        Validated and normalized tag name.
 
     Raises:
         HTTPException: If tag name is invalid.
     """
-    if not tag_name:
-        raise HTTPException(status_code=400, detail="Tag name cannot be empty")
-    if len(tag_name) > MAX_TAG_LENGTH:
-        raise HTTPException(
-            status_code=400, detail=f"Tag name exceeds maximum length of {MAX_TAG_LENGTH} characters"
-        )
-    if not TAG_PATTERN.match(tag_name):
-        raise HTTPException(
-            status_code=400,
-            detail="Tag name must contain only alphanumeric characters, hyphens, and underscores",
-        )
+    try:
+        return validate_tag(tag_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/api/tags", response_model=list[Tag])
@@ -44,19 +38,29 @@ async def list_tags() -> list[Tag]:
 @router.get("/api/conversations/{conversation_id}/tags", response_model=list[str])
 async def get_conversation_tags(conversation_id: str) -> list[str]:
     """Get tags for a specific conversation."""
-    conv = archive_service.get_conversation(conversation_id)
+    try:
+        validated_id = validate_conversation_id(conversation_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    
+    conv = archive_service.get_conversation(validated_id)
     if conv is None:
         raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
-    return archive_service.get_tags_for_conversation(conversation_id)
+    return archive_service.get_tags_for_conversation(validated_id)
 
 
 @router.post("/api/conversations/{conversation_id}/tags", status_code=204)
 async def add_tag(conversation_id: str, request: TagRequest) -> None:
     """Add a tag to a conversation."""
+    try:
+        validated_id = validate_conversation_id(conversation_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    
     # Validate tag name format
-    validate_tag_name(request.tag_name)
+    validated_tag = validate_tag_name(request.tag_name)
 
-    result = archive_service.add_tag_to_conversation(conversation_id, request.tag_name)
+    result = archive_service.add_tag_to_conversation(validated_id, validated_tag)
     if not result:
         raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
 
@@ -64,6 +68,11 @@ async def add_tag(conversation_id: str, request: TagRequest) -> None:
 @router.delete("/api/conversations/{conversation_id}/tags/{tag_name}", status_code=204)
 async def remove_tag(conversation_id: str, tag_name: str) -> None:
     """Remove a tag from a conversation."""
-    result = archive_service.remove_tag_from_conversation(conversation_id, tag_name)
+    try:
+        validated_id = validate_conversation_id(conversation_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    
+    result = archive_service.remove_tag_from_conversation(validated_id, tag_name)
     if not result:
         raise HTTPException(status_code=404, detail="Conversation or tag not found")
