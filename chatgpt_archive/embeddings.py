@@ -67,17 +67,20 @@ class EmbeddingProgress:
         return round(self.completed / self.total * 100, 1)
 
 
-def get_openai_client():
+def get_openai_client(api_key: str | None = None):
     """Get an OpenAI client instance.
-    
+
+    Args:
+        api_key: Optional API key. Falls back to OPENAI_API_KEY env var.
+
     Returns:
         OpenAI client
-        
+
     Raises:
-        APIKeyMissingError: If OPENAI_API_KEY is not set
+        APIKeyMissingError: If no API key is available
         EmbeddingError: If openai package is not installed
     """
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = api_key or os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise APIKeyMissingError(
             "OPENAI_API_KEY environment variable is not set. "
@@ -275,6 +278,7 @@ def embed_messages(
     batch_size: int = DEFAULT_BATCH_SIZE,
     progress_callback: Callable[[EmbeddingProgress], None] | None = None,
     max_batches: int | None = None,
+    api_key: str | None = None,
 ) -> EmbeddingProgress:
     """Generate embeddings for all unembedded messages.
     
@@ -305,8 +309,8 @@ def embed_messages(
         dimensions = EMBEDDING_DIMENSIONS.get(model, 1536)
         init_vec_table(conn, dimensions)
     
-    # Get OpenAI client
-    client = get_openai_client()
+    # Get OpenAI client (api_key takes priority over env var)
+    client = get_openai_client(api_key=api_key)
     
     # Get total stats
     stats = get_embedding_stats(conn)

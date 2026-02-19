@@ -199,8 +199,9 @@ async def generate_embeddings(
             finally:
                 conn.close()
 
-        # Capture max_cost for use in callback
+        # Capture max_cost and api_key for use in background task
         max_cost_limit = request.max_cost
+        stored_api_key = api_key
 
         def progress_callback(progress: EmbProgress) -> None:
             """Update embedding progress during generation.
@@ -247,6 +248,7 @@ async def generate_embeddings(
                     model=request.model,
                     batch_size=request.batch_size,
                     progress_callback=progress_callback,
+                    api_key=stored_api_key,
                 )
                 archive_service.update_embedding_progress(
                     status="complete",
