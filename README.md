@@ -353,14 +353,25 @@ chatgpt-archive import ./archive
 
 ## Web UI (Docker)
 
-A browser-based interface is available via Docker:
+A browser-based interface is available via Docker.
+
+### Running with Docker
 
 ```bash
-# Start the web UI
-docker-compose up -d
+# Build and start all services
+docker compose up -d
 
-# Access at http://localhost:3000
-# API available at http://localhost:8000
+# Web UI:  http://localhost:3001
+# API:     http://localhost:8000
+```
+
+> **First run**: the build step takes a few minutes. Subsequent starts are instant.
+
+### Stopping
+
+```bash
+docker compose down        # stop (data is preserved)
+docker compose down -v     # stop AND delete all data
 ```
 
 ### Features
@@ -374,15 +385,44 @@ docker-compose up -d
 ### Development & Testing
 
 ```bash
-# Run backend API tests (70 tests)
+# Run all backend tests (225 tests)
 source .venv/bin/activate
-pytest api/tests/ -v
+pytest tests/ api/tests/ -q
 
 # Run frontend unit tests with Vitest
-cd web && npm test
+cd web && npm test -- --run
 
 # Run E2E tests with Playwright
 cd web && npm run test:e2e
+```
+
+### Rebuilding After Code Changes
+
+When you modify Python or frontend source files, rebuild the relevant image:
+
+```bash
+# Rebuild and restart everything
+docker compose build && docker compose up -d
+
+# Rebuild only the API (Python changes)
+docker compose build api && docker compose up -d api
+
+# Rebuild only the web (frontend changes)
+docker compose build web && docker compose up -d web
+```
+
+> **Tip**: The web image bakes `NEXT_PUBLIC_API_URL` at build time. If you change
+> the API port, update the `args` section in `docker-compose.yml` and rebuild the web image.
+
+### Running Services Locally (without Docker)
+
+```bash
+# Backend API
+source .venv/bin/activate
+uvicorn api.main:app --reload
+
+# Frontend
+cd web && npm run dev
 ```
 
 ### Web UI Features

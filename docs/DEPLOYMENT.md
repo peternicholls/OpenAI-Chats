@@ -4,10 +4,9 @@ Deploy the ChatGPT Archive Web UI using Docker.
 
 ## Prerequisites
 
-- Docker 20.10+
-- Docker Compose v2+
+- Docker 24+ with Compose v2 (`docker compose` — note: no hyphen)
 - 2GB available disk space
-- Existing ChatGPT archive data (optional, can import later)
+- Existing ChatGPT archive data (optional, can import via the UI)
 
 ## Quick Start
 
@@ -16,14 +15,19 @@ Deploy the ChatGPT Archive Web UI using Docker.
 git clone https://github.com/peternicholls/OpenAI-Chats.git
 cd OpenAI-Chats
 
-# Start the services
-docker-compose up -d
+# Build images and start services (first run takes a few minutes)
+docker compose up -d
 
 # Open in browser
-open http://localhost:3000
+open http://localhost:3001
 ```
 
 That's it! The web UI is now running.
+
+| Service | URL |
+|---------|-----|
+| Web UI | http://localhost:3001 |
+| API | http://localhost:8000 |
 
 ---
 
@@ -32,14 +36,15 @@ That's it! The web UI is now running.
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────────────┐
 │   Browser   │────▶│  Frontend   │────▶│      Backend API    │
-│ :3000       │     │  (Next.js)  │     │     (FastAPI)       │
-└─────────────┘     │  :3000      │     │     :8000           │
+│ :3001       │     │  (Next.js)  │     │     (FastAPI)       │
+└─────────────┘     │  :3001      │     │     :8000           │
                     └─────────────┘     └──────────┬──────────┘
                                                    │
                                         ┌──────────▼──────────┐
                                         │   ~/.chatgpt-archive │
-                                        │   - archive.db      │
+                                        │   - chats.db        │
                                         │   - settings.json   │
+                                        │   - encryption.key  │
                                         └─────────────────────┘
 ```
 
@@ -54,30 +59,34 @@ That's it! The web UI is now running.
 | `CHATGPT_ARCHIVE_DB` | `/data/chats.db` | Database file path inside container |
 | `API_HOST` | `0.0.0.0` | API bind address |
 | `API_PORT` | `8000` | API port |
-| `CORS_ORIGINS` | `["http://localhost:3000"]` | Allowed CORS origins (JSON array) |
-| `OPENAI_API_KEY` | — | OpenAI API key for semantic search |
-| `NEXT_PUBLIC_API_URL` | `http://api:8000` | API URL for frontend |
+| `CORS_ORIGINS` | `["http://localhost:3001"]` | Allowed CORS origins (JSON array) |
+| `OPENAI_API_KEY` | — | OpenAI API key for semantic search (optional — can also be set via Settings UI) |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | API URL baked into the frontend at build time |
 
-### Custom Configuration
+> **`NEXT_PUBLIC_API_URL` is a build-time variable** — it is compiled into the frontend bundle.
+> If you change the API port or hostname, update the `args` section in `docker-compose.yml`
+> and rebuild the web image (`docker compose build web`).
 
-Create a `.env` file in the project root:
+### Custom Port Configuration
 
-```bash
-# .env
-CHATGPT_ARCHIVE_DB=/data/chats.db
-CORS_ORIGINS=["http://localhost:3000","https://your-domain.com"]
-OPENAI_API_KEY=sk-...
-```
-
-Or override in docker-compose:
+If ports `3001` or `8000` conflict with other services, change the host-side port in `docker-compose.yml`:
 
 ```yaml
 services:
+  web:
+    ports:
+      - "3002:3000"   # host:container — change left side only
+    build:
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000   # always the API host port
   api:
+    ports:
+      - "8001:8000"   # change host port to 8001
     environment:
-      - CHATGPT_ARCHIVE_DB=/data/chats.db
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CORS_ORIGINS=["http://localhost:3002"]
 ```
+
+Then rebuild: `docker compose build && docker compose up -d`
 
 ---
 
@@ -101,13 +110,13 @@ This directory is mounted into the container at `/data/`. Data persists across:
 
 ```bash
 # Stop services (optional but recommended)
-docker-compose stop
+docker compose stop
 
 # Backup data
 cp -r ~/.chatgpt-archive ~/.chatgpt-archive.backup
 
 # Restart
-docker-compose start
+docker compose start
 ```
 
 ### Migration
@@ -123,7 +132,7 @@ scp chatgpt-archive-backup.tar.gz user@new-host:~
 
 # On destination
 tar -xzvf chatgpt-archive-backup.tar.gz -C ~
-docker-compose up -d
+docker compose up -d
 ```
 
 ---
@@ -216,11 +225,57 @@ services:
 # Pull latest changes
 git pull
 
-# Rebuild containers
-docker-compose build --no-cache
+# Rebuild and restart (use --no-cache to force a full rebuild)
+docker compose build
+docker compose up -d
 
-# Restart with new images
-docker-compose up -d
+# Force full rebuild (clears Docker layer cache)
+docker compose build --no-cache
+docker compose up -d
+```
+
+---
+
+## Developer Workflow
+
+When iterating on the code locally, rebuild only the image you changed to save time:
+
+```bash
+# Changed anything in api/ or chatgpt_archive/
+docker compose build api && docker compose up -d api
+
+# Changed anything in web/src/ or web/public/
+docker compose build web && docker compose up -d web
+
+# Changed both
+docker compose build && docker compose up -d
+```
+
+### Running Services Without Docker
+
+For faster iteration without rebuilding images:
+
+```bash
+# Backend API (auto-reloads on file changes)
+source .venv/bin/activate
+uvicorn api.main:app --reload --port 8000
+
+# Frontend (in a separate terminal)
+cd web && npm run dev   # served at http://localhost:3000
+```
+
+### Running Tests
+
+```bash
+# All Python tests (225)
+source .venv/bin/activate
+pytest tests/ api/tests/ -q
+
+# Frontend unit tests (81)
+cd web && npm test -- --run
+
+# Frontend E2E tests (Playwright)
+cd web && npm run test:e2e
 ```
 
 ---
@@ -231,40 +286,28 @@ docker-compose up -d
 
 ```bash
 # Check logs
-docker-compose logs api
-docker-compose logs web
+docker compose logs api
+docker compose logs web
 
 # Verify containers are running
-docker-compose ps
+docker compose ps
 ```
 
 ### Port Conflicts
 
-If ports 3000 or 8000 are in use:
+If ports `3001` or `8000` are already in use, check what's using them:
 
-```yaml
-# docker-compose.yml
-services:
-  web:
-    ports:
-      - "3001:3000"  # Use 3001 instead
-  api:
-    ports:
-      - "8001:8000"  # Use 8001 instead
+```bash
+lsof -iTCP -sTCP:LISTEN -P | grep -E "3001|8000"
 ```
 
-Update `CORS_ORIGINS` and `NEXT_PUBLIC_API_URL` accordingly.
+Then change the host-side port in `docker-compose.yml` as described in [Custom Port Configuration](#custom-port-configuration) above.
 
 ### Permission Denied on Volume
 
 ```bash
-# Ensure directory exists
+# Ensure directory exists with correct permissions
 mkdir -p ~/.chatgpt-archive
-
-# Check permissions
-ls -la ~/.chatgpt-archive
-
-# Fix permissions if needed
 chmod 755 ~/.chatgpt-archive
 ```
 
@@ -276,7 +319,7 @@ sqlite3 ~/.chatgpt-archive/chats.db "PRAGMA integrity_check;"
 
 # Reset if corrupted (data loss!)
 rm ~/.chatgpt-archive/chats.db
-docker-compose restart api
+docker compose restart api
 ```
 
 ### Health Check Failures
@@ -285,7 +328,7 @@ docker-compose restart api
 # Test API directly
 curl http://localhost:8000/api/health
 
-# Check container health
+# Check container health status
 docker inspect --format='{{.State.Health.Status}}' openai-chats-api-1
 ```
 
@@ -308,11 +351,11 @@ View logs in real-time:
 
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f api
-docker-compose logs -f web
+docker compose logs -f api
+docker compose logs -f web
 ```
 
 ---
@@ -320,11 +363,11 @@ docker-compose logs -f web
 ## Stopping
 
 ```bash
-# Stop services (preserves data)
-docker-compose down
+# Stop services (data is preserved)
+docker compose down
 
-# Stop and remove volumes (DELETES DATA)
-docker-compose down -v
+# Stop and remove all data volumes (DELETES DATA)
+docker compose down -v
 ```
 
 ---
