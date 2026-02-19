@@ -306,7 +306,7 @@ Web application architecture:
 - [x] T162 [P] Update docs/API.md with complete API documentation (if not using OpenAPI docs)
 - [x] T163 [P] Add environment variable documentation to docker-compose.yml comments
 - [x] T164 [P] Add favicon and app metadata to web/src/app/layout.tsx
-- [ ] T165 [P] Optimize Docker images (reduce size below 500MB total, multi-stage builds)
+- [X] T165 [P] Optimize Docker images (reduce size below 500MB total, multi-stage builds)
 - [x] T166 Add nginx configuration in docker/nginx.conf for production frontend serving
 - [ ] T167 [P] [Priority: P2] Add loading states and skeletons to all data-fetching components (nice-to-have UX polish)
 - [ ] T168 [P] [Priority: P2] Add responsive design breakpoints for mobile/tablet views (optional unless targeting mobile users)
@@ -317,16 +317,16 @@ Web application architecture:
 - [x] T173 [Priority: P1] Add rate limiting middleware in api/middleware/rate_limit.py (100 requests/minute per IP, 429 status on exceed)
 - [x] T174 Add request logging middleware in api/middleware/logging.py (JSON format to stdout for Docker log aggregation: timestamp, method, path, status, duration_ms)
 - [ ] T175 [P] [Priority: P3] Add analytics/telemetry hooks (optional, privacy-respecting, disabled by default)
-- [ ] T176 [Priority: P1] Run full quickstart.md validation on fresh Docker deployment (checkpoint after each user story completion)
-- [ ] T177 [P] Add code comments and documentation for complex functions (focus on archive_service.py, embedding logic)
+- [X] T176 [Priority: P1] Run full quickstart.md validation on fresh Docker deployment (checkpoint after each user story completion)
+- [X] T177 [P] Add code comments and documentation for complex functions (focus on archive_service.py, embedding logic)
 - [x] T178 [P] Run linting and formatting on all code (ruff, black, eslint, prettier)
 - [ ] T179 [Priority: P1] Verify all shadcn/ui components follow accessibility guidelines (test: all interactive elements have ARIA labels, verify VoiceOver/NVDA screen reader compatibility, ensure keyboard-only navigation works for all workflows)
 - [x] T180 [Priority: P1] Add Content Security Policy headers in api/middleware/cors.py (restrict script-src, style-src to 'self', prevent inline scripts except for Next.js hydration)
 - [x] T181 [P] Create deployment guide in docs/DEPLOYMENT.md (one-command Docker deployment with security notices: 0.0.0.0 exposure, default credentials warnings)
-- [ ] T182 [Priority: P1] Verify data persistence across Docker container restarts (test: stop/start containers, verify ~/.chatgpt-archive/archive.db and settings.json survive)
+- [X] T182 [Priority: P1] Verify data persistence across Docker container restarts (test: stop/start containers, verify ~/.chatgpt-archive/archive.db and settings.json survive)
 - [x] T183 Add health check endpoints to docker-compose.yml (api: wget http://localhost:8000/api/health, interval: 30s, timeout: 10s, retries: 3)
 - [x] T184 [P] Add troubleshooting section to docs/TROUBLESHOOTING.md (common issues: port 3000/8000 conflicts, permission denied on volume mount, CORS errors)
-- [ ] T185 [P] Final review and cleanup of unused dependencies (check for orphaned imports, unused packages)
+- [X] T185 [P] Final review and cleanup of unused dependencies (check for orphaned imports, unused packages)
 - [x] T186 [P] Add Browserslist config in web/package.json and verify Chrome, Firefox, Safari, Edge (last 2 versions)
 - [ ] T187 [Priority: P1] Conduct 3-user walkthrough test for SC-010 (document: task completion rates, avg time per task, user pain points, suggestions) and record findings for iteration
 
@@ -336,7 +336,7 @@ Web application architecture:
 
 - [x] T_CR001 [Priority: P1] Apply validation middleware functions to API routes — functions in api/middleware/validation.py exist but are not called in route handlers (validate_query_param, validate_tag_name, validate_conversation_id)
 - [x] T_CR002 [P] [Priority: P2] Add loading state during delete operation in web/src/app/conversation/[id]/page.tsx — handleDelete() should show spinner/disable button while awaiting API response
-- [ ] T_CR003 [P] [Priority: P3] Standardize Python type annotations across api/ — replace mixed `Optional[str]` and `str | None` syntax with consistent `str | None` (Python 3.10+)
+- [X] T_CR003 [P] [Priority: P3] Standardize Python type annotations across api/ — replace mixed `Optional[str]` and `str | None` syntax with consistent `str | None` (Python 3.10+)
 - [x] T_CR004 [P] [Priority: P2] Handle SSE client disconnection in api/routers/progress.py — check for client disconnect in event_generator() loop to avoid orphaned async tasks
 - [x] T_CR005 [P] [Priority: P3] Make page size configurable in web/src/app/page.tsx — move PAGE_SIZE to user settings or environment variable instead of hardcoded constant
 - [x] T_CR006 [P] [Priority: P3] Add warning log in api/services/archive_service.py if temp file cleanup fails in import_archive_from_zip() finally block
@@ -363,7 +363,7 @@ Web application architecture:
 - [x] T197 [P] Create web/vitest.setup.ts with @testing-library/jest-dom matchers
 - [x] T198 [P] Create web/__tests__/mocks/handlers.ts with MSW request handlers for all API endpoints (conversations, search, tags, favorites, import, export, embeddings)
 - [x] T199 [P] Create web/playwright.config.ts with browser configs (chromium, webkit), base URL, test timeout
-- [ ] T200 [P] Setup OpenAI API mocking in tests/conftest.py using pytest-mock (mock embeddings endpoint, return fake vectors)
+- [X] T200 [P] Setup OpenAI API mocking in tests/conftest.py using pytest-mock (mock embeddings endpoint, return fake vectors)
 
 ### End-to-End Tests (Playwright)
 
@@ -419,139 +419,139 @@ Web application architecture:
 
 #### tests/integration/test_api_conversations.py — 8 tests
 
-- [ ] T216 [P] Implement API-CONV-001: test_list_conversations_empty in tests/integration/test_api_conversations.py
-- [ ] T217 [P] Implement API-CONV-002: test_list_conversations_paginated in tests/integration/test_api_conversations.py
-- [ ] T218 [P] Implement API-CONV-003: test_list_conversations_sorted_date in tests/integration/test_api_conversations.py
-- [ ] T219 [P] Implement API-CONV-004: test_list_conversations_sorted_title in tests/integration/test_api_conversations.py
-- [ ] T220 [P] Implement API-CONV-005: test_get_conversation_exists in tests/integration/test_api_conversations.py
-- [ ] T221 [P] Implement API-CONV-006: test_get_conversation_not_found in tests/integration/test_api_conversations.py
-- [ ] T222 [P] Implement API-CONV-007: test_delete_conversation in tests/integration/test_api_conversations.py
-- [ ] T223 [P] Implement API-CONV-008: test_delete_conversation_not_found in tests/integration/test_api_conversations.py
+- [X] T216 [P] Implement API-CONV-001: test_list_conversations_empty in tests/integration/test_api_conversations.py
+- [X] T217 [P] Implement API-CONV-002: test_list_conversations_paginated in tests/integration/test_api_conversations.py
+- [X] T218 [P] Implement API-CONV-003: test_list_conversations_sorted_date in tests/integration/test_api_conversations.py
+- [X] T219 [P] Implement API-CONV-004: test_list_conversations_sorted_title in tests/integration/test_api_conversations.py
+- [X] T220 [P] Implement API-CONV-005: test_get_conversation_exists in tests/integration/test_api_conversations.py
+- [X] T221 [P] Implement API-CONV-006: test_get_conversation_not_found in tests/integration/test_api_conversations.py
+- [X] T222 [P] Implement API-CONV-007: test_delete_conversation in tests/integration/test_api_conversations.py
+- [X] T223 [P] Implement API-CONV-008: test_delete_conversation_not_found in tests/integration/test_api_conversations.py
 
 #### tests/integration/test_api_search.py — 4 tests
 
-- [ ] T224 [P] Implement API-SCH-001: test_search_keyword in tests/integration/test_api_search.py
-- [ ] T225 [P] Implement API-SCH-002: test_search_empty_query in tests/integration/test_api_search.py
-- [ ] T226 [P] Implement API-SCH-003: test_search_date_filter in tests/integration/test_api_search.py
-- [ ] T227 [P] Implement API-SCH-004: test_search_limit in tests/integration/test_api_search.py
+- [X] T224 [P] Implement API-SCH-001: test_search_keyword in tests/integration/test_api_search.py
+- [X] T225 [P] Implement API-SCH-002: test_search_empty_query in tests/integration/test_api_search.py
+- [X] T226 [P] Implement API-SCH-003: test_search_date_filter in tests/integration/test_api_search.py
+- [X] T227 [P] Implement API-SCH-004: test_search_limit in tests/integration/test_api_search.py
 
 #### tests/integration/test_api_export.py — 9 tests
 
-- [ ] T228 [P] Implement API-EXP-001: test_export_markdown in tests/integration/test_api_export.py
-- [ ] T229 [P] Implement API-EXP-002: test_export_json in tests/integration/test_api_export.py
-- [ ] T230 [P] Implement API-EXP-003: test_export_yaml in tests/integration/test_api_export.py
-- [ ] T231 [P] Implement API-EXP-004: test_export_html in tests/integration/test_api_export.py
-- [ ] T232 [P] Implement API-EXP-005: test_export_xml in tests/integration/test_api_export.py
-- [ ] T233 [P] Implement API-EXP-006: test_export_csv in tests/integration/test_api_export.py
-- [ ] T234 [P] Implement API-EXP-007: test_export_excel in tests/integration/test_api_export.py
-- [ ] T235 [P] Implement API-EXP-008: test_export_invalid_format in tests/integration/test_api_export.py
-- [ ] T236 [P] Implement API-EXP-009: test_export_not_found in tests/integration/test_api_export.py
+- [X] T228 [P] Implement API-EXP-001: test_export_markdown in tests/integration/test_api_export.py
+- [X] T229 [P] Implement API-EXP-002: test_export_json in tests/integration/test_api_export.py
+- [X] T230 [P] Implement API-EXP-003: test_export_yaml in tests/integration/test_api_export.py
+- [X] T231 [P] Implement API-EXP-004: test_export_html in tests/integration/test_api_export.py
+- [X] T232 [P] Implement API-EXP-005: test_export_xml in tests/integration/test_api_export.py
+- [X] T233 [P] Implement API-EXP-006: test_export_csv in tests/integration/test_api_export.py
+- [X] T234 [P] Implement API-EXP-007: test_export_excel in tests/integration/test_api_export.py
+- [X] T235 [P] Implement API-EXP-008: test_export_invalid_format in tests/integration/test_api_export.py
+- [X] T236 [P] Implement API-EXP-009: test_export_not_found in tests/integration/test_api_export.py
 
 #### tests/integration/test_api_tags.py — 6 tests
 
-- [ ] T237 [P] Implement API-TAG-001: test_list_tags_empty in tests/integration/test_api_tags.py
-- [ ] T238 [P] Implement API-TAG-002: test_list_tags_with_counts in tests/integration/test_api_tags.py
-- [ ] T239 [P] Implement API-TAG-003: test_add_tag in tests/integration/test_api_tags.py
-- [ ] T240 [P] Implement API-TAG-004: test_add_tag_duplicate in tests/integration/test_api_tags.py
-- [ ] T241 [P] Implement API-TAG-005: test_remove_tag in tests/integration/test_api_tags.py
-- [ ] T242 [P] Implement API-TAG-006: test_remove_tag_not_found in tests/integration/test_api_tags.py
+- [X] T237 [P] Implement API-TAG-001: test_list_tags_empty in tests/integration/test_api_tags.py
+- [X] T238 [P] Implement API-TAG-002: test_list_tags_with_counts in tests/integration/test_api_tags.py
+- [X] T239 [P] Implement API-TAG-003: test_add_tag in tests/integration/test_api_tags.py
+- [X] T240 [P] Implement API-TAG-004: test_add_tag_duplicate in tests/integration/test_api_tags.py
+- [X] T241 [P] Implement API-TAG-005: test_remove_tag in tests/integration/test_api_tags.py
+- [X] T242 [P] Implement API-TAG-006: test_remove_tag_not_found in tests/integration/test_api_tags.py
 
 #### tests/integration/test_api_favorites.py — 4 tests
 
-- [ ] T243 [P] Implement API-FAV-001: test_toggle_favorite_on in tests/integration/test_api_favorites.py
-- [ ] T244 [P] Implement API-FAV-002: test_toggle_favorite_off in tests/integration/test_api_favorites.py
-- [ ] T245 [P] Implement API-FAV-003: test_list_favorites in tests/integration/test_api_favorites.py
-- [ ] T246 [P] Implement API-FAV-004: test_list_favorites_empty in tests/integration/test_api_favorites.py
+- [X] T243 [P] Implement API-FAV-001: test_toggle_favorite_on in tests/integration/test_api_favorites.py
+- [X] T244 [P] Implement API-FAV-002: test_toggle_favorite_off in tests/integration/test_api_favorites.py
+- [X] T245 [P] Implement API-FAV-003: test_list_favorites in tests/integration/test_api_favorites.py
+- [X] T246 [P] Implement API-FAV-004: test_list_favorites_empty in tests/integration/test_api_favorites.py
 
 #### tests/integration/test_api_import.py — 4 tests
 
-- [ ] T247 [P] Implement API-IMP-001: test_import_valid_zip in tests/integration/test_api_import.py
-- [ ] T248 [P] Implement API-IMP-002: test_import_invalid_file in tests/integration/test_api_import.py
-- [ ] T249 [P] Implement API-IMP-003: test_import_progress in tests/integration/test_api_import.py
-- [ ] T250 [P] Implement API-IMP-004: test_import_corrupted_zip in tests/integration/test_api_import.py
+- [X] T247 [P] Implement API-IMP-001: test_import_valid_zip in tests/integration/test_api_import.py
+- [X] T248 [P] Implement API-IMP-002: test_import_invalid_file in tests/integration/test_api_import.py
+- [X] T249 [P] Implement API-IMP-003: test_import_progress in tests/integration/test_api_import.py
+- [X] T250 [P] Implement API-IMP-004: test_import_corrupted_zip in tests/integration/test_api_import.py
 
 #### tests/integration/test_api_settings.py — 4 tests
 
-- [ ] T251 [P] Implement API-SET-001: test_get_settings in tests/integration/test_api_settings.py
-- [ ] T252 [P] Implement API-SET-002: test_update_theme in tests/integration/test_api_settings.py
-- [ ] T253 [P] Implement API-SET-003: test_update_openai_key in tests/integration/test_api_settings.py
-- [ ] T254 [P] Implement API-SET-004: test_update_invalid in tests/integration/test_api_settings.py
+- [X] T251 [P] Implement API-SET-001: test_get_settings in tests/integration/test_api_settings.py
+- [X] T252 [P] Implement API-SET-002: test_update_theme in tests/integration/test_api_settings.py
+- [X] T253 [P] Implement API-SET-003: test_update_openai_key in tests/integration/test_api_settings.py
+- [X] T254 [P] Implement API-SET-004: test_update_invalid in tests/integration/test_api_settings.py
 
 ### Frontend Tests (web/)
 
 #### web/__tests__/services/api.test.ts — 15 tests
 
-- [ ] T255 [P] Implement FE-API-001: test_listConversations in web/__tests__/services/api.test.ts
-- [ ] T256 [P] Implement FE-API-002: test_listConversations_params in web/__tests__/services/api.test.ts
-- [ ] T257 [P] Implement FE-API-003: test_getConversation in web/__tests__/services/api.test.ts
-- [ ] T258 [P] Implement FE-API-004: test_getConversation_error in web/__tests__/services/api.test.ts
-- [ ] T259 [P] Implement FE-API-005: test_search in web/__tests__/services/api.test.ts
-- [ ] T260 [P] Implement FE-API-006: test_search_filters in web/__tests__/services/api.test.ts
-- [ ] T261 [P] Implement FE-API-007: test_listTags in web/__tests__/services/api.test.ts
-- [ ] T262 [P] Implement FE-API-008: test_addTag in web/__tests__/services/api.test.ts
-- [ ] T263 [P] Implement FE-API-009: test_removeTag in web/__tests__/services/api.test.ts
-- [ ] T264 [P] Implement FE-API-010: test_toggleFavorite in web/__tests__/services/api.test.ts
-- [ ] T265 [P] Implement FE-API-011: test_uploadArchive in web/__tests__/services/api.test.ts
-- [ ] T266 [P] Implement FE-API-012: test_getImportProgress in web/__tests__/services/api.test.ts
-- [ ] T267 [P] Implement FE-API-013: test_exportConversation in web/__tests__/services/api.test.ts
-- [ ] T268 [P] Implement FE-API-014: test_healthCheck in web/__tests__/services/api.test.ts
-- [ ] T269 [P] Implement FE-API-015: test_error_handling in web/__tests__/services/api.test.ts
+- [X] T255 [P] Implement FE-API-001: test_listConversations in web/__tests__/services/api.test.ts
+- [X] T256 [P] Implement FE-API-002: test_listConversations_params in web/__tests__/services/api.test.ts
+- [X] T257 [P] Implement FE-API-003: test_getConversation in web/__tests__/services/api.test.ts
+- [X] T258 [P] Implement FE-API-004: test_getConversation_error in web/__tests__/services/api.test.ts
+- [X] T259 [P] Implement FE-API-005: test_search in web/__tests__/services/api.test.ts
+- [X] T260 [P] Implement FE-API-006: test_search_filters in web/__tests__/services/api.test.ts
+- [X] T261 [P] Implement FE-API-007: test_listTags in web/__tests__/services/api.test.ts
+- [X] T262 [P] Implement FE-API-008: test_addTag in web/__tests__/services/api.test.ts
+- [X] T263 [P] Implement FE-API-009: test_removeTag in web/__tests__/services/api.test.ts
+- [X] T264 [P] Implement FE-API-010: test_toggleFavorite in web/__tests__/services/api.test.ts
+- [X] T265 [P] Implement FE-API-011: test_uploadArchive in web/__tests__/services/api.test.ts
+- [X] T266 [P] Implement FE-API-012: test_getImportProgress in web/__tests__/services/api.test.ts
+- [X] T267 [P] Implement FE-API-013: test_exportConversation in web/__tests__/services/api.test.ts
+- [X] T268 [P] Implement FE-API-014: test_healthCheck in web/__tests__/services/api.test.ts
+- [X] T269 [P] Implement FE-API-015: test_error_handling in web/__tests__/services/api.test.ts
 
 #### web/__tests__/hooks/useConversations.test.ts — 5 tests
 
-- [ ] T270 [P] Implement FE-HOOK-001: test_useConversations_loading in web/__tests__/hooks/useConversations.test.ts
-- [ ] T271 [P] Implement FE-HOOK-002: test_useConversations_success in web/__tests__/hooks/useConversations.test.ts
-- [ ] T272 [P] Implement FE-HOOK-003: test_useConversations_refetch in web/__tests__/hooks/useConversations.test.ts
-- [ ] T273 [P] Implement FE-HOOK-004: test_useConversations_error in web/__tests__/hooks/useConversations.test.ts
-- [ ] T274 [P] Implement FE-HOOK-005: test_useConversation_detail in web/__tests__/hooks/useConversations.test.ts
+- [X] T270 [P] Implement FE-HOOK-001: test_useConversations_loading in web/__tests__/hooks/useConversations.test.ts
+- [X] T271 [P] Implement FE-HOOK-002: test_useConversations_success in web/__tests__/hooks/useConversations.test.ts
+- [X] T272 [P] Implement FE-HOOK-003: test_useConversations_refetch in web/__tests__/hooks/useConversations.test.ts
+- [X] T273 [P] Implement FE-HOOK-004: test_useConversations_error in web/__tests__/hooks/useConversations.test.ts
+- [X] T274 [P] Implement FE-HOOK-005: test_useConversation_detail in web/__tests__/hooks/useConversations.test.ts
 
 #### web/__tests__/hooks/useSearch.test.ts — 5 tests
 
-- [ ] T275 [P] Implement FE-HOOK-006: test_useSearch_idle in web/__tests__/hooks/useSearch.test.ts
-- [ ] T276 [P] Implement FE-HOOK-007: test_useSearch_debounce in web/__tests__/hooks/useSearch.test.ts
-- [ ] T277 [P] Implement FE-HOOK-008: test_useSearch_results in web/__tests__/hooks/useSearch.test.ts
-- [ ] T278 [P] Implement FE-HOOK-009: test_useSearch_error in web/__tests__/hooks/useSearch.test.ts
-- [ ] T279 [P] Implement FE-HOOK-010: test_useSearch_clear in web/__tests__/hooks/useSearch.test.ts
+- [X] T275 [P] Implement FE-HOOK-006: test_useSearch_idle in web/__tests__/hooks/useSearch.test.ts
+- [X] T276 [P] Implement FE-HOOK-007: test_useSearch_debounce in web/__tests__/hooks/useSearch.test.ts
+- [X] T277 [P] Implement FE-HOOK-008: test_useSearch_results in web/__tests__/hooks/useSearch.test.ts
+- [X] T278 [P] Implement FE-HOOK-009: test_useSearch_error in web/__tests__/hooks/useSearch.test.ts
+- [X] T279 [P] Implement FE-HOOK-010: test_useSearch_clear in web/__tests__/hooks/useSearch.test.ts
 
 #### web/__tests__/hooks/useFavorites.test.ts — 3 tests
 
-- [ ] T280 [P] Implement FE-HOOK-011: test_useFavorites_list in web/__tests__/hooks/useFavorites.test.ts
-- [ ] T281 [P] Implement FE-HOOK-012: test_useFavorites_toggle in web/__tests__/hooks/useFavorites.test.ts
-- [ ] T282 [P] Implement FE-HOOK-013: test_useFavorites_invalidate in web/__tests__/hooks/useFavorites.test.ts
+- [X] T280 [P] Implement FE-HOOK-011: test_useFavorites_list in web/__tests__/hooks/useFavorites.test.ts
+- [X] T281 [P] Implement FE-HOOK-012: test_useFavorites_toggle in web/__tests__/hooks/useFavorites.test.ts
+- [X] T282 [P] Implement FE-HOOK-013: test_useFavorites_invalidate in web/__tests__/hooks/useFavorites.test.ts
 
 #### web/__tests__/hooks/useTags.test.ts — 4 tests
 
-- [ ] T283 [P] Implement FE-HOOK-014: test_useTags_list in web/__tests__/hooks/useTags.test.ts
-- [ ] T284 [P] Implement FE-HOOK-015: test_useTags_add in web/__tests__/hooks/useTags.test.ts
-- [ ] T285 [P] Implement FE-HOOK-016: test_useTags_remove in web/__tests__/hooks/useTags.test.ts
-- [ ] T286 [P] Implement FE-HOOK-017: test_useTags_invalidate in web/__tests__/hooks/useTags.test.ts
+- [X] T283 [P] Implement FE-HOOK-014: test_useTags_list in web/__tests__/hooks/useTags.test.ts
+- [X] T284 [P] Implement FE-HOOK-015: test_useTags_add in web/__tests__/hooks/useTags.test.ts
+- [X] T285 [P] Implement FE-HOOK-016: test_useTags_remove in web/__tests__/hooks/useTags.test.ts
+- [X] T286 [P] Implement FE-HOOK-017: test_useTags_invalidate in web/__tests__/hooks/useTags.test.ts
 
 #### web/__tests__/components/ConversationCard.test.tsx — 7 tests
 
-- [ ] T287 [P] Implement FE-COMP-001: test_renders_title in web/__tests__/components/ConversationCard.test.tsx
-- [ ] T288 [P] Implement FE-COMP-002: test_renders_untitled in web/__tests__/components/ConversationCard.test.tsx
-- [ ] T289 [P] Implement FE-COMP-003: test_renders_date in web/__tests__/components/ConversationCard.test.tsx
-- [ ] T290 [P] Implement FE-COMP-004: test_renders_message_count in web/__tests__/components/ConversationCard.test.tsx
-- [ ] T291 [P] Implement FE-COMP-005: test_click_navigates in web/__tests__/components/ConversationCard.test.tsx
-- [ ] T292 [P] Implement FE-COMP-006: test_favorite_icon in web/__tests__/components/ConversationCard.test.tsx
-- [ ] T293 [P] Implement FE-COMP-007: test_tags_displayed in web/__tests__/components/ConversationCard.test.tsx
+- [X] T287 [P] Implement FE-COMP-001: test_renders_title in web/__tests__/components/ConversationCard.test.tsx
+- [X] T288 [P] Implement FE-COMP-002: test_renders_untitled in web/__tests__/components/ConversationCard.test.tsx
+- [X] T289 [P] Implement FE-COMP-003: test_renders_date in web/__tests__/components/ConversationCard.test.tsx
+- [X] T290 [P] Implement FE-COMP-004: test_renders_message_count in web/__tests__/components/ConversationCard.test.tsx
+- [X] T291 [P] Implement FE-COMP-005: test_click_navigates in web/__tests__/components/ConversationCard.test.tsx
+- [X] T292 [P] Implement FE-COMP-006: test_favorite_icon in web/__tests__/components/ConversationCard.test.tsx
+- [X] T293 [P] Implement FE-COMP-007: test_tags_displayed in web/__tests__/components/ConversationCard.test.tsx
 
 #### web/__tests__/components/MessageBubble.test.tsx — 6 tests
 
-- [ ] T294 [P] Implement FE-COMP-008: test_user_message_style in web/__tests__/components/MessageBubble.test.tsx
-- [ ] T295 [P] Implement FE-COMP-009: test_assistant_message_style in web/__tests__/components/MessageBubble.test.tsx
-- [ ] T296 [P] Implement FE-COMP-010: test_content_rendered in web/__tests__/components/MessageBubble.test.tsx
-- [ ] T297 [P] Implement FE-COMP-011: test_markdown_rendered in web/__tests__/components/MessageBubble.test.tsx
-- [ ] T298 [P] Implement FE-COMP-012: test_code_highlighted in web/__tests__/components/MessageBubble.test.tsx
-- [ ] T299 [P] Implement FE-COMP-013: test_empty_content in web/__tests__/components/MessageBubble.test.tsx
+- [X] T294 [P] Implement FE-COMP-008: test_user_message_style in web/__tests__/components/MessageBubble.test.tsx
+- [X] T295 [P] Implement FE-COMP-009: test_assistant_message_style in web/__tests__/components/MessageBubble.test.tsx
+- [X] T296 [P] Implement FE-COMP-010: test_content_rendered in web/__tests__/components/MessageBubble.test.tsx
+- [X] T297 [P] Implement FE-COMP-011: test_markdown_rendered in web/__tests__/components/MessageBubble.test.tsx
+- [X] T298 [P] Implement FE-COMP-012: test_code_highlighted in web/__tests__/components/MessageBubble.test.tsx
+- [X] T299 [P] Implement FE-COMP-013: test_empty_content in web/__tests__/components/MessageBubble.test.tsx
 
 #### web/__tests__/components/SearchBar.test.tsx — 5 tests
 
-- [ ] T300 [P] Implement FE-COMP-014: test_renders_input in web/__tests__/components/SearchBar.test.tsx
-- [ ] T301 [P] Implement FE-COMP-015: test_typing_calls_onChange in web/__tests__/components/SearchBar.test.tsx
-- [ ] T302 [P] Implement FE-COMP-016: test_clear_button in web/__tests__/components/SearchBar.test.tsx
-- [ ] T303 [P] Implement FE-COMP-017: test_loading_spinner in web/__tests__/components/SearchBar.test.tsx
-- [ ] T304 [P] Implement FE-COMP-018: test_placeholder in web/__tests__/components/SearchBar.test.tsx
+- [X] T300 [P] Implement FE-COMP-014: test_renders_input in web/__tests__/components/SearchBar.test.tsx
+- [X] T301 [P] Implement FE-COMP-015: test_typing_calls_onChange in web/__tests__/components/SearchBar.test.tsx
+- [X] T302 [P] Implement FE-COMP-016: test_clear_button in web/__tests__/components/SearchBar.test.tsx
+- [X] T303 [P] Implement FE-COMP-017: test_loading_spinner in web/__tests__/components/SearchBar.test.tsx
+- [X] T304 [P] Implement FE-COMP-018: test_placeholder in web/__tests__/components/SearchBar.test.tsx
 
 ### Test CI/CD Integration
 
@@ -560,7 +560,7 @@ Web application architecture:
 - [x] T307 [P] Add npm test:watch script to web/package.json: "test:watch": "vitest"
 - [x] T308 Create .github/workflows/test.yml with Python and frontend test jobs
 - [x] T309 [P] Add pytest.ini with asyncio_mode = auto and coverage settings
-- [ ] T310 Run full test suite and verify 70%+ coverage on Python, all frontend tests pass
+- [X] T310 Run full test suite and verify 70%+ coverage on Python, all frontend tests pass
 
 ---
 
