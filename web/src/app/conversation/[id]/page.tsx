@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queryKeys";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 export default function ConversationDetailPage() {
     const params = useParams();
@@ -32,6 +33,7 @@ export default function ConversationDetailPage() {
     const { data: conversation, isLoading, error, refetch } = useConversation(id);
     const [showExport, setShowExport] = useState(false);
     const [showDelete, setShowDelete] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
 
     // Sync local favorite state with conversation data
@@ -54,6 +56,7 @@ export default function ConversationDetailPage() {
     };
 
     const handleDelete = async () => {
+        setIsDeleting(true);
         try {
             await api.deleteConversation(id);
             queryClient.invalidateQueries({ queryKey: queryKeys.conversations.all });
@@ -61,6 +64,7 @@ export default function ConversationDetailPage() {
             router.push("/");
         } catch {
             toast.error("Failed to delete conversation");
+            setIsDeleting(false);
         }
     };
 
@@ -114,7 +118,7 @@ export default function ConversationDetailPage() {
                 onOpenChange={setShowExport}
             />
 
-            <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
+            <AlertDialog open={showDelete} onOpenChange={(open) => !isDeleting && setShowDelete(open)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
@@ -124,9 +128,20 @@ export default function ConversationDetailPage() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                "Delete"
+                            )}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

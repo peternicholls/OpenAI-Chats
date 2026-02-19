@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToggleFavorite } from "@/hooks/useFavorites";
@@ -24,10 +24,12 @@ export function FavoriteButton({
     const [optimisticFavorite, setOptimisticFavorite] = useState(isFavorite);
     const { mutateAsync: toggleFavorite, isPending: isToggling } = useToggleFavorite();
 
-    // Sync with prop when it changes
-    if (isFavorite !== optimisticFavorite && !isToggling) {
-        setOptimisticFavorite(isFavorite);
-    }
+    // Sync with server state when mutation settles.
+    useEffect(() => {
+        if (!isToggling) {
+            setOptimisticFavorite(isFavorite);
+        }
+    }, [isFavorite, isToggling]);
 
     const handleClick = async (e: React.MouseEvent) => {
         e.preventDefault();

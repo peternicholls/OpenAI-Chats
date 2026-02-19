@@ -52,7 +52,7 @@ export interface Tag {
 }
 
 export interface ImportProgress {
-    status: "pending" | "processing" | "complete" | "error" | "idle";
+    status: "pending" | "processing" | "complete" | "error" | "idle" | "cancelled";
     current: number;
     total: number;
     percent: number;

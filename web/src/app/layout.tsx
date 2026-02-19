@@ -18,6 +18,23 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ChatGPT Archive",
   description: "Browse, search, and export your ChatGPT conversation history",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+  openGraph: {
+    title: "ChatGPT Archive",
+    description: "Browse, search, and export your ChatGPT conversation history",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

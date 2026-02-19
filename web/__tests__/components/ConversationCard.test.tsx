@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ConversationCard } from '@/components/conversations/ConversationCard'
 import type { Conversation } from '@/types'
+import { createWrapper } from '../utils/test-utils'
 
 // Mock Next.js Link component
 vi.mock('next/link', () => ({
@@ -22,20 +23,25 @@ const mockConversation: Conversation = {
 }
 
 describe('ConversationCard', () => {
+    const renderWithProviders = (conversation: Conversation) =>
+        render(<ConversationCard conversation={conversation} />, {
+            wrapper: createWrapper(),
+        })
+
     it('renders conversation title', () => {
-        render(<ConversationCard conversation={mockConversation} />)
+        renderWithProviders(mockConversation)
 
         expect(screen.getByText('Test Conversation Title')).toBeInTheDocument()
     })
 
     it('renders message count', () => {
-        render(<ConversationCard conversation={mockConversation} />)
+        renderWithProviders(mockConversation)
 
         expect(screen.getByText(/5 messages/)).toBeInTheDocument()
     })
 
     it('renders model name when present', () => {
-        render(<ConversationCard conversation={mockConversation} />)
+        renderWithProviders(mockConversation)
 
         expect(screen.getByText(/gpt-4/)).toBeInTheDocument()
     })
@@ -45,7 +51,7 @@ describe('ConversationCard', () => {
             ...mockConversation,
             title: '',
         }
-        render(<ConversationCard conversation={untitledConv} />)
+        renderWithProviders(untitledConv)
 
         expect(screen.getByText('[Untitled]')).toBeInTheDocument()
     })
@@ -55,7 +61,7 @@ describe('ConversationCard', () => {
             ...mockConversation,
             is_favorite: true,
         }
-        render(<ConversationCard conversation={favoriteConv} />)
+        renderWithProviders(favoriteConv)
 
         // Star icon should be present (SVG)
         const star = document.querySelector('svg')
@@ -67,28 +73,28 @@ describe('ConversationCard', () => {
             ...mockConversation,
             tags: ['work', 'important'],
         }
-        render(<ConversationCard conversation={taggedConv} />)
+        renderWithProviders(taggedConv)
 
         expect(screen.getByText('work')).toBeInTheDocument()
         expect(screen.getByText('important')).toBeInTheDocument()
     })
 
     it('does not render tags section when no tags', () => {
-        render(<ConversationCard conversation={mockConversation} />)
+        renderWithProviders(mockConversation)
 
         // Check that no badge elements exist
         expect(screen.queryByText('work')).not.toBeInTheDocument()
     })
 
     it('links to conversation detail page', () => {
-        render(<ConversationCard conversation={mockConversation} />)
+        renderWithProviders(mockConversation)
 
         const link = screen.getByRole('link')
         expect(link).toHaveAttribute('href', '/conversation/test-conv-1')
     })
 
     it('formats date correctly', () => {
-        render(<ConversationCard conversation={mockConversation} />)
+        renderWithProviders(mockConversation)
 
         // November 14, 2023 (timestamp 1700000000)
         expect(screen.getByText(/Nov 14, 2023/)).toBeInTheDocument()

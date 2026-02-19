@@ -13,6 +13,7 @@ import type {
 } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const API_BASE_URL = API_URL;
 
 class APIClient {
     private baseUrl: string;
@@ -245,14 +246,35 @@ class APIClient {
     async generateEmbeddings(params: {
         model?: string;
         batchSize?: number;
+        maxCost?: number;
     } = {}): Promise<ImportProgress> {
         return this.request("/api/embeddings/generate", {
             method: "POST",
             body: JSON.stringify({
                 model: params.model || "text-embedding-3-small",
                 batch_size: params.batchSize || 100,
+                max_cost: params.maxCost,
             }),
         });
+    }
+
+    async validateEmbeddingsKey(apiKey?: string): Promise<{ valid: boolean; message: string }> {
+        return this.request("/api/embeddings/validate-key", {
+            method: "POST",
+            body: JSON.stringify({ api_key: apiKey }),
+        });
+    }
+
+    async getEmbeddingStats(): Promise<{ total: number; withEmbeddings: number }> {
+        return this.request("/api/embeddings/stats");
+    }
+
+    async cancelEmbeddingGeneration(): Promise<{ cancelled: boolean; message: string }> {
+        return this.request("/api/embeddings/cancel", { method: "POST" });
+    }
+
+    getEmbeddingsProgressStreamUrl(): string {
+        return `${this.baseUrl}/api/embeddings/progress/stream`;
     }
 
     // Health

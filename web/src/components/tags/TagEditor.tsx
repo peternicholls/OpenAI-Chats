@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,9 @@ export function TagEditor({
     className,
     maxTags = 10,
 }: TagEditorProps) {
+    const searchParams = useSearchParams();
+    const activeTagFilter = searchParams.get("tag");
+
     const [open, setOpen] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -87,6 +91,14 @@ export function TagEditor({
     };
 
     const handleRemoveTag = async (tagName: string) => {
+        // Warn if removing tag that matches active filter and it's the only matching tag
+        if (activeTagFilter && tagName === activeTagFilter && tags.filter(t => t === activeTagFilter).length === 1) {
+            toast.info(
+                "Removing this tag will hide this conversation from the current filtered view",
+                { duration: 4000 }
+            );
+        }
+
         try {
             await removeTag(tagName);
             toast.success(`Removed tag "${tagName}"`);
