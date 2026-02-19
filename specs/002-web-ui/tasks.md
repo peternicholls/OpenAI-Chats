@@ -196,7 +196,7 @@ Web application architecture:
 - [x] T099 [P] [US3] Add batch export button to conversation list toolbar (visible when conversations selected)
 - [x] T100 [P] [US3] Add export success toast notification using shadcn/ui Toast (generate and add via CLI)
 - [x] T101 [P] [US3] Add export error handling with user-friendly messages (format not supported, conversation not found, server error)
-- [ ] T102 [US3] Add validation test: export all 7 formats (md, json, yaml, html, xml, csv, xlsx) with multi-conversation selection, verify each downloads correctly
+- [x] T102 [US3] Add validation test: export all 7 formats (md, json, yaml, html, xml, csv, xlsx) with multi-conversation selection, verify each downloads correctly
 
 **Checkpoint**: All three user stories (US1, US2, US3) should now be independently functional. Run quickstart.md validation for US1-US3 scope.
 
@@ -243,7 +243,7 @@ Web application architecture:
 - [x] T128 [US4] Add favorites link to sidebar navigation
 - [x] T129 [US4] Implement optimistic updates for favorite toggle (update UI immediately, rollback on error)
 - [x] T130 [US4] Add tag autocomplete with existing tags (filter taglist as user types)
-- [ ] T131 [P] [US4] Add error handling: display message when removing last tag from filtered view
+- [x] T131 [P] [US4] Add error handling: display message when removing last tag from filtered view
 - [x] T132 [P] [US4] Add "no tags" empty state in sidebar TagList component
 - [x] T133 [P] [US4] Add tag limit validation: warn user if attempting to add more than 10 tags per conversation
 
@@ -264,33 +264,33 @@ Web application architecture:
 - [x] T134 [P] [US5] Create embeddings router in api/routers/embeddings.py with POST generate endpoint
 - [x] T135 [P] [US5] Add GET estimate endpoint for cost calculation in embeddings router
 - [x] T136 [US5] Integrate chatgpt_archive.embeddings module in archive_service.py
-- [ ] T137 [US5] Add OpenAI API key validation in embeddings router before starting generation (make test API call to verify key validity and sufficient quota)
+- [x] T137 [US5] Add OpenAI API key validation in embeddings router before starting generation (make test API call to verify key validity and sufficient quota)
 - [x] T138 [US5] Add background task support for embedding generation (FastAPI BackgroundTasks — in-memory only, lost on server restart; acceptable for single-user deployment)
-- [ ] T139 [US5] (similar to T042) Add SSE progress stream for embedding generation in api/routers/embeddings.py (reuse pattern from import progress endpoint)
+- [x] T139 [US5] (similar to T042) Add SSE progress stream for embedding generation in api/routers/embeddings.py (reuse pattern from import progress endpoint)
 - [x] T140 [US5] Add semantic search support to search endpoint (search_type parameter: "keyword" | "semantic")
-- [ ] T141 [US5] Add error handling for API quota exceeded, invalid credentials, rate limits
-- [ ] T142 [P] [US5] Add cancel/pause endpoint for embedding generation in embeddings router (set cancellation flag, gracefully stop after current batch)
-- [ ] T143 [P] [US5] Add cost limit safeguard in embeddings router (accept max_cost param, stop if estimate exceeds limit)
-- [ ] T144 [P] [US5] Add OpenAI API key encryption for settings storage in api/services/settings_service.py (use cryptography.fernet with server-side key)
+- [x] T141 [US5] Add error handling for API quota exceeded, invalid credentials, rate limits
+- [x] T142 [P] [US5] Add cancel/pause endpoint for embedding generation in embeddings router (set cancellation flag, gracefully stop after current batch)
+- [x] T143 [P] [US5] Add cost limit safeguard in embeddings router (accept max_cost param, stop if estimate exceeds limit)
+- [x] T144 [P] [US5] Add OpenAI API key encryption for settings storage in api/services/settings_service.py (use cryptography.fernet with server-side key)
 
 #### Frontend UI
 
 - [x] T145 [P] [US5] Create settings page in web/src/app/settings/page.tsx (client component for API key input)
-- [ ] T146 [P] [US5] Create SettingsForm component in web/src/components/settings/SettingsForm.tsx (tabbed interface for different settings)
-- [ ] T147 [P] [US5] Create ApiCredentials component in web/src/components/settings/ApiCredentials.tsx (password input for API key, test connection button)
+- [x] T146 [P] [US5] Create SettingsForm component in web/src/components/settings/SettingsForm.tsx (tabbed interface for different settings)
+- [x] T147 [P] [US5] Create ApiCredentials component in web/src/components/settings/ApiCredentials.tsx (password input for API key, test connection button)
 - [x] T148 [P] [US5] Add shadcn/ui Tabs for settings sections
 - [x] T149 [US5] Create useSettings hook in web/src/hooks/useSettings.ts with React Query
 - [x] T150 [US5] Add settings API client methods in web/src/services/api.ts (get, update)
 - [x] T151 [US5] Add embeddings API client methods in web/src/services/api.ts (estimate, generate, progress)
-- [ ] T152 [US5] Add embedding generation UI to settings page (start button, progress bar, cancel button)
-- [ ] T153 [US5] Add cost estimate display before generation (show: total messages, estimated tokens, cost in USD, confirm button)
+- [x] T152 [US5] Add embedding generation UI to settings page (start button, progress bar, cancel button)
+- [x] T153 [US5] Add cost estimate display before generation (show: total messages, estimated tokens, cost in USD, confirm button)
 - [x] T154 [US5] Add semantic search type option to SearchFilters component (radio group: keyword/semantic)
-- [ ] T155 [US5] (depends on T139) Add SSE listener for embedding progress in settings page (reuse useSSE hook pattern)
-- [ ] T156 [US5] Add OpenAI API key input with secure storage indication (show lock icon, "encrypted at rest" message)
-- [ ] T157 [US5] Persist user settings to backend settings service (save on change, optimistic updates)
-- [ ] T158 [US5] Add "Embeddings not generated" info message in semantic search mode (suggest going to settings)
-- [ ] T159 [P] [US5] Add cost limit input to embedding generation UI (max spend in USD, default $5.00)
-- [ ] T160 [P] [US5] Add resume support UI: detect incomplete embedding generation, offer "Resume" button
+- [x] T155 [US5] (depends on T139) Add SSE listener for embedding progress in settings page (reuse useSSE hook pattern)
+- [x] T156 [US5] Add OpenAI API key input with secure storage indication (show lock icon, "encrypted at rest" message)
+- [x] T157 [US5] Persist user settings to backend settings service (save on change, optimistic updates)
+- [x] T158 [US5] Add "Embeddings not generated" info message in semantic search mode (suggest going to settings)
+- [x] T159 [P] [US5] Add cost limit input to embedding generation UI (max spend in USD, default $5.00)
+- [x] T160 [P] [US5] Add resume support UI: detect incomplete embedding generation, offer "Resume" button
 
 **Checkpoint**: All five user stories should now be independently functional. Run quickstart.md validation for full feature scope.
 
@@ -302,10 +302,10 @@ Web application architecture:
 
 **Note**: Priority markers: P1 = critical for launch, P2 = nice-to-have, P3 = optional
 
-- [ ] T161 [P] Update README.md with project overview, features, and deployment instructions
-- [ ] T162 [P] Update docs/API.md with complete API documentation (if not using OpenAPI docs)
-- [ ] T163 [P] Add environment variable documentation to docker-compose.yml comments
-- [ ] T164 [P] Add favicon and app metadata to web/src/app/layout.tsx
+- [x] T161 [P] Update README.md with project overview, features, and deployment instructions
+- [x] T162 [P] Update docs/API.md with complete API documentation (if not using OpenAPI docs)
+- [x] T163 [P] Add environment variable documentation to docker-compose.yml comments
+- [x] T164 [P] Add favicon and app metadata to web/src/app/layout.tsx
 - [ ] T165 [P] Optimize Docker images (reduce size below 500MB total, multi-stage builds)
 - [x] T166 Add nginx configuration in docker/nginx.conf for production frontend serving
 - [ ] T167 [P] [Priority: P2] Add loading states and skeletons to all data-fetching components (nice-to-have UX polish)
@@ -313,33 +313,33 @@ Web application architecture:
 - [x] T169 [P] [Priority: P2] Add dark mode support using Next.js themes and Tailwind dark mode classes (UX polish)
 - [ ] T170 [Priority: P2] Add keyboard shortcuts for common actions (/, Ctrl+K for search) (power user feature)
 - [ ] T171 [P] [Priority: P2] Add toast notifications for all remaining user actions (import success, tag added, etc.)
-- [ ] T172 [Priority: P1] Optimize conversation list with virtualization for 1000+ conversations (REQUIRED for SC-009: render 5000+ items with <16ms frame time, use react-window or @tanstack/react-virtual)
-- [ ] T173 [Priority: P1] Add rate limiting middleware in api/middleware/rate_limit.py (100 requests/minute per IP, 429 status on exceed)
-- [ ] T174 Add request logging middleware in api/middleware/logging.py (JSON format to stdout for Docker log aggregation: timestamp, method, path, status, duration_ms)
+- [x] T172 [Priority: P1] Optimize conversation list with virtualization for 1000+ conversations (REQUIRED for SC-009: render 5000+ items with <16ms frame time, use react-window or @tanstack/react-virtual)
+- [x] T173 [Priority: P1] Add rate limiting middleware in api/middleware/rate_limit.py (100 requests/minute per IP, 429 status on exceed)
+- [x] T174 Add request logging middleware in api/middleware/logging.py (JSON format to stdout for Docker log aggregation: timestamp, method, path, status, duration_ms)
 - [ ] T175 [P] [Priority: P3] Add analytics/telemetry hooks (optional, privacy-respecting, disabled by default)
 - [ ] T176 [Priority: P1] Run full quickstart.md validation on fresh Docker deployment (checkpoint after each user story completion)
 - [ ] T177 [P] Add code comments and documentation for complex functions (focus on archive_service.py, embedding logic)
-- [ ] T178 [P] Run linting and formatting on all code (ruff, black, eslint, prettier)
+- [x] T178 [P] Run linting and formatting on all code (ruff, black, eslint, prettier)
 - [ ] T179 [Priority: P1] Verify all shadcn/ui components follow accessibility guidelines (test: all interactive elements have ARIA labels, verify VoiceOver/NVDA screen reader compatibility, ensure keyboard-only navigation works for all workflows)
-- [ ] T180 [Priority: P1] Add Content Security Policy headers in api/middleware/cors.py (restrict script-src, style-src to 'self', prevent inline scripts except for Next.js hydration)
-- [ ] T181 [P] Create deployment guide in docs/DEPLOYMENT.md (one-command Docker deployment with security notices: 0.0.0.0 exposure, default credentials warnings)
+- [x] T180 [Priority: P1] Add Content Security Policy headers in api/middleware/cors.py (restrict script-src, style-src to 'self', prevent inline scripts except for Next.js hydration)
+- [x] T181 [P] Create deployment guide in docs/DEPLOYMENT.md (one-command Docker deployment with security notices: 0.0.0.0 exposure, default credentials warnings)
 - [ ] T182 [Priority: P1] Verify data persistence across Docker container restarts (test: stop/start containers, verify ~/.chatgpt-archive/archive.db and settings.json survive)
-- [ ] T183 Add health check endpoints to docker-compose.yml (api: wget http://localhost:8000/api/health, interval: 30s, timeout: 10s, retries: 3)
-- [ ] T184 [P] Add troubleshooting section to docs/TROUBLESHOOTING.md (common issues: port 3000/8000 conflicts, permission denied on volume mount, CORS errors)
+- [x] T183 Add health check endpoints to docker-compose.yml (api: wget http://localhost:8000/api/health, interval: 30s, timeout: 10s, retries: 3)
+- [x] T184 [P] Add troubleshooting section to docs/TROUBLESHOOTING.md (common issues: port 3000/8000 conflicts, permission denied on volume mount, CORS errors)
 - [ ] T185 [P] Final review and cleanup of unused dependencies (check for orphaned imports, unused packages)
-- [ ] T186 [P] Add Browserslist config in web/package.json and verify Chrome, Firefox, Safari, Edge (last 2 versions)
+- [x] T186 [P] Add Browserslist config in web/package.json and verify Chrome, Firefox, Safari, Edge (last 2 versions)
 - [ ] T187 [Priority: P1] Conduct 3-user walkthrough test for SC-010 (document: task completion rates, avg time per task, user pain points, suggestions) and record findings for iteration
 
 ### Code Review Fixes (from Phase 1-3 Review)
 
 **Purpose**: Address issues identified during code review of Phase 1-3 implementation
 
-- [ ] T_CR001 [Priority: P1] Apply validation middleware functions to API routes — functions in api/middleware/validation.py exist but are not called in route handlers (validate_query_param, validate_tag_name, validate_conversation_id)
-- [ ] T_CR002 [P] [Priority: P2] Add loading state during delete operation in web/src/app/conversation/[id]/page.tsx — handleDelete() should show spinner/disable button while awaiting API response
+- [x] T_CR001 [Priority: P1] Apply validation middleware functions to API routes — functions in api/middleware/validation.py exist but are not called in route handlers (validate_query_param, validate_tag_name, validate_conversation_id)
+- [x] T_CR002 [P] [Priority: P2] Add loading state during delete operation in web/src/app/conversation/[id]/page.tsx — handleDelete() should show spinner/disable button while awaiting API response
 - [ ] T_CR003 [P] [Priority: P3] Standardize Python type annotations across api/ — replace mixed `Optional[str]` and `str | None` syntax with consistent `str | None` (Python 3.10+)
-- [ ] T_CR004 [P] [Priority: P2] Handle SSE client disconnection in api/routers/progress.py — check for client disconnect in event_generator() loop to avoid orphaned async tasks
-- [ ] T_CR005 [P] [Priority: P3] Make page size configurable in web/src/app/page.tsx — move PAGE_SIZE to user settings or environment variable instead of hardcoded constant
-- [ ] T_CR006 [P] [Priority: P3] Add warning log in api/services/archive_service.py if temp file cleanup fails in import_archive_from_zip() finally block
+- [x] T_CR004 [P] [Priority: P2] Handle SSE client disconnection in api/routers/progress.py — check for client disconnect in event_generator() loop to avoid orphaned async tasks
+- [x] T_CR005 [P] [Priority: P3] Make page size configurable in web/src/app/page.tsx — move PAGE_SIZE to user settings or environment variable instead of hardcoded constant
+- [x] T_CR006 [P] [Priority: P3] Add warning log in api/services/archive_service.py if temp file cleanup fails in import_archive_from_zip() finally block
 
 ---
 
@@ -355,10 +355,10 @@ Web application architecture:
 - [x] T189 [P] Add test dependencies to web/package.json: vitest, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, jsdom, msw
 - [x] T190 [P] Add Playwright dependencies to web/package.json: @playwright/test (for E2E tests)
 - [x] T191 [P] Create tests/conftest.py with shared fixtures: tmp_db, sample_conversation, api_client, mock_openai_client
-- [ ] T192 [P] Create tests/fixtures/sample_conversation.json with minimal valid conversation (user + assistant messages)
-- [ ] T193 [P] Create tests/fixtures/sample_archive/ directory with conversations.json (3 conversations), user.json
-- [ ] T194 [P] Create tests/fixtures/test_archive.zip from sample_archive/ for import testing
-- [ ] T195 [P] Create test data generator script in tests/fixtures/generate_test_data.py (generate conversations with varying sizes: 10, 100, 1000 messages)
+- [x] T192 [P] Create tests/fixtures/sample_conversation.json with minimal valid conversation (user + assistant messages)
+- [x] T193 [P] Create tests/fixtures/sample_archive/ directory with conversations.json (3 conversations), user.json
+- [x] T194 [P] Create tests/fixtures/test_archive.zip from sample_archive/ for import testing
+- [x] T195 [P] Create test data generator script in tests/fixtures/generate_test_data.py (generate conversations with varying sizes: 10, 100, 1000 messages)
 - [x] T196 [P] Create web/vitest.config.ts with jsdom environment, react plugin, coverage settings (target: 70%+)
 - [x] T197 [P] Create web/vitest.setup.ts with @testing-library/jest-dom matchers
 - [x] T198 [P] Create web/__tests__/mocks/handlers.ts with MSW request handlers for all API endpoints (conversations, search, tags, favorites, import, export, embeddings)
@@ -372,48 +372,48 @@ Web application architecture:
 - [x] T203 [P] Write Playwright E2E test for US1 conversation detail in web/__tests__/e2e/conversation-detail.spec.ts (click conversation, view messages, navigate back)
 - [x] T204 [P] Write Playwright E2E test for US2 search flow in web/__tests__/e2e/search.spec.ts (type query, verify debounce, check results, click result)
 - [x] T205 [P] Write Playwright E2E test for US3 export flow in web/__tests__/e2e/export.spec.ts (open export dialog, select format, verify download)
-- [ ] T206 [P] Write Playwright E2E test for US4 favorites flow in web/__tests__/e2e/favorites.spec.ts (toggle favorite, filter favorites page)
-- [ ] T207 [P] Write Playwright E2E test for US4 tags flow in web/__tests__/e2e/tags.spec.ts (add tag, remove tag, filter by tag)
-- [ ] T208 [P] Write Playwright E2E test for US5 embeddings flow in web/__tests__/e2e/embeddings.spec.ts (add API key, view cost estimate, start generation)
-- [ ] T209 Write Playwright E2E test for data persistence in web/__tests__/e2e/persistence.spec.ts (import data, restart containers via docker-compose, verify data survives)
+- [x] T206 [P] Write Playwright E2E test for US4 favorites flow in web/__tests__/e2e/favorites.spec.ts (toggle favorite, filter favorites page)
+- [x] T207 [P] Write Playwright E2E test for US4 tags flow in web/__tests__/e2e/tags.spec.ts (add tag, remove tag, filter by tag)
+- [x] T208 [P] Write Playwright E2E test for US5 embeddings flow in web/__tests__/e2e/embeddings.spec.ts (add API key, view cost estimate, start generation)
+- [x] T209 Write Playwright E2E test for data persistence in web/__tests__/e2e/persistence.spec.ts (import data, restart containers via docker-compose, verify data survives)
 
 ### Python Unit Tests (chatgpt_archive/)
 
 #### tests/unit/test_exporters.py — 14 tests
 
-- [ ] T210 [P] Implement EXP-001: test_markdown_export_single_conversation in tests/unit/test_exporters.py
-- [ ] T211 [P] Implement EXP-002: test_markdown_export_multipart_content in tests/unit/test_exporters.py
-- [ ] T212 [P] Implement EXP-003: test_json_export_structure in tests/unit/test_exporters.py
-- [ ] T213 [P] Implement EXP-004: test_json_export_special_chars in tests/unit/test_exporters.py
-- [ ] T214 [P] Implement EXP-005: test_yaml_export_structure in tests/unit/test_exporters.py
-- [ ] T215 [P] Implement EXP-006: test_html_export_structure in tests/unit/test_exporters.py
-- [ ] T216 [P] Implement EXP-007: test_html_export_xss_prevention in tests/unit/test_exporters.py
-- [ ] T217 [P] Implement EXP-008: test_xml_export_structure in tests/unit/test_exporters.py
-- [ ] T218 [P] Implement EXP-009: test_xml_export_special_chars in tests/unit/test_exporters.py
-- [ ] T219 [P] Implement EXP-010: test_csv_export_structure in tests/unit/test_exporters.py
-- [ ] T220 [P] Implement EXP-011: test_csv_export_commas_in_content in tests/unit/test_exporters.py
-- [ ] T221 [P] Implement EXP-012: test_excel_export_structure in tests/unit/test_exporters.py
-- [ ] T222 [P] Implement EXP-013: test_excel_export_binary in tests/unit/test_exporters.py
-- [ ] T223 [P] Implement EXP-014: test_export_empty_conversation in tests/unit/test_exporters.py
+- [x] T210 [P] Implement EXP-001: test_markdown_export_single_conversation in tests/unit/test_exporters.py
+- [x] T211 [P] Implement EXP-002: test_markdown_export_multipart_content in tests/unit/test_exporters.py
+- [x] T212 [P] Implement EXP-003: test_json_export_structure in tests/unit/test_exporters.py
+- [x] T213 [P] Implement EXP-004: test_json_export_special_chars in tests/unit/test_exporters.py
+- [x] T214 [P] Implement EXP-005: test_yaml_export_structure in tests/unit/test_exporters.py
+- [x] T215 [P] Implement EXP-006: test_html_export_structure in tests/unit/test_exporters.py
+- [x] T216 [P] Implement EXP-007: test_html_export_xss_prevention in tests/unit/test_exporters.py
+- [x] T217 [P] Implement EXP-008: test_xml_export_structure in tests/unit/test_exporters.py
+- [x] T218 [P] Implement EXP-009: test_xml_export_special_chars in tests/unit/test_exporters.py
+- [x] T219 [P] Implement EXP-010: test_csv_export_structure in tests/unit/test_exporters.py
+- [x] T220 [P] Implement EXP-011: test_csv_export_commas_in_content in tests/unit/test_exporters.py
+- [x] T221 [P] Implement EXP-012: test_excel_export_structure in tests/unit/test_exporters.py
+- [x] T222 [P] Implement EXP-013: test_excel_export_binary in tests/unit/test_exporters.py
+- [x] T223 [P] Implement EXP-014: test_export_empty_conversation in tests/unit/test_exporters.py
 
 #### tests/unit/test_search.py — 8 tests
 
-- [ ] T224 [P] Implement SCH-001: test_fts_search_basic in tests/unit/test_search.py
-- [ ] T225 [P] Implement SCH-002: test_fts_search_phrase in tests/unit/test_search.py
-- [ ] T226 [P] Implement SCH-003: test_fts_search_no_results in tests/unit/test_search.py
-- [ ] T227 [P] Implement SCH-004: test_fts_search_special_chars in tests/unit/test_search.py
-- [ ] T228 [P] Implement SCH-005: test_search_with_date_filter in tests/unit/test_search.py
-- [ ] T229 [P] Implement SCH-006: test_search_result_preview in tests/unit/test_search.py
-- [ ] T230 [P] Implement SCH-007: test_search_match_count in tests/unit/test_search.py
-- [ ] T231 [P] Implement SCH-008: test_search_performance in tests/unit/test_search.py (verify <500ms)
+- [x] T224 [P] Implement SCH-001: test_fts_search_basic in tests/unit/test_search.py
+- [x] T225 [P] Implement SCH-002: test_fts_search_phrase in tests/unit/test_search.py
+- [x] T226 [P] Implement SCH-003: test_fts_search_no_results in tests/unit/test_search.py
+- [x] T227 [P] Implement SCH-004: test_fts_search_special_chars in tests/unit/test_search.py
+- [x] T228 [P] Implement SCH-005: test_search_with_date_filter in tests/unit/test_search.py
+- [x] T229 [P] Implement SCH-006: test_search_result_preview in tests/unit/test_search.py
+- [x] T230 [P] Implement SCH-007: test_search_match_count in tests/unit/test_search.py
+- [x] T231 [P] Implement SCH-008: test_search_performance in tests/unit/test_search.py (verify <500ms)
 
 #### tests/unit/test_embeddings.py — 5 tests
 
-- [ ] T232 [P] Implement EMB-001: test_estimate_tokens in tests/unit/test_embeddings.py
-- [ ] T233 [P] Implement EMB-002: test_estimate_cost in tests/unit/test_embeddings.py
-- [ ] T234 [P] Implement EMB-003: test_batch_messages in tests/unit/test_embeddings.py
-- [ ] T235 [P] Implement EMB-004: test_store_embedding in tests/unit/test_embeddings.py
-- [ ] T236 [P] Implement EMB-005: test_embedding_mock_api in tests/unit/test_embeddings.py (mock OpenAI)
+- [x] T232 [P] Implement EMB-001: test_estimate_tokens in tests/unit/test_embeddings.py
+- [x] T233 [P] Implement EMB-002: test_estimate_cost in tests/unit/test_embeddings.py
+- [x] T234 [P] Implement EMB-003: test_batch_messages in tests/unit/test_embeddings.py
+- [x] T235 [P] Implement EMB-004: test_store_embedding in tests/unit/test_embeddings.py
+- [x] T236 [P] Implement EMB-005: test_embedding_mock_api in tests/unit/test_embeddings.py (mock OpenAI)
 
 ### Python Integration Tests (api/)
 
@@ -555,11 +555,11 @@ Web application architecture:
 
 ### Test CI/CD Integration
 
-- [ ] T305 Add npm test script to web/package.json: "test": "vitest run"
-- [ ] T306 [P] Add npm test:coverage script to web/package.json: "test:coverage": "vitest run --coverage"
-- [ ] T307 [P] Add npm test:watch script to web/package.json: "test:watch": "vitest"
-- [ ] T308 Create .github/workflows/test.yml with Python and frontend test jobs
-- [ ] T309 [P] Add pytest.ini with asyncio_mode = auto and coverage settings
+- [x] T305 Add npm test script to web/package.json: "test": "vitest run"
+- [x] T306 [P] Add npm test:coverage script to web/package.json: "test:coverage": "vitest run --coverage"
+- [x] T307 [P] Add npm test:watch script to web/package.json: "test:watch": "vitest"
+- [x] T308 Create .github/workflows/test.yml with Python and frontend test jobs
+- [x] T309 [P] Add pytest.ini with asyncio_mode = auto and coverage settings
 - [ ] T310 Run full test suite and verify 70%+ coverage on Python, all frontend tests pass
 
 ---
