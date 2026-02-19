@@ -1,5 +1,6 @@
 """Rate limiting middleware for API protection."""
 
+import os
 import time
 from collections import defaultdict
 from typing import Callable
@@ -52,6 +53,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with rate limiting."""
+        # Skip rate limiting in test mode
+        if os.getenv("TESTING") == "1":
+            return await call_next(request)
+
         # Skip rate limiting for health checks
         if request.url.path == "/api/health":
             return await call_next(request)
