@@ -12,7 +12,7 @@ COPY api/ api/
 # Install root chatgpt_archive package first (makes it findable for api/ install),
 # then install the API package which reads its pyproject.toml for all deps.
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir "." && \
+    pip install --no-cache-dir ".[semantic]" && \
     pip install --no-cache-dir "./api/"
 
 # ---
