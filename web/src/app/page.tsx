@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useConversations } from "@/hooks/useConversations";
 import { ConversationCard } from "@/components/conversations/ConversationCard";
+import { VirtualizedConversationList } from "@/components/conversations/VirtualizedConversationList";
 import { Pagination } from "@/components/common/Pagination";
 import { ConversationListSkeleton } from "@/components/conversations/ConversationListSkeleton";
 import { Button } from "@/components/ui/button";
@@ -16,14 +17,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowUpDown, Download, X } from "lucide-react";
+import { ArrowUpDown, Download, X, List } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-import type { SortField, SortOrder, ExportFormat } from "@/types";
+import type { SortField, SortOrder, ExportFormatCode } from "@/types";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = Number(process.env.NEXT_PUBLIC_PAGE_SIZE) || 20;
+const VIRTUALIZATION_THRESHOLD = 100; // Use virtualization when viewing more than this many items
 
-const EXPORT_FORMATS: { value: ExportFormat; label: string }[] = [
+const EXPORT_FORMATS: { value: ExportFormatCode; label: string }[] = [
   { value: "md", label: "Markdown" },
   { value: "json", label: "JSON" },
   { value: "yaml", label: "YAML" },
@@ -42,12 +44,17 @@ export default function ConversationsPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
+  const [viewAllMode, setViewAllMode] = useState(false);
+
+  // When viewAllMode is true, fetch all conversations (large limit for virtualization)
+  const effectiveLimit = viewAllMode ? 10000 : PAGE_SIZE;
+  const effectiveOffset = viewAllMode ? 0 : offset;
 
   const { data, isLoading, error, refetch } = useConversations({
     sortBy,
     order,
-    limit: PAGE_SIZE,
-    offset,
+    limit: effectiveLimit,
+    offset: effectiveOffset,
     tag: tagFilter,
   });
 
@@ -87,7 +94,7 @@ export default function ConversationsPage() {
     setSelectedIds(new Set());
   };
 
-  const handleBatchExport = async (format: ExportFormat) => {
+  const handleBatchExport = async (format: ExportFormatCode) => {
     if (selectedIds.size === 0) return;
     setIsExporting(true);
     try {
@@ -152,7 +159,7 @@ export default function ConversationsPage() {
               </div>
               <Select
                 value=""
-                onValueChange={(v) => handleBatchExport(v as ExportFormat)}
+                onValueChange={(v) => handleBatchExport(v as ExportFormatCode)}
                 disabled={selectedIds.size === 0 || isExporting}
               >
                 <SelectTrigger className="w-[140px]">
@@ -173,6 +180,21 @@ export default function ConversationsPage() {
             </>
           ) : (
             <>
+              {/* View mode toggle for large datasets */}
+              {data && data.total > VIRTUALIZATION_THRESHOLD && (
+                <Button
+                  variant={viewAllMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setViewAllMode(!viewAllMode);
+                    setOffset(0);
+                  }}
+                  title={viewAllMode ? "Switch to paginated view" : "View all (virtualized)"}
+                >
+                  <List className="h-4 w-4 mr-1" />
+                  {viewAllMode ? "Pages" : "All"}
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -207,23 +229,37 @@ export default function ConversationsPage() {
         <ConversationListSkeleton />
       ) : data && data.items.length > 0 ? (
         <>
-          <div className="grid gap-3">
-            {data.items.map((conversation) => (
-              <ConversationCard
-                key={conversation.id}
-                conversation={conversation}
-                selectable={selectMode}
-                isSelected={selectedIds.has(conversation.id)}
-                onSelectChange={handleSelectChange}
-              />
-            ))}
-          </div>
-          <Pagination
-            total={data.total}
-            offset={data.offset}
-            limit={data.limit}
-            onPageChange={setOffset}
-          />
+          {/* Use virtualized list for large datasets in "view all" mode */}
+          {viewAllMode && data.items.length > VIRTUALIZATION_THRESHOLD ? (
+            <VirtualizedConversationList
+              conversations={data.items}
+              selectable={selectMode}
+              selectedIds={selectedIds}
+              onSelectChange={handleSelectChange}
+            />
+          ) : (
+            <>
+              <div className="grid gap-3">
+                {data.items.map((conversation) => (
+                  <ConversationCard
+                    key={conversation.id}
+                    conversation={conversation}
+                    selectable={selectMode}
+                    isSelected={selectedIds.has(conversation.id)}
+                    onSelectChange={handleSelectChange}
+                  />
+                ))}
+              </div>
+              {!viewAllMode && (
+                <Pagination
+                  total={data.total}
+                  offset={data.offset}
+                  limit={data.limit}
+                  onPageChange={setOffset}
+                />
+              )}
+            </>
+          )}
         </>
       ) : (
         <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
