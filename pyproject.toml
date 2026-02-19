@@ -48,6 +48,12 @@ chatgpt-archive = "chatgpt_archive.cli:main"
 [project.urls]
 Repository = "https://github.com/peternicholls/OpenAI-Chats"
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests", "api/tests"]
+addopts = "--tb=short"
+
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["chatgpt_archive*"]
