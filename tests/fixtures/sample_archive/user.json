@@ -1,0 +1,5 @@
+{
+    "id": "test-user-fixture",
+    "email": "testuser@example.com",
+    "name": "Test User"
+}
