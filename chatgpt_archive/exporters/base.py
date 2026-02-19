@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 
 
 class BaseExporter(ABC):
@@ -43,7 +43,7 @@ class BaseExporter(ABC):
         pass
     
     @staticmethod
-    def format_timestamp(ts: Optional[float], include_time: bool = True) -> str:
+    def format_timestamp(ts: float | None, include_time: bool = True) -> str:
         """Format a unix timestamp for display.
         
         Args:
@@ -61,7 +61,7 @@ class BaseExporter(ABC):
         return dt.strftime("%Y-%m-%d")
     
     @staticmethod
-    def format_date(ts: Optional[float]) -> str:
+    def format_date(ts: float | None) -> str:
         """Format a unix timestamp as date only.
         
         Args:
@@ -73,7 +73,7 @@ class BaseExporter(ABC):
         return BaseExporter.format_timestamp(ts, include_time=False)
     
     @staticmethod
-    def format_time(ts: Optional[float]) -> str:
+    def format_time(ts: float | None) -> str:
         """Format a unix timestamp as time only.
         
         Args:
@@ -88,7 +88,7 @@ class BaseExporter(ABC):
         return dt.strftime("%H:%M:%S")
     
     @staticmethod
-    def format_iso8601(ts: Optional[float]) -> Optional[str]:
+    def format_iso8601(ts: float | None) -> str | None:
         """Format a unix timestamp as ISO 8601.
         
         Args:

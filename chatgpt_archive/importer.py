@@ -3,7 +3,7 @@
 import json
 import sqlite3
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Callable
+from typing import Dict, List, Tuple, Any, Callable
 
 from chatgpt_archive.db import init_db
 from chatgpt_archive.models import Conversation, Message, Attachment
@@ -311,8 +311,8 @@ def insert_conversation(
 
 def import_archive(
     archive_dir: Path,
-    db_path: Optional[Path] = None,
-    progress_callback: Optional[Callable[[int, int], None]] = None,
+    db_path: Path | None = None,
+    progress_callback: Callable[[int, int], None] | None = None,
     embed: bool = False,
     embed_model: str = "text-embedding-3-small",
 ) -> Tuple[int, int]:

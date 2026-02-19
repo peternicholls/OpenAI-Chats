@@ -1,7 +1,7 @@
 """Data models for ChatGPT archive entities."""
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 
 @dataclass
@@ -16,10 +16,10 @@ class Attachment:
         original_name: Original filename from the export
     """
     file_path: str
-    file_type: Optional[str] = None
-    original_name: Optional[str] = None
-    id: Optional[int] = None
-    message_id: Optional[int] = None
+    file_type: str | None = None
+    original_name: str | None = None
+    id: int | None = None
+    message_id: int | None = None
 
 
 @dataclass
@@ -41,14 +41,14 @@ class Message:
     """
     openai_id: str
     author_role: str
-    content: Optional[str] = None
-    conversation_id: Optional[int] = None
-    parent_id: Optional[str] = None
+    content: str | None = None
+    conversation_id: int | None = None
+    parent_id: str | None = None
     content_type: str = "text"
-    create_time: Optional[float] = None
+    create_time: float | None = None
     weight: float = 1.0
     is_hidden: bool = False
-    id: Optional[int] = None
+    id: int | None = None
     attachments: List[Attachment] = field(default_factory=list)
 
     def __post_init__(self):
@@ -76,12 +76,12 @@ class Conversation:
         message_count: Count of messages (for list display)
     """
     openai_id: str
-    title: Optional[str] = None
-    create_time: Optional[float] = None
-    update_time: Optional[float] = None
-    model_slug: Optional[str] = None
+    title: str | None = None
+    create_time: float | None = None
+    update_time: float | None = None
+    model_slug: str | None = None
     is_archived: bool = False
-    id: Optional[int] = None
+    id: int | None = None
     messages: List[Message] = field(default_factory=list)
     message_count: int = 0
 

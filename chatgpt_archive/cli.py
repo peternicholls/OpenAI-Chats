@@ -12,7 +12,6 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click  # type: ignore[import-untyped]
 
@@ -37,7 +36,7 @@ from chatgpt_archive.search import (
 )
 
 
-def get_db_option_path(db: Optional[str]) -> Path:
+def get_db_option_path(db: str | None) -> Path:
     """Resolve database path from CLI option or environment/default.
     
     Args:
@@ -97,7 +96,7 @@ class AliasedGroup(click.Group):
 )
 @click.version_option(version=__version__, prog_name="chatgpt-archive")
 @click.pass_context
-def main(ctx: click.Context, db: Optional[str], json_output: bool) -> None:
+def main(ctx: click.Context, db: str | None, json_output: bool) -> None:
     """ChatGPT Archive Search & Export - manage your ChatGPT conversation history.
     
     Import your ChatGPT export, search through conversations, view them,
@@ -205,7 +204,7 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
 @click.option("--semantic", is_flag=True, help="Use semantic (vector) search instead of keyword search")
 @click.option("--hybrid", is_flag=True, help="Combine keyword and semantic search for best results")
 @click.pass_context
-def search(ctx: click.Context, query: str, from_date: Optional[str], to_date: Optional[str],
+def search(ctx: click.Context, query: str, from_date: str | None, to_date: str | None,
            limit: int, semantic: bool, hybrid: bool) -> None:
     """Search conversations by keyword or phrase.
     
@@ -433,7 +432,7 @@ def embed(ctx: click.Context, model: str, batch_size: int, estimate: bool, yes: 
 @click.option("--tag", "-t", help="Filter by tag name")
 @click.pass_context
 def list_conversations(ctx: click.Context, sort: str, order: str, limit: int, offset: int,
-                       tag: Optional[str]) -> None:
+                       tag: str | None) -> None:
     """List all imported conversations.
     
     \b
@@ -611,7 +610,7 @@ def view(ctx: click.Context, conversation_id: str) -> None:
         sys.exit(3)
 
 
-def _format_timestamp(ts: Optional[float]) -> str:
+def _format_timestamp(ts: float | None) -> str:
     """Format a unix timestamp for display.
     
     Args:
@@ -627,7 +626,7 @@ def _format_timestamp(ts: Optional[float]) -> str:
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def _format_date(ts: Optional[float]) -> str:
+def _format_date(ts: float | None) -> str:
     """Format a unix timestamp as date only.
     
     Args:
@@ -643,7 +642,7 @@ def _format_date(ts: Optional[float]) -> str:
     return dt.strftime("%Y-%m-%d")
 
 
-def _format_time(ts: Optional[float]) -> str:
+def _format_time(ts: float | None) -> str:
     """Format a unix timestamp as time only.
     
     Args:
@@ -743,7 +742,7 @@ def _view_json(conv, messages) -> None:
               help="Output format")
 @click.option("--output", "-o", type=click.Path(), help="Output file (stdout if not specified)")
 @click.pass_context
-def export(ctx: click.Context, conversation_id: str, fmt: str, output: Optional[str]) -> None:
+def export(ctx: click.Context, conversation_id: str, fmt: str, output: str | None) -> None:
     """Export a conversation to file.
     
     CONVERSATION_ID is the OpenAI conversation ID.

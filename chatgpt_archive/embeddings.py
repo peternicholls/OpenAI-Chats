@@ -9,7 +9,7 @@ import os
 import sqlite3
 import time
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Tuple
 
 from chatgpt_archive.db import (
     get_embedding_stats,
@@ -273,8 +273,8 @@ def embed_messages(
     conn: sqlite3.Connection,
     model: str = DEFAULT_MODEL,
     batch_size: int = DEFAULT_BATCH_SIZE,
-    progress_callback: Optional[Callable[[EmbeddingProgress], None]] = None,
-    max_batches: Optional[int] = None,
+    progress_callback: Callable[[EmbeddingProgress], None] | None = None,
+    max_batches: int | None = None,
 ) -> EmbeddingProgress:
     """Generate embeddings for all unembedded messages.
     

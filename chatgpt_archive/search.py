@@ -8,7 +8,7 @@ import re
 import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 
 @dataclass
@@ -27,7 +27,7 @@ class SearchResult:
     conversation_id: int
     openai_id: str
     title: str
-    create_time: Optional[float]
+    create_time: float | None
     preview: str
     relevance_score: float
     match_count: int = 1
@@ -110,8 +110,8 @@ def sanitize_query(query: str) -> str:
 
 def build_search_query(
     query: str,
-    from_date: Optional[str] = None,
-    to_date: Optional[str] = None,
+    from_date: str | None = None,
+    to_date: str | None = None,
     limit: int = 20,
 ) -> Tuple[str, list]:
     """Build the full SQL search query with optional date filtering.
@@ -202,8 +202,8 @@ def _parse_date(date_str: str, start_of_day: bool = True) -> float:
 def execute_search(
     conn: sqlite3.Connection,
     query: str,
-    from_date: Optional[str] = None,
-    to_date: Optional[str] = None,
+    from_date: str | None = None,
+    to_date: str | None = None,
     limit: int = 20,
 ) -> SearchResults:
     """Execute a full-text search and return formatted results.
@@ -421,8 +421,8 @@ def _format_no_results(query: str) -> str:
 def execute_semantic_search(
     conn: sqlite3.Connection,
     query: str,
-    from_date: Optional[str] = None,
-    to_date: Optional[str] = None,
+    from_date: str | None = None,
+    to_date: str | None = None,
     limit: int = 20,
 ) -> SearchResults:
     """Execute semantic search using vector embeddings.
@@ -478,8 +478,8 @@ def _vec_semantic_search(
     conn: sqlite3.Connection,
     query_blob: bytes,
     query: str,
-    from_date: Optional[str],
-    to_date: Optional[str],
+    from_date: str | None,
+    to_date: str | None,
     limit: int,
 ) -> SearchResults:
     """Semantic search using sqlite-vec virtual table.
@@ -582,8 +582,8 @@ def _fallback_semantic_search(
     conn: sqlite3.Connection,
     query_embedding: list,
     query: str,
-    from_date: Optional[str],
-    to_date: Optional[str],
+    from_date: str | None,
+    to_date: str | None,
     limit: int,
 ) -> SearchResults:
     """Fallback semantic search using brute-force cosine similarity.
@@ -681,8 +681,8 @@ def _fallback_semantic_search(
 def execute_hybrid_search(
     conn: sqlite3.Connection,
     query: str,
-    from_date: Optional[str] = None,
-    to_date: Optional[str] = None,
+    from_date: str | None = None,
+    to_date: str | None = None,
     limit: int = 20,
 ) -> SearchResults:
     """Execute hybrid search combining FTS5 keyword and vector semantic search.

@@ -4,7 +4,6 @@ import os
 import sqlite3
 import struct
 from pathlib import Path
-from typing import Optional
 
 # Default database location
 DEFAULT_DB_DIR = Path.home() / ".chatgpt-archive"
@@ -138,7 +137,7 @@ def ensure_db_dir(db_path: Path) -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def get_connection(db_path: Optional[Path] = None) -> sqlite3.Connection:
+def get_connection(db_path: Path | None = None) -> sqlite3.Connection:
     """Get a database connection with proper settings.
     
     Args:
@@ -179,7 +178,7 @@ def init_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def init_db(db_path: Optional[Path] = None) -> sqlite3.Connection:
+def init_db(db_path: Path | None = None) -> sqlite3.Connection:
     """Initialize database with schema.
     
     Convenience function that gets connection and initializes schema.
@@ -195,7 +194,7 @@ def init_db(db_path: Optional[Path] = None) -> sqlite3.Connection:
     return conn
 
 
-def get_db_size(db_path: Optional[Path] = None) -> int:
+def get_db_size(db_path: Path | None = None) -> int:
     """Get database file size in bytes.
     
     Args:
@@ -309,7 +308,7 @@ def deserialize_embedding(blob: bytes) -> list:
     return list(struct.unpack(f'{n}f', blob))
 
 
-def get_conversation_by_id(conn: sqlite3.Connection, openai_id: str) -> Optional[sqlite3.Row]:
+def get_conversation_by_id(conn: sqlite3.Connection, openai_id: str) -> sqlite3.Row | None:
     """Retrieve a conversation by its OpenAI ID.
     
     Args:

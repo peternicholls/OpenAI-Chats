@@ -13,7 +13,7 @@ Available formats:
     - xlsx: Excel format (requires openpyxl)
 """
 
-from typing import Dict, Type, Optional
+from typing import Dict, Type
 
 from .base import BaseExporter
 from .markdown import MarkdownExporter
@@ -52,7 +52,7 @@ if _HAS_EXCEL:
 SUPPORTED_FORMATS = ["md", "json", "yaml", "html", "xml", "csv", "xlsx"]
 
 
-def get_exporter(format_name: str) -> Optional[BaseExporter]:
+def get_exporter(format_name: str) -> BaseExporter | None:
     """Get an exporter instance for the specified format.
     
     Args:
