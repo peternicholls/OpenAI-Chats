@@ -91,6 +91,18 @@ _import_progress: dict[str, Any] = {
     "message": None,
 }
 
+# In-memory embedding progress state
+_embedding_progress: dict[str, Any] = {
+    "status": "idle",
+    "current": 0,
+    "total": 0,
+    "percent": 0.0,
+    "message": None,
+}
+
+# Cancellation flag for embedding generation
+_embedding_cancelled: bool = False
+
 
 def get_db_path() -> Path:
     """Get the database path from environment or default."""
@@ -334,8 +346,10 @@ def import_archive_from_zip(zip_path: str) -> None:
             "message": str(e),
         }
     finally:
-        with contextlib.suppress(OSError):
+        try:
             os.unlink(zip_path)
+        except OSError as e:
+            logger.warning("Failed to clean up temp file %s: %s", zip_path, e)
 
 
 def get_import_progress() -> dict[str, Any]:
@@ -499,7 +513,7 @@ def export_conversation(conversation_id: str, format: str) -> tuple[str | bytes,
 
     if format == "xlsx":
         exporter = excel_export.ExcelExporter()
-        content = exporter.export(conv_dict, messages)
+        content = exporter.export_bytes(conv_dict, messages)
         return (
             content,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -677,7 +691,7 @@ def export_multiple_conversations(
             "model": "various",
             "message_count": len(all_messages),
         }
-        content = exporter.export(combined_conv, all_messages)
+        content = exporter.export_bytes(combined_conv, all_messages)
 
     return content, content_type, filename
 
@@ -712,3 +726,63 @@ def _get_is_favorite(conn: sqlite3.Connection, db_id: int) -> bool:
         return bool(row and row["is_favorite"])
     except sqlite3.OperationalError:
         return False
+
+
+def get_embedding_progress() -> dict[str, Any]:
+    """Get current embedding generation progress state."""
+    return dict(_embedding_progress)
+
+
+def update_embedding_progress(
+    status: str,
+    current: int = 0,
+    total: int = 0,
+    message: str | None = None,
+) -> None:
+    """Update embedding generation progress state."""
+    global _embedding_progress
+    pct = (current / total * 100) if total > 0 else 0.0
+    _embedding_progress = {
+        "status": status,
+        "current": current,
+        "total": total,
+        "percent": round(pct, 1),
+        "message": message,
+    }
+
+
+def reset_embedding_progress() -> None:
+    """Reset embedding progress to idle state."""
+    global _embedding_progress, _embedding_cancelled
+    _embedding_progress = {
+        "status": "idle",
+        "current": 0,
+        "total": 0,
+        "percent": 0.0,
+        "message": None,
+    }
+    _embedding_cancelled = False
+
+
+def cancel_embedding_generation() -> bool:
+    """Request cancellation of embedding generation.
+
+    Returns:
+        True if cancellation was requested, False if no embedding is in progress.
+    """
+    global _embedding_cancelled
+    if _embedding_progress.get("status") in ("processing", "pending"):
+        _embedding_cancelled = True
+        return True
+    return False
+
+
+def is_embedding_cancelled() -> bool:
+    """Check if embedding generation has been cancelled."""
+    return _embedding_cancelled
+
+
+def clear_embedding_cancellation() -> None:
+    """Clear the cancellation flag."""
+    global _embedding_cancelled
+    _embedding_cancelled = False
