@@ -653,6 +653,7 @@ def export_multiple_conversations(
     elif format == "csv":
         import csv
         import io
+        from chatgpt_archive.exporters.base import BaseExporter
 
         output = io.StringIO()
         writer = csv.writer(output)
@@ -663,11 +664,11 @@ def export_multiple_conversations(
             for msg in conv_data["messages"]:
                 writer.writerow(
                     [
-                        conv_data["id"],
-                        conv_data["title"],
-                        msg["role"],
-                        msg["content"],
-                        msg.get("create_time", ""),
+                        BaseExporter.sanitize_spreadsheet_cell(conv_data["id"]),
+                        BaseExporter.sanitize_spreadsheet_cell(conv_data["title"]),
+                        BaseExporter.sanitize_spreadsheet_cell(msg["role"]),
+                        BaseExporter.sanitize_spreadsheet_cell(msg["content"]),
+                        BaseExporter.sanitize_spreadsheet_cell(msg.get("create_time", "")),
                     ]
                 )
         content = output.getvalue()

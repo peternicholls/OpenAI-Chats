@@ -80,11 +80,11 @@ class ExcelExporter(BaseExporter):
         header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
         header_text_font = Font(bold=True, color="FFFFFF", size=11)
         
-        title = self.get_display_title(conversation)
+        title = self.sanitize_spreadsheet_cell(self.get_display_title(conversation))
         created = self.format_timestamp(conversation.get("create_time"))
         updated = self.format_timestamp(conversation.get("update_time"))
-        model = conversation.get("model") or "unknown"
-        conv_id = conversation.get("id", "")
+        model = self.sanitize_spreadsheet_cell(conversation.get("model") or "unknown")
+        conv_id = self.sanitize_spreadsheet_cell(conversation.get("id", ""))
         msg_count = conversation.get("message_count", len(messages))
         
         # Write metadata
@@ -144,12 +144,15 @@ class ExcelExporter(BaseExporter):
             row_num += 1
             timestamp = self.format_timestamp(msg.get("create_time"))
             fill = role_fills.get(role)
+            safe_role = self.sanitize_spreadsheet_cell(role.capitalize())
+            safe_content = self.sanitize_spreadsheet_cell(content)
+            safe_timestamp = self.sanitize_spreadsheet_cell(timestamp)
             
             cells = [
                 ws_msgs.cell(row=row_num, column=1, value=row_num - 1),
-                ws_msgs.cell(row=row_num, column=2, value=role.capitalize()),
-                ws_msgs.cell(row=row_num, column=3, value=content),
-                ws_msgs.cell(row=row_num, column=4, value=timestamp),
+                ws_msgs.cell(row=row_num, column=2, value=safe_role),
+                ws_msgs.cell(row=row_num, column=3, value=safe_content),
+                ws_msgs.cell(row=row_num, column=4, value=safe_timestamp),
             ]
             
             # Apply role-based fill color

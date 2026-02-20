@@ -35,10 +35,10 @@ class CSVExporter(BaseExporter):
         output = io.StringIO()
         
         # Write metadata as comment lines
-        title = self.get_display_title(conversation)
+        title = self.sanitize_spreadsheet_cell(self.get_display_title(conversation))
         created = self.format_timestamp(conversation.get("create_time"))
-        model = conversation.get("model") or "unknown"
-        conv_id = conversation.get("id", "")
+        model = self.sanitize_spreadsheet_cell(conversation.get("model") or "unknown")
+        conv_id = self.sanitize_spreadsheet_cell(conversation.get("id", ""))
         
         output.write(f"# Conversation: {title}\n")
         output.write(f"# ID: {conv_id}\n")
@@ -60,7 +60,14 @@ class CSVExporter(BaseExporter):
             
             timestamp = self.format_iso8601(msg.get("create_time")) or ""
             msg_id = msg.get("id", "")
-            
-            writer.writerow([msg_id, role, content, timestamp])
+
+            writer.writerow(
+                [
+                    self.sanitize_spreadsheet_cell(msg_id),
+                    self.sanitize_spreadsheet_cell(role),
+                    self.sanitize_spreadsheet_cell(content),
+                    self.sanitize_spreadsheet_cell(timestamp),
+                ]
+            )
         
         return output.getvalue()

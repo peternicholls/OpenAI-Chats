@@ -113,3 +113,18 @@ class BaseExporter(ABC):
             Title or "[Untitled]" if not set
         """
         return conversation.get("title") or "[Untitled]"
+
+    @staticmethod
+    def sanitize_spreadsheet_cell(value: str | None) -> str:
+        """Sanitize cell text to prevent spreadsheet formula injection.
+
+        Prefixes suspicious leading characters with an apostrophe so values
+        are treated as literals by spreadsheet applications.
+        """
+        if value is None:
+            return ""
+        text = str(value)
+        stripped = text.lstrip()
+        if stripped and stripped[0] in {"=", "+", "-", "@"}:
+            return "'" + text
+        return text
