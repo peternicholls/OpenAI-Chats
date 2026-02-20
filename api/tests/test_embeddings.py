@@ -58,3 +58,36 @@ class TestValidateEmbeddingsKey:
         assert response.status_code == 200
         assert response.json()["valid"] is True
         assert seen == ["sk-stored"]
+
+
+class TestGenerateEmbeddings:
+    """Tests for POST /api/embeddings/generate endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_generate_rejects_when_cost_exceeds_limit(self, client, monkeypatch):
+        """Uses estimated_cost_usd to enforce max_cost before starting."""
+
+        async def fake_validate(_api_key: str):
+            return True, ""
+
+        monkeypatch.setattr("api.routers.embeddings.validate_openai_api_key", fake_validate)
+        monkeypatch.setattr(
+            "api.routers.embeddings.settings_service.get_setting", lambda _: "sk-stored"
+        )
+        monkeypatch.setattr(
+            "chatgpt_archive.embeddings.estimate_cost",
+            lambda _conn, model=None: {"estimated_cost_usd": 12.5, "model": model},
+        )
+
+        response = await client.post(
+            "/api/embeddings/generate",
+            json={
+                "model": "text-embedding-3-small",
+                "batch_size": 100,
+                "max_cost": 1.0,
+                "estimate_only": False,
+            },
+        )
+
+        assert response.status_code == 400
+        assert "exceeds" in response.json()["detail"].lower()

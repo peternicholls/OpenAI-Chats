@@ -15,8 +15,7 @@ class TestImport:
             files = {"file": ("archive.zip", f, "application/zip")}
             response = await client.post("/api/import", files=files)
 
-        # Should return 200 or 202 (accepted)
-        assert response.status_code in [200, 202]
+        assert response.status_code == 202
 
     @pytest.mark.asyncio
     async def test_import_returns_progress_info(self, client, sample_archive_zip):
@@ -36,19 +35,16 @@ class TestImport:
         files = {"file": ("notzip.txt", io.BytesIO(content), "text/plain")}
         response = await client.post("/api/import", files=files)
 
-        # Should return 400 or 422
-        assert response.status_code in [400, 422, 500]
+        assert response.status_code == 400
 
     @pytest.mark.asyncio
     async def test_import_corrupt_zip_handled(self, client):
-        """Test that corrupt ZIP files are handled gracefully."""
+        """Corrupt ZIP files are rejected early."""
         content = b"PK\x03\x04corrupted data"
         files = {"file": ("corrupt.zip", io.BytesIO(content), "application/zip")}
         response = await client.post("/api/import", files=files)
 
-        # API accepts the file and processes async, so 202 is expected
-        # The error will be reported via the progress endpoint
-        assert response.status_code in [200, 202, 400, 422, 500]
+        assert response.status_code == 400
 
     @pytest.mark.asyncio
     async def test_import_empty_zip_handled(self, client, tmp_path):
@@ -63,8 +59,18 @@ class TestImport:
             files = {"file": ("empty.zip", f, "application/zip")}
             response = await client.post("/api/import", files=files)
 
-        # Should handle gracefully (error or success with 0 imports)
-        assert response.status_code in [200, 202, 400, 422, 500]
+        # Valid ZIP upload should be queued; processing may still error later.
+        assert response.status_code == 202
+
+    @pytest.mark.asyncio
+    async def test_import_oversize_upload_rejected(self, client, monkeypatch):
+        """Uploads exceeding MAX_FILE_SIZE_BYTES return 413."""
+        monkeypatch.setattr("api.routers.import_.MAX_FILE_SIZE_BYTES", 10)
+
+        files = {"file": ("archive.zip", io.BytesIO(b"01234567890"), "application/zip")}
+        response = await client.post("/api/import", files=files)
+
+        assert response.status_code == 413
 
 
 class TestImportProgress:

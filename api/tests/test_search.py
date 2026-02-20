@@ -65,6 +65,13 @@ class TestSearch:
         assert "match_count" in item
 
     @pytest.mark.asyncio
+    async def test_search_allows_plain_text_with_and(self, client):
+        """Natural language queries containing 'and' should not be rejected."""
+        response = await client.post("/api/search", json={"query": "hello and python"})
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
     async def test_search_empty_query_handled(self, client):
         """Test that empty query is rejected by request validation."""
         response = await client.post("/api/search", json={"query": ""})
