@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToggleFavorite } from "@/hooks/useFavorites";
@@ -21,30 +21,24 @@ export function FavoriteButton({
     size = "icon",
     className,
 }: FavoriteButtonProps) {
-    const [optimisticFavorite, setOptimisticFavorite] = useState(isFavorite);
+    const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(null);
     const { mutateAsync: toggleFavorite, isPending: isToggling } = useToggleFavorite();
-
-    // Sync with server state when mutation settles.
-    useEffect(() => {
-        if (!isToggling) {
-            setOptimisticFavorite(isFavorite);
-        }
-    }, [isFavorite, isToggling]);
+    const effectiveFavorite = optimisticFavorite ?? isFavorite;
 
     const handleClick = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
         // Optimistic update
-        const newState = !optimisticFavorite;
+        const newState = !effectiveFavorite;
         setOptimisticFavorite(newState);
 
         try {
             await toggleFavorite(conversationId);
             onToggle?.(newState);
+            setOptimisticFavorite(null);
         } catch {
-            // Rollback on error
-            setOptimisticFavorite(!newState);
+            setOptimisticFavorite(null);
         }
     };
 
@@ -55,12 +49,12 @@ export function FavoriteButton({
             onClick={handleClick}
             disabled={isToggling}
             className={cn("shrink-0", className)}
-            aria-label={optimisticFavorite ? "Remove from favorites" : "Add to favorites"}
+            aria-label={effectiveFavorite ? "Remove from favorites" : "Add to favorites"}
         >
             <Star
                 className={cn(
                     "h-4 w-4 transition-colors",
-                    optimisticFavorite
+                    effectiveFavorite
                         ? "text-yellow-500 fill-yellow-500"
                         : "text-muted-foreground"
                 )}

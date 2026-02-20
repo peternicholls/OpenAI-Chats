@@ -16,7 +16,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { api } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queryKeys";
@@ -34,19 +34,14 @@ export default function ConversationDetailPage() {
     const [showExport, setShowExport] = useState(false);
     const [showDelete, setShowDelete] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isFavorite, setIsFavorite] = useState(false);
-
-    // Sync local favorite state with conversation data
-    useEffect(() => {
-        if (conversation) {
-            setIsFavorite(conversation.is_favorite);
-        }
-    }, [conversation]);
 
     const handleToggleFavorite = async () => {
         try {
             const result = await api.toggleFavorite(id);
-            setIsFavorite(result.is_favorite);
+            queryClient.setQueryData(queryKeys.conversations.detail(id), (current: unknown) => {
+                if (!current || typeof current !== "object") return current;
+                return { ...(current as Record<string, unknown>), is_favorite: result.is_favorite };
+            });
             queryClient.invalidateQueries({ queryKey: queryKeys.conversations.all });
             queryClient.invalidateQueries({ queryKey: queryKeys.favorites.all });
             toast.success(result.is_favorite ? "Added to favorites" : "Removed from favorites");
@@ -103,7 +98,7 @@ export default function ConversationDetailPage() {
                 onExport={() => setShowExport(true)}
                 onDelete={() => setShowDelete(true)}
                 onToggleFavorite={handleToggleFavorite}
-                isFavorite={isFavorite}
+                isFavorite={conversation.is_favorite}
             />
 
             <div className="space-y-2">
