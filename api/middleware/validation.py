@@ -4,7 +4,7 @@ import re
 
 # Patterns for common injection attacks
 SQL_INJECTION_PATTERN = re.compile(
-    r"(--|;|'|\b(DROP|DELETE|INSERT|UPDATE|SELECT|UNION|OR|AND)\b\s)",
+    r"(--|;|/\*|\*/|\b(DROP|DELETE|INSERT|UPDATE|SELECT|UNION)\b\s)",
     re.IGNORECASE,
 )
 XSS_PATTERN = re.compile(r"(<script|javascript:|on\w+=)", re.IGNORECASE)
@@ -51,8 +51,9 @@ def validate_query_param(name: str, value: str, max_length: int = 200) -> str:
 
     sanitized = sanitize_string(value, max_length)
 
-    # Check for SQL injection patterns in critical fields
-    if name in ("query", "tag", "search", "q") and SQL_INJECTION_PATTERN.search(sanitized):
+    # Query text supports normal language and FTS operators, so apply this
+    # stricter check only to non-query params.
+    if name in ("tag", "search", "q") and SQL_INJECTION_PATTERN.search(sanitized):
         raise ValueError(f"Invalid characters in {name}")
 
     # Check for XSS patterns

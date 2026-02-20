@@ -41,12 +41,14 @@ def validate_environment() -> None:
     """
     errors = []
 
-    # Validate DB_PATH if provided
-    db_path = os.environ.get("DB_PATH")
+    # Validate active DB path env var if provided
+    db_path = os.environ.get("CHATGPT_ARCHIVE_DB") or os.environ.get("DB_PATH")
     if db_path:
         db_path_obj = Path(db_path)
         if not db_path_obj.parent.exists():
-            errors.append(f"DB_PATH parent directory does not exist: {db_path_obj.parent}")
+            errors.append(
+                f"CHATGPT_ARCHIVE_DB/DB_PATH parent directory does not exist: {db_path_obj.parent}"
+            )
 
     # Validate CORS_ORIGINS if provided
     cors_origins = os.environ.get("CORS_ORIGINS")
