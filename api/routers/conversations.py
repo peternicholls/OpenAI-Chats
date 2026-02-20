@@ -1,12 +1,20 @@
 """Conversation CRUD endpoints."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException, Query
 
-from api.middleware.validation import validate_conversation_id, validate_pagination, validate_sort_by, validate_sort_order
+from api.middleware.validation import (
+    validate_conversation_id,
+    validate_pagination,
+    validate_sort_by,
+    validate_sort_order,
+)
 from api.models.responses import ConversationDetail, ConversationSummary, Message, PaginatedResponse
 from api.services import archive_service
 
 router = APIRouter(tags=["Conversations"])
+logger = logging.getLogger(__name__)
 
 ALLOWED_SORT_FIELDS = ["date", "title", "messages"]
 
@@ -24,15 +32,25 @@ async def list_conversations(
     validated_sort = validate_sort_by(sort_by, ALLOWED_SORT_FIELDS)
     validated_order = validate_sort_order(order)
     validated_offset, validated_limit = validate_pagination(offset, limit)
-    
+
     try:
         conversations, total = archive_service.list_conversations(
-            sort_by=validated_sort, order=validated_order, limit=validated_limit, offset=validated_offset, tag_filter=tag
+            sort_by=validated_sort,
+            order=validated_order,
+            limit=validated_limit,
+            offset=validated_offset,
+            tag_filter=tag,
         )
         items = [ConversationSummary(**c) for c in conversations]
-        return PaginatedResponse(total=total, offset=validated_offset, limit=validated_limit, items=items)
+        return PaginatedResponse(
+            total=total,
+            offset=validated_offset,
+            limit=validated_limit,
+            items=items,
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Failed to list conversations")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get("/api/conversations/{conversation_id}", response_model=ConversationDetail)
@@ -42,7 +60,7 @@ async def get_conversation(conversation_id: str) -> ConversationDetail:
         validated_id = validate_conversation_id(conversation_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
+
     conv = archive_service.get_conversation(validated_id)
     if conv is None:
         raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
@@ -66,7 +84,7 @@ async def delete_conversation(conversation_id: str) -> None:
         validated_id = validate_conversation_id(conversation_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
+
     deleted = archive_service.delete_conversation(validated_id)
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")

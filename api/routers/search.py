@@ -1,14 +1,17 @@
 """Search endpoints."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException
 
-from api.middleware.validation import validate_query_param, validate_pagination
+from api.middleware.validation import validate_pagination, validate_query_param
 from api.models.requests import SearchRequest
 from api.models.responses import PaginatedResponse, SearchResult
 from api.services import archive_service
 from chatgpt_archive.search import InvalidQueryError
 
 router = APIRouter(tags=["Search"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/api/search", response_model=PaginatedResponse)
@@ -22,7 +25,7 @@ async def search_conversations(request: SearchRequest) -> PaginatedResponse:
     
     # Validate pagination
     validated_offset, validated_limit = validate_pagination(request.offset, request.limit)
-    
+
     try:
         results = archive_service.search_conversations(
             query=validated_query,
@@ -42,4 +45,5 @@ async def search_conversations(request: SearchRequest) -> PaginatedResponse:
     except InvalidQueryError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Search request failed")
+        raise HTTPException(status_code=500, detail="Internal server error") from e

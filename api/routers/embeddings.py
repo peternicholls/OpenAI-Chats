@@ -1,5 +1,6 @@
 """Embedding generation endpoints."""
 
+import logging
 import sqlite3
 
 import httpx
@@ -11,6 +12,7 @@ from api.models.responses import ImportProgress
 from api.services import archive_service, settings_service
 
 router = APIRouter(tags=["Embeddings"])
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingCancelledError(Exception):
@@ -108,7 +110,8 @@ async def get_embedding_stats() -> dict:
         finally:
             conn.close()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Failed to load embedding stats")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.post("/api/embeddings/cancel")
@@ -144,7 +147,8 @@ async def estimate_embeddings(
             "Install with: pip install 'chatgpt-archive[semantic]'",
         ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Failed to estimate embedding cost")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.post("/api/embeddings/generate", status_code=202, response_model=ImportProgress)
@@ -186,7 +190,7 @@ async def generate_embeddings(
             conn = archive_service.get_connection()
             try:
                 estimate = estimate_cost(conn, model=request.model)
-                estimated_cost = estimate.get("estimated_cost", 0)
+                estimated_cost = estimate.get("estimated_cost_usd", 0.0)
                 if estimated_cost > request.max_cost:
                     raise HTTPException(
                         status_code=400,
@@ -338,7 +342,7 @@ async def generate_embeddings(
                         status="error",
                         current=0,
                         total=0,
-                        message=f"Unexpected error: {e}",
+                        message="Unexpected error during embedding generation.",
                     )
             finally:
                 conn.close()
@@ -360,4 +364,5 @@ async def generate_embeddings(
             detail="Semantic search dependencies not installed.",
         ) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Embedding generation request failed")
+        raise HTTPException(status_code=500, detail="Internal server error") from e

@@ -1,5 +1,7 @@
 """Export endpoints."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 
@@ -7,6 +9,7 @@ from api.middleware.validation import validate_conversation_id, validate_export_
 from api.services import archive_service
 
 router = APIRouter(tags=["Export"])
+logger = logging.getLogger(__name__)
 
 SUPPORTED_FORMATS = ["md", "json", "yaml", "html", "xml", "csv", "xlsx"]
 
@@ -23,17 +26,20 @@ async def export_conversation(
     try:
         # Validate format
         validated_format = validate_export_format(format, SUPPORTED_FORMATS)
-        
+
         # Check if multiple IDs provided (comma-separated)
         conversation_ids = [cid.strip() for cid in conversation_id.split(",") if cid.strip()]
-        
+
         # Validate each conversation ID
         validated_ids = []
         for cid in conversation_ids:
             try:
                 validated_ids.append(validate_conversation_id(cid))
             except ValueError as e:
-                raise HTTPException(status_code=400, detail=f"Invalid conversation ID '{cid}': {e}") from e
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid conversation ID '{cid}': {e}",
+                ) from e
 
         if len(validated_ids) > 1:
             # Multi-conversation export
@@ -63,7 +69,8 @@ async def export_conversation(
             raise HTTPException(status_code=400, detail=error_msg) from e
         raise HTTPException(status_code=400, detail=error_msg) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Export failed: {e}") from e
+        logger.exception("Conversation export failed")
+        raise HTTPException(status_code=500, detail="Export failed") from e
 
 
 @router.get("/api/export/batch")
@@ -82,7 +89,7 @@ async def export_batch(
         validated_format = validate_export_format(format, SUPPORTED_FORMATS)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
+
     conversation_ids = [cid.strip() for cid in ids.split(",") if cid.strip()]
 
     if not conversation_ids:
@@ -94,7 +101,10 @@ async def export_batch(
         try:
             validated_ids.append(validate_conversation_id(cid))
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"Invalid conversation ID '{cid}': {e}") from e
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid conversation ID '{cid}': {e}",
+            ) from e
 
     try:
         content, content_type, filename = archive_service.export_multiple_conversations(
@@ -116,4 +126,5 @@ async def export_batch(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Batch export failed: {e}") from e
+        logger.exception("Batch export failed")
+        raise HTTPException(status_code=500, detail="Batch export failed") from e
