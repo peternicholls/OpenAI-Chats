@@ -9,24 +9,24 @@ from .base import BaseExporter
 
 class YAMLExporter(BaseExporter):
     """Export conversations to YAML format.
-    
+
     Produces a clean YAML document with:
     - Conversation metadata
     - Array of messages with full details
     - ISO 8601 formatted timestamps
     - Human-readable multi-line content blocks
     """
-    
+
     format_name = "yaml"
     file_extension = ".yaml"
-    
+
     def export(self, conversation: dict, messages: List[dict]) -> str:
         """Export conversation to YAML format.
-        
+
         Args:
             conversation: Conversation metadata dictionary
             messages: List of message dictionaries
-            
+
         Returns:
             YAML formatted string
         """
@@ -45,14 +45,14 @@ class YAMLExporter(BaseExporter):
                     "created_at": self.format_iso8601(msg.get("create_time")),
                 }
                 for msg in messages
-            ]
+            ],
         }
-        
+
         # Use default_flow_style=False for readable multi-line output
         # allow_unicode=True for proper character handling
         return yaml.dump(
-            output, 
-            default_flow_style=False, 
+            output,
+            default_flow_style=False,
             allow_unicode=True,
             sort_keys=False,
             width=120,

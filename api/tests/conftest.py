@@ -26,7 +26,10 @@ def sample_conversations_data() -> list[dict]:
                     "message": {
                         "id": "msg-001",
                         "author": {"role": "user"},
-                        "content": {"parts": ["Hello, how are you?"], "content_type": "text"},
+                        "content": {
+                            "parts": ["Hello, how are you?"],
+                            "content_type": "text",
+                        },
                         "create_time": 1700000000.0,
                     },
                     "parent": None,
@@ -59,7 +62,10 @@ def sample_conversations_data() -> list[dict]:
                     "message": {
                         "id": "msg-003",
                         "author": {"role": "user"},
-                        "content": {"parts": ["What is Python?"], "content_type": "text"},
+                        "content": {
+                            "parts": ["What is Python?"],
+                            "content_type": "text",
+                        },
                         "create_time": 1700100000.0,
                     },
                     "parent": None,

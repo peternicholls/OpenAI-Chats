@@ -32,14 +32,18 @@ class TestExport:
     @pytest.mark.asyncio
     async def test_export_json_returns_200(self, client):
         """Test exporting as JSON returns 200."""
-        response = await client.get("/api/conversations/conv-001-test/export?format=json")
+        response = await client.get(
+            "/api/conversations/conv-001-test/export?format=json"
+        )
 
         assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_json_is_valid(self, client):
         """Test JSON export is valid JSON."""
-        response = await client.get("/api/conversations/conv-001-test/export?format=json")
+        response = await client.get(
+            "/api/conversations/conv-001-test/export?format=json"
+        )
 
         data = response.json()
         assert data["id"] == "conv-001-test"
@@ -48,14 +52,18 @@ class TestExport:
     @pytest.mark.asyncio
     async def test_export_json_content_type(self, client):
         """Test JSON export has correct content type."""
-        response = await client.get("/api/conversations/conv-001-test/export?format=json")
+        response = await client.get(
+            "/api/conversations/conv-001-test/export?format=json"
+        )
 
         assert "application/json" in response.headers.get("content-type", "")
 
     @pytest.mark.asyncio
     async def test_export_yaml_returns_200(self, client):
         """Test exporting as YAML returns expected type and content."""
-        response = await client.get("/api/conversations/conv-001-test/export?format=yaml")
+        response = await client.get(
+            "/api/conversations/conv-001-test/export?format=yaml"
+        )
 
         assert response.status_code == 200
         assert "application/x-yaml" in response.headers.get("content-type", "")
@@ -64,7 +72,9 @@ class TestExport:
     @pytest.mark.asyncio
     async def test_export_html_returns_200(self, client):
         """Test exporting as HTML returns expected type and content."""
-        response = await client.get("/api/conversations/conv-001-test/export?format=html")
+        response = await client.get(
+            "/api/conversations/conv-001-test/export?format=html"
+        )
 
         assert response.status_code == 200
         assert "text/html" in response.headers.get("content-type", "")
@@ -73,7 +83,9 @@ class TestExport:
     @pytest.mark.asyncio
     async def test_export_csv_returns_200(self, client):
         """Test exporting as CSV returns expected type and content."""
-        response = await client.get("/api/conversations/conv-001-test/export?format=csv")
+        response = await client.get(
+            "/api/conversations/conv-001-test/export?format=csv"
+        )
 
         assert response.status_code == 200
         assert "text/csv" in response.headers.get("content-type", "")
@@ -82,7 +94,9 @@ class TestExport:
     @pytest.mark.asyncio
     async def test_export_invalid_format_returns_error(self, client):
         """Test invalid export format returns 400 (enum validation)."""
-        response = await client.get("/api/conversations/conv-001-test/export?format=invalid")
+        response = await client.get(
+            "/api/conversations/conv-001-test/export?format=invalid"
+        )
 
         # FastAPI returns 400 for invalid enum values (via Starlette)
         assert response.status_code == 400
@@ -90,7 +104,9 @@ class TestExport:
     @pytest.mark.asyncio
     async def test_export_nonexistent_conversation_returns_404(self, client):
         """Test exporting non-existent conversation returns 404."""
-        response = await client.get("/api/conversations/nonexistent-id/export?format=md")
+        response = await client.get(
+            "/api/conversations/nonexistent-id/export?format=md"
+        )
 
         assert response.status_code == 404
 
@@ -107,7 +123,9 @@ class TestExport:
     @pytest.mark.asyncio
     async def test_export_xml_returns_200(self, client):
         """Test exporting as XML returns expected type and content."""
-        response = await client.get("/api/conversations/conv-001-test/export?format=xml")
+        response = await client.get(
+            "/api/conversations/conv-001-test/export?format=xml"
+        )
 
         assert response.status_code == 200
         assert "application/xml" in response.headers.get("content-type", "")
@@ -117,7 +135,9 @@ class TestExport:
     @pytest.mark.asyncio
     async def test_export_xlsx_returns_200(self, client):
         """Test exporting as XLSX returns expected type and binary content."""
-        response = await client.get("/api/conversations/conv-001-test/export?format=xlsx")
+        response = await client.get(
+            "/api/conversations/conv-001-test/export?format=xlsx"
+        )
 
         assert response.status_code == 200
         content_type = response.headers.get("content-type", "")
@@ -175,13 +195,13 @@ class TestBatchExport:
                 f"/api/export/batch?ids=conv-001-test,conv-002-test&format={fmt}"
             )
 
-            assert response.status_code == 200, (
-                f"Format {fmt} failed with status {response.status_code}"
-            )
+            assert (
+                response.status_code == 200
+            ), f"Format {fmt} failed with status {response.status_code}"
             content_type = response.headers.get("content-type", "")
-            assert expected_content_type in content_type, (
-                f"Format {fmt} has wrong content-type: {content_type}"
-            )
+            assert (
+                expected_content_type in content_type
+            ), f"Format {fmt} has wrong content-type: {content_type}"
             assert "content-disposition" in response.headers
             assert "attachment" in response.headers["content-disposition"]
 
@@ -195,9 +215,7 @@ class TestBatchExport:
     @pytest.mark.asyncio
     async def test_batch_export_nonexistent_id_returns_404(self, client):
         """Test batch export with non-existent ID returns 404."""
-        response = await client.get(
-            "/api/export/batch?ids=nonexistent-id&format=md"
-        )
+        response = await client.get("/api/export/batch?ids=nonexistent-id&format=md")
 
         assert response.status_code == 404
 

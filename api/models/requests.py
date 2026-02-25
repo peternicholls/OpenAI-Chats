@@ -18,7 +18,11 @@ class TagRequest(BaseModel):
     """Add/remove tag."""
 
     tag_name: str = Field(
-        ..., min_length=1, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$", description="Tag name"
+        ...,
+        min_length=1,
+        max_length=50,
+        pattern=r"^[a-zA-Z0-9_-]+$",
+        description="Tag name",
     )
 
 
@@ -35,5 +39,8 @@ class EmbeddingRequest(BaseModel):
     batch_size: int = Field(100, ge=1, le=500, description="Messages per batch")
     estimate_only: bool = Field(False, description="Return cost estimate only")
     max_cost: float | None = Field(
-        5.00, ge=0.0, le=1000.0, description="Maximum cost in USD (default $5.00, None=unlimited)"
+        5.00,
+        ge=0.0,
+        le=1000.0,
+        description="Maximum cost in USD (default $5.00, None=unlimited)",
     )

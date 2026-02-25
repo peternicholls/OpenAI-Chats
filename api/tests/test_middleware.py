@@ -37,6 +37,7 @@ def _logging_middleware(trusted_ips: str = "127.0.0.1,::1") -> RequestLoggingMid
     """Return a RequestLoggingMiddleware with custom trusted IPs (no real app)."""
     app = MagicMock()
     import os
+
     original = os.environ.get("TRUSTED_PROXY_IPS")
     os.environ["TRUSTED_PROXY_IPS"] = trusted_ips
     m = RequestLoggingMiddleware(app)
@@ -50,6 +51,7 @@ def _logging_middleware(trusted_ips: str = "127.0.0.1,::1") -> RequestLoggingMid
 def _rate_limit_middleware(rpm: int = 5) -> RateLimitMiddleware:
     app = MagicMock()
     import os
+
     original = os.environ.get("TRUSTED_PROXY_IPS")
     os.environ["TRUSTED_PROXY_IPS"] = "10.0.0.1"
     m = RateLimitMiddleware(app, requests_per_minute=rpm)
@@ -135,6 +137,7 @@ class TestRateLimitEnforcement:
         m = _rate_limit_middleware(rpm=10)
         # Directly exercise internal counter logic
         import time
+
         now = time.time()
         m.request_counts["1.2.3.4"] = [(now, 1)] * 9
         m.last_seen["1.2.3.4"] = now
@@ -144,6 +147,7 @@ class TestRateLimitEnforcement:
     def test_old_entries_cleaned_up(self):
         m = _rate_limit_middleware(rpm=10)
         import time
+
         old = time.time() - 120  # 2 minutes ago
         m.request_counts["1.2.3.4"] = [(old, 1)] * 5
         m.last_seen["1.2.3.4"] = old
@@ -153,6 +157,7 @@ class TestRateLimitEnforcement:
     def test_evict_stale_clients_removes_old(self):
         m = _rate_limit_middleware(rpm=10)
         import time
+
         stale = time.time() - 120
         m.last_seen["stale-client"] = stale
         m.request_counts["stale-client"] = []

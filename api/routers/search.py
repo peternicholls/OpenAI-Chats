@@ -24,7 +24,9 @@ async def search_conversations(request: SearchRequest) -> PaginatedResponse:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
     # Validate pagination
-    validated_offset, validated_limit = validate_pagination(request.offset, request.limit)
+    validated_offset, validated_limit = validate_pagination(
+        request.offset, request.limit
+    )
 
     try:
         results = archive_service.search_conversations(

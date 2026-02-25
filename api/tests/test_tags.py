@@ -88,7 +88,9 @@ class TestRemoveTag:
         )
 
         # Then remove it
-        response = await client.delete("/api/conversations/conv-001-test/tags/to-remove")
+        response = await client.delete(
+            "/api/conversations/conv-001-test/tags/to-remove"
+        )
 
         assert response.status_code == 204
 
@@ -126,9 +128,7 @@ class TestRenameTag:
         await client.post(
             "/api/conversations/conv-001-test/tags", json={"tag_name": "old-tag"}
         )
-        response = await client.put(
-            "/api/tags/old-tag", json={"new_name": "new-tag"}
-        )
+        response = await client.put("/api/tags/old-tag", json={"new_name": "new-tag"})
         assert response.status_code == 200
 
     @pytest.mark.asyncio
@@ -178,4 +178,3 @@ class TestRenameTag:
         """Missing new_name field should be rejected with 422."""
         response = await client.put("/api/tags/some-tag", json={})
         assert response.status_code == 422
-

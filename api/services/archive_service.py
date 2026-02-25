@@ -122,6 +122,7 @@ def _persist_progress_state() -> None:
         path = _progress_state_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         import json as _json
+
         with open(path, "w", encoding="utf-8") as f:
             _json.dump(
                 {"import": _import_progress, "embedding": _embedding_progress},
@@ -151,12 +152,19 @@ def load_persisted_progress() -> None:
         logger.warning("Could not load persisted progress state: %s", e)
         return
 
-    for key, _target in (("import", "_import_progress"), ("embedding", "_embedding_progress")):
+    for key, _target in (
+        ("import", "_import_progress"),
+        ("embedding", "_embedding_progress"),
+    ):
         state = stored.get(key)
         if not isinstance(state, dict):
             continue
         if state.get("status") in ("processing", "pending"):
-            state = {**state, "status": "error", "message": "Server restarted — job interrupted"}
+            state = {
+                **state,
+                "status": "error",
+                "message": "Server restarted — job interrupted",
+            }
         if key == "import":
             _import_progress = state
         else:
@@ -207,7 +215,12 @@ def list_conversations(
     try:
         if tag_filter:
             rows, total = db.list_conversations_by_tag(
-                conn, tag_filter, sort_by=sort_by, order=order, limit=limit, offset=offset
+                conn,
+                tag_filter,
+                sort_by=sort_by,
+                order=order,
+                limit=limit,
+                offset=offset,
             )
         else:
             rows, total = db.list_conversations(
@@ -509,7 +522,10 @@ def toggle_favorite(conversation_id: str) -> bool:
         ).fetchone()
         new_val = 0 if (current and current[0]) else 1
 
-        conn.execute("UPDATE conversations SET is_favorite = ? WHERE id = ?", (new_val, row["id"]))
+        conn.execute(
+            "UPDATE conversations SET is_favorite = ? WHERE id = ?",
+            (new_val, row["id"]),
+        )
         conn.commit()
         return bool(new_val)
     finally:
@@ -522,14 +538,18 @@ def list_favorites(
     """List favorited conversations."""
     conn = get_connection()
     try:
-        sort_map = {"date": "c.create_time", "title": "c.title", "messages": "message_count"}
+        sort_map = {
+            "date": "c.create_time",
+            "title": "c.title",
+            "messages": "message_count",
+        }
         sort_column = sort_map.get(sort_by, "c.create_time")
         order_clause = "DESC" if order.lower() == "desc" else "ASC"
         null_handling = "NULLS LAST" if order_clause == "DESC" else "NULLS FIRST"
 
-        total = conn.execute("SELECT COUNT(*) FROM conversations WHERE is_favorite = 1").fetchone()[
-            0
-        ]
+        total = conn.execute(
+            "SELECT COUNT(*) FROM conversations WHERE is_favorite = 1"
+        ).fetchone()[0]
 
         # Safe: sort_column, order_clause, null_handling are from hardcoded maps
         query = f"""
@@ -564,7 +584,9 @@ def list_favorites(
         conn.close()
 
 
-def export_conversation(conversation_id: str, format: str) -> tuple[str | bytes, str, str]:
+def export_conversation(
+    conversation_id: str, format: str
+) -> tuple[str | bytes, str, str]:
     """Export a conversation in the specified format.
 
     Returns:
@@ -594,7 +616,9 @@ def export_conversation(conversation_id: str, format: str) -> tuple[str | bytes,
         "message_count": conv_data["message_count"],
     }
     messages = conv_data["messages"]
-    safe_title = (conv_data["title"] or "untitled").replace("/", "_").replace(" ", "_")[:50]
+    safe_title = (
+        (conv_data["title"] or "untitled").replace("/", "_").replace(" ", "_")[:50]
+    )
 
     format_map = {
         "md": (markdown.MarkdownExporter, "text/markdown", f"{safe_title}.md"),
@@ -670,17 +694,19 @@ def export_multiple_conversations(
                 for msg in messages_rows
             ]
 
-            conversations_data.append({
-                "id": row["openai_id"],
-                "title": row["title"],
-                "create_time": row["create_time"],
-                "update_time": row["update_time"],
-                "message_count": row["message_count"],
-                "model": row["model_slug"],
-                "messages": messages,
-                "tags": tags,
-                "is_favorite": is_fav,
-            })
+            conversations_data.append(
+                {
+                    "id": row["openai_id"],
+                    "title": row["title"],
+                    "create_time": row["create_time"],
+                    "update_time": row["update_time"],
+                    "message_count": row["message_count"],
+                    "model": row["model_slug"],
+                    "messages": messages,
+                    "tags": tags,
+                    "is_favorite": is_fav,
+                }
+            )
     finally:
         conn.close()
 
@@ -782,9 +808,7 @@ def export_multiple_conversations(
 
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(
-            ["conversation_id", "title", "role", "content", "create_time"]
-        )
+        writer.writerow(["conversation_id", "title", "role", "content", "create_time"])
         for conv_data in conversations_data:
             for msg in conv_data["messages"]:
                 writer.writerow(
@@ -793,7 +817,9 @@ def export_multiple_conversations(
                         BaseExporter.sanitize_spreadsheet_cell(conv_data["title"]),
                         BaseExporter.sanitize_spreadsheet_cell(msg["role"]),
                         BaseExporter.sanitize_spreadsheet_cell(msg["content"]),
-                        BaseExporter.sanitize_spreadsheet_cell(msg.get("create_time", "")),
+                        BaseExporter.sanitize_spreadsheet_cell(
+                            msg.get("create_time", "")
+                        ),
                     ]
                 )
         content = output.getvalue()

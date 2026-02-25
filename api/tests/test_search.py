@@ -46,7 +46,9 @@ class TestSearch:
     @pytest.mark.asyncio
     async def test_search_with_limit(self, client):
         """Test search respects limit parameter."""
-        response = await client.post("/api/search", json={"query": "Python", "limit": 1})
+        response = await client.post(
+            "/api/search", json={"query": "Python", "limit": 1}
+        )
 
         data = response.json()
         assert data["limit"] == 1
@@ -104,7 +106,9 @@ class TestSearchTypes:
         invalid = await client.post(
             "/api/search", json={"query": "test", "search_type": "invalid_type"}
         )
-        keyword = await client.post("/api/search", json={"query": "test", "search_type": "keyword"})
+        keyword = await client.post(
+            "/api/search", json={"query": "test", "search_type": "keyword"}
+        )
 
         assert invalid.status_code == 200
         assert invalid.json() == keyword.json()

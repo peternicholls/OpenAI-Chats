@@ -34,7 +34,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), microphone=(), camera=()"
+        )
 
         return response
 
@@ -48,7 +50,9 @@ def setup_cors(app: FastAPI) -> None:
     Args:
         app: FastAPI application instance
     """
-    origins_str = os.environ.get("CORS_ORIGINS", '["http://localhost:3000","http://localhost:3001"]')
+    origins_str = os.environ.get(
+        "CORS_ORIGINS", '["http://localhost:3000","http://localhost:3001"]'
+    )
     try:
         origins = json.loads(origins_str)
     except (json.JSONDecodeError, TypeError):

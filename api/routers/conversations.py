@@ -10,7 +10,12 @@ from api.middleware.validation import (
     validate_sort_by,
     validate_sort_order,
 )
-from api.models.responses import ConversationDetail, ConversationSummary, Message, PaginatedResponse
+from api.models.responses import (
+    ConversationDetail,
+    ConversationSummary,
+    Message,
+    PaginatedResponse,
+)
 from api.services import archive_service
 
 router = APIRouter(tags=["Conversations"])
@@ -63,7 +68,9 @@ async def get_conversation(conversation_id: str) -> ConversationDetail:
 
     conv = archive_service.get_conversation(validated_id)
     if conv is None:
-        raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Conversation {conversation_id} not found"
+        )
     return ConversationDetail(
         id=conv["id"],
         title=conv["title"],
@@ -87,4 +94,6 @@ async def delete_conversation(conversation_id: str) -> None:
 
     deleted = archive_service.delete_conversation(validated_id)
     if not deleted:
-        raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Conversation {conversation_id} not found"
+        )

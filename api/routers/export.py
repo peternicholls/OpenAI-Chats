@@ -36,7 +36,9 @@ async def export_conversation(
         validated_format = validate_export_format(format, SUPPORTED_FORMATS)
 
         # Check if multiple IDs provided (comma-separated)
-        conversation_ids = [cid.strip() for cid in conversation_id.split(",") if cid.strip()]
+        conversation_ids = [
+            cid.strip() for cid in conversation_id.split(",") if cid.strip()
+        ]
 
         # Validate each conversation ID
         validated_ids = []
@@ -51,8 +53,10 @@ async def export_conversation(
 
         if len(validated_ids) > 1:
             # Multi-conversation export
-            content, content_type, filename = archive_service.export_multiple_conversations(
-                validated_ids, validated_format
+            content, content_type, filename = (
+                archive_service.export_multiple_conversations(
+                    validated_ids, validated_format
+                )
             )
         else:
             # Single conversation export
