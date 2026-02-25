@@ -175,7 +175,9 @@ class TestBatchExport:
                 f"/api/export/batch?ids=conv-001-test,conv-002-test&format={fmt}"
             )
 
-            assert response.status_code == 200, f"Format {fmt} failed with status {response.status_code}"
+            assert response.status_code == 200, (
+                f"Format {fmt} failed with status {response.status_code}"
+            )
             content_type = response.headers.get("content-type", "")
             assert expected_content_type in content_type, (
                 f"Format {fmt} has wrong content-type: {content_type}"

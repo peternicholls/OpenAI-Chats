@@ -122,12 +122,12 @@ def load_settings() -> dict[str, Any]:
         try:
             with open(settings_path, encoding="utf-8") as f:
                 stored = json.load(f)
-            
+
             # Decrypt encrypted settings
             for key, value in stored.items():
                 if key in ENCRYPTED_SETTINGS and isinstance(value, str):
                     stored[key] = _decrypt_value(value)
-            
+
             settings.update(stored)
         except json.JSONDecodeError as e:
             logger.warning("Settings file corrupted, using defaults: %s", e)

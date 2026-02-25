@@ -151,7 +151,7 @@ def load_persisted_progress() -> None:
         logger.warning("Could not load persisted progress state: %s", e)
         return
 
-    for key, target in (("import", "_import_progress"), ("embedding", "_embedding_progress")):
+    for key, _target in (("import", "_import_progress"), ("embedding", "_embedding_progress")):
         state = stored.get(key)
         if not isinstance(state, dict):
             continue
@@ -221,16 +221,14 @@ def list_conversations(
         conv_db_ids = [row["id"] for row in rows]
         placeholders = ",".join("?" * len(conv_db_ids))
         tag_map: dict[int, list[str]] = {row["id"]: [] for row in rows}
-        tag_rows = conn.execute(
-            f"""
-            SELECT ct.conversation_id, t.name
-            FROM conversation_tags ct
-            JOIN tags t ON ct.tag_id = t.id
-            WHERE ct.conversation_id IN ({placeholders})
-            ORDER BY t.name
-            """,
-            conv_db_ids,
-        ).fetchall()
+        tag_query = (
+            "SELECT ct.conversation_id, t.name"  # noqa: S608
+            " FROM conversation_tags ct"
+            " JOIN tags t ON ct.tag_id = t.id"
+            " WHERE ct.conversation_id IN (" + placeholders + ")"
+            " ORDER BY t.name"
+        )
+        tag_rows = conn.execute(tag_query, conv_db_ids).fetchall()
         for r in tag_rows:
             tag_map[r[0]].append(r[1])
 
@@ -634,11 +632,8 @@ def export_multiple_conversations(
         Tuple of (content, content_type, filename).
     """
     from chatgpt_archive.exporters import (
-        csv_export,
         excel_export,
-        json_export,
         markdown,
-        yaml_export,
     )
     from chatgpt_archive.exporters import html as html_export
     from chatgpt_archive.exporters import xml_export as xml_exp
@@ -782,6 +777,7 @@ def export_multiple_conversations(
     elif format == "csv":
         import csv
         import io
+
         from chatgpt_archive.exporters.base import BaseExporter
 
         output = io.StringIO()
