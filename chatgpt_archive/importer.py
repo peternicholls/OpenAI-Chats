@@ -268,7 +268,7 @@ def insert_conversation(
         ''', (openai_id, title, create_time, update_time, model_slug, int(is_archived)))
         conv_db_id_temp = cursor.lastrowid
         if conv_db_id_temp is None:
-            raise RuntimeError("Failed to get conversation ID after insert")
+            raise sqlite3.OperationalError("Failed to get conversation ID after insert")
         conv_db_id: int = conv_db_id_temp
         
         # Extract and insert all messages

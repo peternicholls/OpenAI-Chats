@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+- **Python 3.10+ now required** for the `chatgpt_archive` CLI/library (previously 3.8+).
+  The API backend (`api/`) requires Python 3.11+. Users on older Python versions must upgrade.
+
 ### Added
 - **Web UI Test Suite**: Comprehensive testing infrastructure for the web UI feature
   - API integration tests (62 tests) covering all endpoints
