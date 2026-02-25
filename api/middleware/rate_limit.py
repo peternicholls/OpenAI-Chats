@@ -103,7 +103,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with rate limiting."""
-        if os.getenv("DISABLE_RATE_LIMIT") == "1":
+        # Skip rate limiting when explicitly disabled (primarily for tests).
+        # WARNING: Never set DISABLE_RATE_LIMIT=1 or TESTING=1 in production deployments.
+        disable_rate_limit = os.getenv("DISABLE_RATE_LIMIT")
+        if disable_rate_limit == "1" or (
+            disable_rate_limit is None and os.getenv("TESTING") == "1"
+        ):
             return await call_next(request)
 
         # Skip rate limiting for health checks

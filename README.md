@@ -348,7 +348,8 @@ chatgpt-archive import ./archive
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.10+ for CLI and library usage
+- Python 3.11+ for running the API backend locally
 - No external services required (fully offline)
 
 ## Web UI (Docker)
@@ -381,7 +382,7 @@ docker compose down -v     # stop AND delete all data
 
 - Browse and search conversations
 - Tag and favorite conversations for organization
-- Import archives via drag-and-drop (maximum 500MB per upload; use the CLI for larger archives)
+- Import archives via drag-and-drop (maximum 500MB per file)
 - Export to multiple formats
 - Real-time import progress tracking
 
@@ -458,6 +459,8 @@ The API includes comprehensive security:
 - **Content Security Policy** (CSP) to prevent XSS
 - **X-Frame-Options** to prevent clickjacking
 - **Input validation** and sanitization on all endpoints
+- **Rate limiting** – enabled by default; set `DISABLE_RATE_LIMIT=1` only in non-production environments (e.g., automated tests)
+- **Upload size limit** – archive imports are capped at **500 MB** per file; the API returns HTTP 413 with a clear message if the limit is exceeded
 - **Environment variable validation** on startup
 - **API key encryption** at rest using Fernet
 - **0.0.0.0 binding warning** logged when exposed to network
