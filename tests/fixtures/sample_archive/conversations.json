@@ -1,0 +1,140 @@
+[
+    {
+        "id": "fixture-conv-001",
+        "title": "Fixture Conversation 1",
+        "create_time": 1700000000.0,
+        "update_time": 1700001000.0,
+        "mapping": {
+            "msg-001": {
+                "id": "msg-001",
+                "message": {
+                    "id": "msg-001",
+                    "author": {
+                        "role": "user"
+                    },
+                    "content": {
+                        "parts": [
+                            "Hello, how are you today?"
+                        ],
+                        "content_type": "text"
+                    },
+                    "create_time": 1700000000.0
+                },
+                "parent": null,
+                "children": [
+                    "msg-002"
+                ]
+            },
+            "msg-002": {
+                "id": "msg-002",
+                "message": {
+                    "id": "msg-002",
+                    "author": {
+                        "role": "assistant"
+                    },
+                    "content": {
+                        "parts": [
+                            "I'm doing well, thank you!"
+                        ],
+                        "content_type": "text"
+                    },
+                    "create_time": 1700000100.0
+                },
+                "parent": "msg-001",
+                "children": []
+            }
+        }
+    },
+    {
+        "id": "fixture-conv-002",
+        "title": "Fixture Conversation 2 - Python",
+        "create_time": 1700100000.0,
+        "update_time": 1700101000.0,
+        "mapping": {
+            "msg-003": {
+                "id": "msg-003",
+                "message": {
+                    "id": "msg-003",
+                    "author": {
+                        "role": "user"
+                    },
+                    "content": {
+                        "parts": [
+                            "Tell me about Python programming"
+                        ],
+                        "content_type": "text"
+                    },
+                    "create_time": 1700100000.0
+                },
+                "parent": null,
+                "children": [
+                    "msg-004"
+                ]
+            },
+            "msg-004": {
+                "id": "msg-004",
+                "message": {
+                    "id": "msg-004",
+                    "author": {
+                        "role": "assistant"
+                    },
+                    "content": {
+                        "parts": [
+                            "Python is a high-level, interpreted programming language."
+                        ],
+                        "content_type": "text"
+                    },
+                    "create_time": 1700100100.0
+                },
+                "parent": "msg-003",
+                "children": []
+            }
+        }
+    },
+    {
+        "id": "fixture-conv-003",
+        "title": "Fixture Conversation 3 - Machine Learning",
+        "create_time": 1700200000.0,
+        "update_time": 1700201000.0,
+        "mapping": {
+            "msg-005": {
+                "id": "msg-005",
+                "message": {
+                    "id": "msg-005",
+                    "author": {
+                        "role": "user"
+                    },
+                    "content": {
+                        "parts": [
+                            "What is machine learning?"
+                        ],
+                        "content_type": "text"
+                    },
+                    "create_time": 1700200000.0
+                },
+                "parent": null,
+                "children": [
+                    "msg-006"
+                ]
+            },
+            "msg-006": {
+                "id": "msg-006",
+                "message": {
+                    "id": "msg-006",
+                    "author": {
+                        "role": "assistant"
+                    },
+                    "content": {
+                        "parts": [
+                            "Machine learning is a subset of artificial intelligence."
+                        ],
+                        "content_type": "text"
+                    },
+                    "create_time": 1700200100.0
+                },
+                "parent": "msg-005",
+                "children": []
+            }
+        }
+    }
+]

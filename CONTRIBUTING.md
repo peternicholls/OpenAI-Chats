@@ -182,31 +182,77 @@ git push origin feature/my-new-feature
 
 ### Test Structure
 
-Tests are organized by module:
+Tests are organized by layer:
+
+**Core Library** (`tests/`):
 - `test_cli.py` - CLI command tests
 - `test_db.py` - Database schema and queries
 - `test_importer.py` - Import functionality
 - `test_models.py` - Data model validation
 - `test_real_archive.py` - Integration tests with real archive
 
+**API Backend** (`api/tests/`):
+- `test_health.py` - Health check endpoint
+- `test_conversations.py` - Conversation CRUD endpoints
+- `test_search.py` - Search functionality
+- `test_export.py` - Export endpoints
+- `test_import.py` - Import endpoints
+- `test_tags.py` - Tag management
+- `test_favorites.py` - Favorites management
+
+**Frontend** (`web/__tests__/`):
+- `services/api.test.ts` - API client tests
+- `hooks/useDebounce.test.ts` - Hook tests
+- `hooks/useSearch.test.ts` - Search hook tests
+- `components/*.test.tsx` - React component tests
+- `e2e/*.spec.ts` - Playwright E2E tests
+
 ### Running Tests
 
 ```bash
-# All tests
-pytest
+# === Core Library Tests ===
+pytest tests/
 
 # Specific file
 pytest tests/test_importer.py
 
-# Specific test
-pytest tests/test_importer.py::test_import_basic
-
-# With output
-pytest -v -s
-
-# With coverage report
+# With coverage
 pytest --cov=chatgpt_archive --cov-report=html
 open htmlcov/index.html
+
+# === API Backend Tests ===
+# Activate venv first
+source .venv/bin/activate
+
+# Run all API tests
+pytest api/tests/ -v
+
+# With coverage
+pytest api/tests/ --cov=api --cov-report=term-missing
+
+# === Frontend Tests ===
+cd web
+
+# Run unit/component tests
+npm test
+
+# Watch mode during development
+npm run test:watch
+
+# With coverage report
+npm test -- --coverage
+
+# === E2E Tests (Playwright) ===
+cd web
+
+# Run E2E tests (starts dev server on port 3030)
+npm run test:e2e
+
+# Run with UI
+npx playwright test --ui
+
+# Run specific test file
+npx playwright test __tests__/e2e/home.spec.ts
 ```
 
 ### Writing Tests

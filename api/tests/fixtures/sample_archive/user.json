@@ -1,0 +1,9 @@
+{
+    "id": "user-test-12345",
+    "email": "test@example.com",
+    "name": "Test User",
+    "picture": null,
+    "chatgpt_plus_user": false,
+    "phone_number": null,
+    "created": 1699900000.0
+}

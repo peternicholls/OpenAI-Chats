@@ -1,0 +1,311 @@
+[
+    {
+        "id": "test-conv-001",
+        "title": "Test Conversation One",
+        "create_time": 1700000000.0,
+        "update_time": 1700001000.0,
+        "default_model_slug": "gpt-4",
+        "is_archived": false,
+        "mapping": {
+            "root-001": {
+                "id": "root-001",
+                "message": null,
+                "parent": null,
+                "children": [
+                    "msg-001"
+                ]
+            },
+            "msg-001": {
+                "id": "msg-001",
+                "message": {
+                    "id": "msg-001",
+                    "author": {
+                        "role": "user",
+                        "name": null,
+                        "metadata": {}
+                    },
+                    "create_time": 1700000100.0,
+                    "update_time": null,
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "Hello, can you help me with Python programming?"
+                        ]
+                    },
+                    "status": "finished_successfully",
+                    "end_turn": false,
+                    "weight": 1.0,
+                    "metadata": {},
+                    "recipient": "all",
+                    "channel": null
+                },
+                "parent": "root-001",
+                "children": [
+                    "msg-002"
+                ]
+            },
+            "msg-002": {
+                "id": "msg-002",
+                "message": {
+                    "id": "msg-002",
+                    "author": {
+                        "role": "assistant",
+                        "name": null,
+                        "metadata": {}
+                    },
+                    "create_time": 1700000200.0,
+                    "update_time": null,
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "Of course! I'd be happy to help you with Python programming. What would you like to know?"
+                        ]
+                    },
+                    "status": "finished_successfully",
+                    "end_turn": true,
+                    "weight": 1.0,
+                    "metadata": {},
+                    "recipient": "all",
+                    "channel": null
+                },
+                "parent": "msg-001",
+                "children": [
+                    "msg-003"
+                ]
+            },
+            "msg-003": {
+                "id": "msg-003",
+                "message": {
+                    "id": "msg-003",
+                    "author": {
+                        "role": "user",
+                        "name": null,
+                        "metadata": {}
+                    },
+                    "create_time": 1700000300.0,
+                    "update_time": null,
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "How do I create a list comprehension?"
+                        ]
+                    },
+                    "status": "finished_successfully",
+                    "end_turn": false,
+                    "weight": 1.0,
+                    "metadata": {},
+                    "recipient": "all",
+                    "channel": null
+                },
+                "parent": "msg-002",
+                "children": [
+                    "msg-004"
+                ]
+            },
+            "msg-004": {
+                "id": "msg-004",
+                "message": {
+                    "id": "msg-004",
+                    "author": {
+                        "role": "assistant",
+                        "name": null,
+                        "metadata": {}
+                    },
+                    "create_time": 1700000400.0,
+                    "update_time": null,
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "A list comprehension in Python is a concise way to create lists. Here's the basic syntax:\n\n```python\n[expression for item in iterable if condition]\n```\n\nFor example:\n```python\nsquares = [x**2 for x in range(10)]\n```"
+                        ]
+                    },
+                    "status": "finished_successfully",
+                    "end_turn": true,
+                    "weight": 1.0,
+                    "metadata": {},
+                    "recipient": "all",
+                    "channel": null
+                },
+                "parent": "msg-003",
+                "children": [
+                    "msg-005"
+                ]
+            },
+            "msg-005": {
+                "id": "msg-005",
+                "message": {
+                    "id": "msg-005",
+                    "author": {
+                        "role": "user",
+                        "name": null,
+                        "metadata": {}
+                    },
+                    "create_time": 1700000500.0,
+                    "update_time": null,
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "Thanks! That's very helpful."
+                        ]
+                    },
+                    "status": "finished_successfully",
+                    "end_turn": false,
+                    "weight": 1.0,
+                    "metadata": {},
+                    "recipient": "all",
+                    "channel": null
+                },
+                "parent": "msg-004",
+                "children": []
+            }
+        }
+    },
+    {
+        "id": "test-conv-002",
+        "title": "JavaScript Discussion",
+        "create_time": 1700100000.0,
+        "update_time": 1700101000.0,
+        "default_model_slug": "gpt-4",
+        "is_archived": false,
+        "mapping": {
+            "root-002": {
+                "id": "root-002",
+                "message": null,
+                "parent": null,
+                "children": [
+                    "js-msg-001"
+                ]
+            },
+            "js-msg-001": {
+                "id": "js-msg-001",
+                "message": {
+                    "id": "js-msg-001",
+                    "author": {
+                        "role": "user",
+                        "name": null,
+                        "metadata": {}
+                    },
+                    "create_time": 1700100100.0,
+                    "update_time": null,
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "What's the difference between let and const in JavaScript?"
+                        ]
+                    },
+                    "status": "finished_successfully",
+                    "end_turn": false,
+                    "weight": 1.0,
+                    "metadata": {},
+                    "recipient": "all",
+                    "channel": null
+                },
+                "parent": "root-002",
+                "children": [
+                    "js-msg-002"
+                ]
+            },
+            "js-msg-002": {
+                "id": "js-msg-002",
+                "message": {
+                    "id": "js-msg-002",
+                    "author": {
+                        "role": "assistant",
+                        "name": null,
+                        "metadata": {}
+                    },
+                    "create_time": 1700100200.0,
+                    "update_time": null,
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "Great question! Here are the key differences:\n\n**let:**\n- Can be reassigned\n- Block-scoped\n- Cannot be redeclared in the same scope\n\n**const:**\n- Cannot be reassigned\n- Block-scoped\n- Must be initialized at declaration\n- For objects/arrays, contents can still be modified"
+                        ]
+                    },
+                    "status": "finished_successfully",
+                    "end_turn": true,
+                    "weight": 1.0,
+                    "metadata": {},
+                    "recipient": "all",
+                    "channel": null
+                },
+                "parent": "js-msg-001",
+                "children": []
+            }
+        }
+    },
+    {
+        "id": "test-conv-003",
+        "title": "Recipe Ideas",
+        "create_time": 1700200000.0,
+        "update_time": 1700201000.0,
+        "default_model_slug": "gpt-3.5-turbo",
+        "is_archived": true,
+        "mapping": {
+            "root-003": {
+                "id": "root-003",
+                "message": null,
+                "parent": null,
+                "children": [
+                    "recipe-msg-001"
+                ]
+            },
+            "recipe-msg-001": {
+                "id": "recipe-msg-001",
+                "message": {
+                    "id": "recipe-msg-001",
+                    "author": {
+                        "role": "user",
+                        "name": null,
+                        "metadata": {}
+                    },
+                    "create_time": 1700200100.0,
+                    "update_time": null,
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "Can you give me a simple pasta recipe?"
+                        ]
+                    },
+                    "status": "finished_successfully",
+                    "end_turn": false,
+                    "weight": 1.0,
+                    "metadata": {},
+                    "recipient": "all",
+                    "channel": null
+                },
+                "parent": "root-003",
+                "children": [
+                    "recipe-msg-002"
+                ]
+            },
+            "recipe-msg-002": {
+                "id": "recipe-msg-002",
+                "message": {
+                    "id": "recipe-msg-002",
+                    "author": {
+                        "role": "assistant",
+                        "name": null,
+                        "metadata": {}
+                    },
+                    "create_time": 1700200200.0,
+                    "update_time": null,
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "Here's a simple garlic butter pasta:\n\n**Ingredients:**\n- 8 oz pasta\n- 4 tbsp butter\n- 4 cloves garlic, minced\n- Salt and pepper\n- Parmesan cheese\n- Fresh parsley\n\n**Instructions:**\n1. Cook pasta according to package directions\n2. Melt butter, sauté garlic until fragrant\n3. Toss pasta with garlic butter\n4. Season and top with parmesan and parsley"
+                        ]
+                    },
+                    "status": "finished_successfully",
+                    "end_turn": true,
+                    "weight": 1.0,
+                    "metadata": {},
+                    "recipient": "all",
+                    "channel": null
+                },
+                "parent": "recipe-msg-001",
+                "children": []
+            }
+        }
+    }
+]

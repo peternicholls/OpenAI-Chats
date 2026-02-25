@@ -1,12 +1,21 @@
 """Tests for database functionality."""
 
 import sqlite3
-import tempfile
 from pathlib import Path
 
 import pytest
 
-from chatgpt_archive.db import init_db, get_db_path, get_db_size
+from chatgpt_archive.db import (
+    init_db,
+    get_db_path,
+    get_db_size,
+    add_tag,
+    remove_tag,
+    get_conversation_tags,
+    list_all_tags,
+    list_conversations_by_tag,
+    rename_tag,
+)
 
 
 class TestDatabaseSchema:
@@ -170,8 +179,112 @@ class TestDatabaseUtilities:
         assert size == 0
 
 
+# ---------------------------------------------------------------------------
+# Fixture helpers
+# ---------------------------------------------------------------------------
+
+def _make_conversation(conn: sqlite3.Connection, openai_id: str = "conv-001") -> int:
+    """Insert a minimal conversation row and return its integer pk."""
+    cursor = conn.execute(
+        "INSERT INTO conversations (openai_id, title, create_time, update_time)"
+        " VALUES (?, ?, 1700000000.0, 1700000000.0)",
+        (openai_id, "Test Conversation"),
+    )
+    conn.commit()
+    return cursor.lastrowid
+
+
 @pytest.fixture
-def tmp_path():
-    """Create a temporary directory for testing."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
+def tag_db(tmp_path):
+    """Return an open, initialised in-memory-like DB conn for tag tests."""
+    db_path = tmp_path / "tags_test.db"
+    init_db(db_path)
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    _make_conversation(conn, "conv-001")
+    _make_conversation(conn, "conv-002")
+    yield conn
+    conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Tag tests
+# ---------------------------------------------------------------------------
+
+class TestTagFunctions:
+    """Unit tests for tag DB functions: add, remove, get, list, rename, by_tag."""
+
+    def test_add_tag_creates_entry(self, tag_db):
+        result = add_tag(tag_db, "conv-001", "work")
+        assert result is True
+        tags = get_conversation_tags(tag_db, "conv-001")
+        assert "work" in tags
+
+    def test_add_tag_duplicate_is_idempotent(self, tag_db):
+        add_tag(tag_db, "conv-001", "work")
+        # Second add should not raise and still return the tag once
+        add_tag(tag_db, "conv-001", "work")
+        tags = get_conversation_tags(tag_db, "conv-001")
+        assert tags.count("work") == 1
+
+    def test_add_tag_nonexistent_conversation(self, tag_db):
+        # Should return False (or raise) for unknown conversation
+        result = add_tag(tag_db, "conv-DOES-NOT-EXIST", "work")
+        assert result is False
+
+    def test_remove_tag_existing(self, tag_db):
+        add_tag(tag_db, "conv-001", "to-remove")
+        result = remove_tag(tag_db, "conv-001", "to-remove")
+        assert result is True
+        assert "to-remove" not in get_conversation_tags(tag_db, "conv-001")
+
+    def test_remove_tag_not_present(self, tag_db):
+        result = remove_tag(tag_db, "conv-001", "not-here")
+        assert result is False
+
+    def test_get_conversation_tags_multiple(self, tag_db):
+        add_tag(tag_db, "conv-001", "alpha")
+        add_tag(tag_db, "conv-001", "beta")
+        tags = get_conversation_tags(tag_db, "conv-001")
+        assert set(tags) == {"alpha", "beta"}
+
+    def test_get_conversation_tags_empty(self, tag_db):
+        tags = get_conversation_tags(tag_db, "conv-001")
+        assert tags == []
+
+    def test_list_all_tags(self, tag_db):
+        add_tag(tag_db, "conv-001", "project-x")
+        add_tag(tag_db, "conv-002", "project-x")
+        add_tag(tag_db, "conv-001", "personal")
+        all_tags = list_all_tags(tag_db)
+        names = [t["name"] if isinstance(t, dict) else t for t in all_tags]
+        assert "project-x" in names
+        assert "personal" in names
+
+    def test_rename_tag_updates_all_conversations(self, tag_db):
+        add_tag(tag_db, "conv-001", "old-name")
+        add_tag(tag_db, "conv-002", "old-name")
+        result = rename_tag(tag_db, "old-name", "new-name")
+        assert result is True
+        assert "new-name" in get_conversation_tags(tag_db, "conv-001")
+        assert "new-name" in get_conversation_tags(tag_db, "conv-002")
+        assert "old-name" not in get_conversation_tags(tag_db, "conv-001")
+
+    def test_rename_tag_nonexistent(self, tag_db):
+        result = rename_tag(tag_db, "ghost", "phantom")
+        assert result is False
+
+    def test_list_conversations_by_tag(self, tag_db):
+        add_tag(tag_db, "conv-001", "shared")
+        add_tag(tag_db, "conv-002", "shared")
+        rows, total = list_conversations_by_tag(tag_db, "shared", limit=50, offset=0)
+        openai_ids = [r["openai_id"] for r in rows]
+        assert "conv-001" in openai_ids
+        assert "conv-002" in openai_ids
+        assert total == 2
+
+    def test_list_conversations_by_tag_empty(self, tag_db):
+        rows, total = list_conversations_by_tag(tag_db, "no-such-tag", limit=50, offset=0)
+        assert rows == []
+        assert total == 0
+

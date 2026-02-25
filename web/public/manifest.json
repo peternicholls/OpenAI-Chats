@@ -1,0 +1,16 @@
+{
+    "name": "ChatGPT Archive",
+    "short_name": "Archive",
+    "description": "Browse, search, and export your ChatGPT conversation history",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#10a37f",
+    "icons": [
+        {
+            "src": "/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}

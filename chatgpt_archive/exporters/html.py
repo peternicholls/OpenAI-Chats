@@ -8,17 +8,17 @@ from .base import BaseExporter
 
 class HTMLExporter(BaseExporter):
     """Export conversations to HTML format with CSS styling.
-    
+
     Produces a self-contained HTML document with:
     - Embedded CSS for professional appearance
     - Responsive design for various screen sizes
     - Styled message bubbles for user/assistant roles
     - Proper escaping of content
     """
-    
+
     format_name = "html"
     file_extension = ".html"
-    
+
     CSS_STYLES = """
         * {
             box-sizing: border-box;
@@ -177,14 +177,14 @@ class HTMLExporter(BaseExporter):
             }
         }
     """
-    
+
     def export(self, conversation: dict, messages: List[dict]) -> str:
         """Export conversation to HTML format.
-        
+
         Args:
             conversation: Conversation metadata dictionary
             messages: List of message dictionaries
-            
+
         Returns:
             HTML formatted string (complete document)
         """
@@ -193,22 +193,26 @@ class HTMLExporter(BaseExporter):
         model = escape(conversation.get("model") or "unknown")
         msg_count = conversation.get("message_count", len(messages))
         conv_id = escape(conversation.get("id", ""))
-        
+
         # Build messages HTML
         messages_html = []
         for msg in messages:
             role = msg.get("role", "unknown")
             content = msg.get("content") or ""
             time_str = self.format_time(msg.get("create_time"))
-            
+
             # Skip empty system messages
             if not content.strip() and role == "system":
                 continue
-            
+
             role_class = f"message-{role}"
-            time_html = f'<span class="message-time">{escape(time_str)}</span>' if time_str else ""
-            
-            messages_html.append(f'''
+            time_html = (
+                f'<span class="message-time">{escape(time_str)}</span>'
+                if time_str
+                else ""
+            )
+
+            messages_html.append(f"""
                 <div class="message {role_class}">
                     <div class="message-header">
                         <span class="message-role">{escape(role)}</span>
@@ -216,9 +220,9 @@ class HTMLExporter(BaseExporter):
                     </div>
                     <div class="message-content">{escape(content)}</div>
                 </div>
-            ''')
-        
-        html = f'''<!DOCTYPE html>
+            """)
+
+        html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -249,6 +253,6 @@ class HTMLExporter(BaseExporter):
         Exported from ChatGPT Archive
     </div>
 </body>
-</html>'''
-        
+</html>"""
+
         return html

@@ -1,0 +1,82 @@
+# ChatGPT Archive Web UI
+# Run with: docker compose up -d
+# Access at: http://localhost (port 80 via nginx)
+#
+# For configuration options, see docs/DEPLOYMENT.md
+
+services:
+  # Reverse proxy (nginx)
+  # Unifies web + api behind port 80, handles SSE buffering config
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+    restart: unless-stopped
+
+  # Backend API (FastAPI + Python)
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    volumes:
+      # Mount host data directory for database persistence
+      # Data in ~/.chatgpt-archive/ persists across container restarts
+      - ${HOME}/.chatgpt-archive:/data
+    environment:
+      # CHATGPT_ARCHIVE_DB: Path to SQLite database inside container
+      # Default: /data/chats.db (maps to ~/.chatgpt-archive/chats.db on host)
+      - CHATGPT_ARCHIVE_DB=/data/chats.db
+      
+      # API_HOST: Network interface to bind to
+      # 0.0.0.0 = all interfaces (required for Docker), 127.0.0.1 = localhost only
+      # WARNING: 0.0.0.0 exposes API to all network interfaces
+      - API_HOST=0.0.0.0
+      
+      # API_PORT: Port for the API server
+      - API_PORT=8000
+      
+      # CORS_ORIGINS: JSON array of allowed origins for CORS
+      # Must include the frontend URL. Add production domains as needed.
+      - CORS_ORIGINS=["http://localhost"]
+      
+      # TRUSTED_PROXY_IPS: Comma-separated list of proxy IPs whose
+      # X-Forwarded-For / X-Real-IP headers are trusted.
+      # To find your nginx container's IP:
+      #   docker inspect openai-chats-nginx-1 | grep IPAddress
+      # Then add it here, e.g.: 127.0.0.1,::1,172.17.0.2
+      - TRUSTED_PROXY_IPS=127.0.0.1,::1
+      
+      # OPENAI_API_KEY: Required for semantic search / embeddings
+      # Uncomment and set to enable semantic search:
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (Next.js)
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        # Baked at build time — must point to a URL the browser can reach
+        # Routes through nginx at port 80 which proxies /api/ to the api service
+        - NEXT_PUBLIC_API_URL=http://localhost
+    environment:
+      # Runtime env (informational only — NEXT_PUBLIC_* is baked at build time via build args above)
+      - NEXT_PUBLIC_API_URL=http://localhost
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
