@@ -93,13 +93,11 @@ async def get_embedding_stats() -> dict:
             total = cursor.fetchone()[0]
             # Conversations with embeddings (when embedding table exists).
             try:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT COUNT(DISTINCT m.conversation_id)
                     FROM message_embeddings me
                     JOIN messages m ON m.id = me.message_id
-                    """
-                )
+                    """)
                 with_embeddings = cursor.fetchone()[0]
             except sqlite3.OperationalError:
                 with_embeddings = 0

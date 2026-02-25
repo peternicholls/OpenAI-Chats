@@ -132,14 +132,12 @@ def run_migrations(conn: sqlite3.Connection) -> None:
     Args:
         conn: Database connection
     """
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS schema_migrations (
             version INTEGER PRIMARY KEY,
             applied_at REAL DEFAULT (unixepoch())
         )
-    """
-    )
+    """)
     conn.commit()
 
     applied = {
@@ -326,15 +324,13 @@ def init_vec_table(conn: sqlite3.Connection, dimensions: int = 1536) -> bool:
         True if virtual table was created successfully
     """
     try:
-        conn.execute(
-            f"""
+        conn.execute(f"""
             CREATE VIRTUAL TABLE IF NOT EXISTS vec_messages 
             USING vec0(
                 message_id INTEGER PRIMARY KEY,
                 embedding float[{dimensions}]
             )
-        """
-        )
+        """)
         conn.commit()
         return True
     except Exception:
@@ -720,15 +716,13 @@ def list_all_tags(conn: sqlite3.Connection) -> list:
     Returns:
         List of dicts with 'name' and 'count' keys
     """
-    rows = conn.execute(
-        """
+    rows = conn.execute("""
         SELECT t.name, COUNT(ct.conversation_id) as count
         FROM tags t
         LEFT JOIN conversation_tags ct ON t.id = ct.tag_id
         GROUP BY t.id
         ORDER BY t.name
-        """
-    ).fetchall()
+        """).fetchall()
     return [{"name": row[0], "count": row[1]} for row in rows]
 
 

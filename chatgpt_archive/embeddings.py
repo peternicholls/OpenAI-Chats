@@ -18,7 +18,6 @@ from chatgpt_archive.db import (
     EMBEDDING_DIMENSIONS,
 )
 
-
 # OpenAI API configuration
 DEFAULT_MODEL = "text-embedding-3-small"
 DEFAULT_BATCH_SIZE = 100  # Messages per API call (max 2048 for OpenAI)
@@ -117,16 +116,14 @@ def estimate_cost(
         Dictionary with cost estimation details
     """
     # Get messages that need embedding
-    cursor = conn.execute(
-        """
+    cursor = conn.execute("""
         SELECT COUNT(*) as count, 
                COALESCE(SUM(LENGTH(content)), 0) as total_chars
         FROM messages 
         WHERE content IS NOT NULL 
           AND content != ''
           AND id NOT IN (SELECT message_id FROM message_embeddings)
-    """
-    )
+    """)
     row = cursor.fetchone()
     message_count = row[0]
     total_chars = row[1]
