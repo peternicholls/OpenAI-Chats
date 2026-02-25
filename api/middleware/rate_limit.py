@@ -31,12 +31,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # In-memory storage: {client_ip: [(timestamp, count), ...]}
         self.request_counts: dict[str, list[tuple[float, int]]] = defaultdict(list)
         self.last_seen: dict[str, float] = {}
-        self._rate_limit_disabled = os.getenv("DISABLE_RATE_LIMIT") == "1"
-        if self._rate_limit_disabled:
-            _log.warning(
-                "Rate limiting is DISABLED (DISABLE_RATE_LIMIT=1). "
-                "Never set this in production."
-            )
         trusted_proxies_env = os.getenv("TRUSTED_PROXY_IPS", "127.0.0.1,::1")
         self.trusted_proxy_ips = {
             ip.strip() for ip in trusted_proxies_env.split(",") if ip.strip()
@@ -109,7 +103,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with rate limiting."""
-        if self._rate_limit_disabled:
+        if os.getenv("DISABLE_RATE_LIMIT") == "1":
             return await call_next(request)
 
         # Skip rate limiting for health checks

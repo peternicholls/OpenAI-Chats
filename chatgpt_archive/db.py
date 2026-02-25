@@ -271,7 +271,7 @@ def is_sqlite_vec_available() -> bool:
         True if sqlite-vec can be loaded
     """
     try:
-        import sqlite_vec  # type: ignore[import-untyped]
+        import sqlite_vec  # type: ignore[import-untyped]  # noqa: F401
         return True
     except ImportError:
         return False

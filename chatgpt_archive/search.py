@@ -448,7 +448,7 @@ def execute_semantic_search(
     
     try:
         from chatgpt_archive.embeddings import get_openai_client, generate_embeddings_batch
-        from chatgpt_archive.db import serialize_embedding, load_sqlite_vec, deserialize_embedding
+        from chatgpt_archive.db import serialize_embedding, load_sqlite_vec
     except ImportError:
         raise InvalidQueryError(
             "Semantic search requires 'chatgpt-archive[semantic]'. "

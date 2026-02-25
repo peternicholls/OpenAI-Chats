@@ -75,7 +75,6 @@ class ExcelExporter(BaseExporter):
         ws_meta.title = "Metadata"
         
         # Style definitions
-        header_font = Font(bold=True, size=12)
         label_font = Font(bold=True)
         header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
         header_text_font = Font(bold=True, color="FFFFFF", size=11)
