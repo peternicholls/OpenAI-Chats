@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS conversations (
     create_time   REAL,
     update_time   REAL,
     model_slug    TEXT,
-    is_archived   INTEGER DEFAULT 0
+    is_archived   INTEGER DEFAULT 0,
+    is_favorite   INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -112,6 +113,54 @@ EMBEDDING_DIMENSIONS = {
     "text-embedding-ada-002": 1536,
 }
 
+# Versioned, idempotent DDL patches applied by run_migrations()
+_MIGRATIONS = [
+    # Migration 1: add is_favorite column to conversations
+    (
+        1,
+        "ALTER TABLE conversations ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0",
+    ),
+]
+
+
+def run_migrations(conn: sqlite3.Connection) -> None:
+    """Apply versioned schema migrations idempotently.
+
+    Creates a schema_migrations table to track which patches have been
+    applied, then runs any patches not yet recorded.
+
+    Args:
+        conn: Database connection
+    """
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            version INTEGER PRIMARY KEY,
+            applied_at REAL DEFAULT (unixepoch())
+        )
+    """)
+    conn.commit()
+
+    applied = {
+        row[0]
+        for row in conn.execute("SELECT version FROM schema_migrations").fetchall()
+    }
+
+    for version, ddl in _MIGRATIONS:
+        if version in applied:
+            continue
+        try:
+            conn.execute(ddl)
+            conn.execute(
+                "INSERT INTO schema_migrations (version) VALUES (?)", (version,)
+            )
+            conn.commit()
+        except sqlite3.OperationalError:
+            # Column/object already exists — mark as applied and continue
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)", (version,)
+            )
+            conn.commit()
+
 
 def get_db_path() -> Path:
     """Get database path from environment or use default.
@@ -180,17 +229,19 @@ def init_schema(conn: sqlite3.Connection) -> None:
 
 def init_db(db_path: Path | None = None) -> sqlite3.Connection:
     """Initialize database with schema.
-    
-    Convenience function that gets connection and initializes schema.
-    
+
+    Convenience function that gets connection and initializes schema,
+    then applies any pending migrations.
+
     Args:
         db_path: Optional path to database file
-        
+
     Returns:
         Initialized database connection
     """
     conn = get_connection(db_path)
     init_schema(conn)
+    run_migrations(conn)
     return conn
 
 
@@ -456,7 +507,7 @@ def list_conversations(
     # Query conversations with message counts
     query = f"""
         SELECT c.id, c.openai_id, c.title, c.create_time, c.update_time,
-               c.model_slug, c.is_archived,
+               c.model_slug, c.is_archived, c.is_favorite,
                (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id) as message_count
         FROM conversations c
         ORDER BY {sort_column} {order_clause} {null_handling}
@@ -514,18 +565,26 @@ def delete_conversation(conn: sqlite3.Connection, openai_id: str) -> bool:
         return False
     
     db_id = row[0]
-    
+
+    # Collect message IDs before deletion (for targeted embedding cleanup)
+    msg_rows = conn.execute(
+        "SELECT id FROM messages WHERE conversation_id = ?", (db_id,)
+    ).fetchall()
+    message_ids = [r[0] for r in msg_rows]
+
     # Delete messages first (triggers FTS cleanup via triggers)
     conn.execute("DELETE FROM messages WHERE conversation_id = ?", (db_id,))
-    
-    # Delete any embeddings for those messages
-    try:
-        conn.execute(
-            "DELETE FROM message_embeddings WHERE message_id NOT IN "
-            "(SELECT id FROM messages)"
-        )
-    except sqlite3.OperationalError:
-        pass  # Embeddings table may not exist
+
+    # Delete embeddings for only the removed messages (not a full-table scan)
+    if message_ids:
+        placeholders = ",".join("?" * len(message_ids))
+        try:
+            conn.execute(
+                f"DELETE FROM message_embeddings WHERE message_id IN ({placeholders})",
+                message_ids,
+            )
+        except sqlite3.OperationalError:
+            pass  # Embeddings table may not exist
     
     # Delete the conversation
     conn.execute("DELETE FROM conversations WHERE id = ?", (db_id,))
@@ -671,6 +730,36 @@ def list_all_tags(conn: sqlite3.Connection) -> list:
     return [{"name": row[0], "count": row[1]} for row in rows]
 
 
+def rename_tag(conn: sqlite3.Connection, old_name: str, new_name: str) -> bool:
+    """Rename a tag across all conversations.
+
+    Args:
+        conn: Database connection
+        old_name: Existing tag name
+        new_name: New tag name
+
+    Returns:
+        True if the tag was found and renamed, False if not found.
+
+    Raises:
+        ValueError: If new_name is empty.
+    """
+    new_name = new_name.strip()
+    if not new_name:
+        raise ValueError("New tag name cannot be empty")
+
+    tag_row = conn.execute(
+        "SELECT id FROM tags WHERE name = ? COLLATE NOCASE",
+        (old_name.strip(),),
+    ).fetchone()
+    if tag_row is None:
+        return False
+
+    conn.execute("UPDATE tags SET name = ? WHERE id = ?", (new_name, tag_row[0]))
+    conn.commit()
+    return True
+
+
 def list_conversations_by_tag(
     conn: sqlite3.Connection,
     tag_name: str,
@@ -714,7 +803,7 @@ def list_conversations_by_tag(
     
     query = f"""
         SELECT c.id, c.openai_id, c.title, c.create_time, c.update_time,
-               c.model_slug, c.is_archived,
+               c.model_slug, c.is_archived, c.is_favorite,
                (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id) as message_count
         FROM conversations c
         JOIN conversation_tags ct ON c.id = ct.conversation_id

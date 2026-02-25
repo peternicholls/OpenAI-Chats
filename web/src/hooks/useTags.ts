@@ -40,3 +40,15 @@ export function useRemoveTag(conversationId: string) {
         },
     });
 }
+
+export function useRenameTag() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ oldName, newName }: { oldName: string; newName: string }) =>
+            api.renameTag(oldName, newName),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.tags.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.conversations.all });
+        },
+    });
+}

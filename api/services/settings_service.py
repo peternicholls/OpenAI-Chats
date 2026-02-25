@@ -24,6 +24,7 @@ DEFAULT_SETTINGS = {
     "sidebar_open": True,
     "openai_api_key": "",
     "embedding_model": "text-embedding-3-small",
+    "items_per_page": 50,
 }
 
 # Settings that should be encrypted at rest

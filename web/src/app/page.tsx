@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useConversations } from "@/hooks/useConversations";
+import { useSettings } from "@/hooks/useSettings";
 import { ConversationCard } from "@/components/conversations/ConversationCard";
 import { VirtualizedConversationList } from "@/components/conversations/VirtualizedConversationList";
 import { Pagination } from "@/components/common/Pagination";
@@ -22,8 +23,9 @@ import { toast } from "sonner";
 import { api } from "@/services/api";
 import type { SortField, SortOrder, ExportFormatCode } from "@/types";
 
-const PAGE_SIZE = Number(process.env.NEXT_PUBLIC_PAGE_SIZE) || 20;
 const VIRTUALIZATION_THRESHOLD = 100; // Use virtualization when viewing more than this many items
+
+const DEFAULT_PAGE_SIZE = Number(process.env.NEXT_PUBLIC_PAGE_SIZE) || 20;
 
 const EXPORT_FORMATS: { value: ExportFormatCode; label: string }[] = [
   { value: "md", label: "Markdown" },
@@ -38,6 +40,9 @@ function ConversationsContent() {
   const searchParams = useSearchParams();
   const tagFilter = searchParams.get("tag") || undefined;
 
+  const { data: settings } = useSettings();
+  const pageSize = settings?.items_per_page ?? DEFAULT_PAGE_SIZE;
+
   const [sortBy, setSortBy] = useState<SortField>("date");
   const [order, setOrder] = useState<SortOrder>("desc");
   const [offset, setOffset] = useState(0);
@@ -47,7 +52,7 @@ function ConversationsContent() {
   const [viewAllMode, setViewAllMode] = useState(false);
 
   // When viewAllMode is true, fetch all conversations (large limit for virtualization)
-  const effectiveLimit = viewAllMode ? 10000 : PAGE_SIZE;
+  const effectiveLimit = viewAllMode ? 10000 : pageSize;
   const effectiveOffset = viewAllMode ? 0 : offset;
 
   const { data, isLoading, error, refetch } = useConversations({

@@ -112,12 +112,24 @@ This directory is mounted into the container at `/data/`. Data persists across:
 # Stop services (optional but recommended)
 docker compose stop
 
-# Backup data
+# Backup data (includes database, settings, and encryption key)
 cp -r ~/.chatgpt-archive ~/.chatgpt-archive.backup
 
 # Restart
 docker compose start
 ```
+
+> ⚠️ **Encryption key backup is critical.**  
+> The file `~/.chatgpt-archive/encryption.key` is used to encrypt sensitive settings
+> (such as your OpenAI API key) stored in `settings.json`. If this key is lost, any
+> encrypted settings will be permanently unreadable and you will need to re-enter them.
+>
+> **Always include `encryption.key` in your backups.** The backup command above copies the
+> entire `.chatgpt-archive/` directory, so the key is included automatically.
+>
+> **Do not commit `encryption.key` to version control.** It is listed in `.gitignore`.
+> Keep a separate secure copy (e.g., a password manager, encrypted cloud storage, or an
+> offline backup drive).
 
 ### Migration
 
@@ -134,6 +146,10 @@ scp chatgpt-archive-backup.tar.gz user@new-host:~
 tar -xzvf chatgpt-archive-backup.tar.gz -C ~
 docker compose up -d
 ```
+
+> The `encryption.key` file inside `.chatgpt-archive/` is included in the archive above.
+> Keep its permissions restricted (`chmod 600 ~/.chatgpt-archive/encryption.key`) on the
+> destination host so only your user can read it.
 
 ---
 

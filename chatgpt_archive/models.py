@@ -4,6 +4,13 @@ from dataclasses import dataclass, field
 from typing import List
 
 
+def truncate_title(text: str, max_length: int = 50) -> str:
+    """Truncate a string to max_length, appending '...' if truncated."""
+    if len(text) <= max_length:
+        return text
+    return text[:max_length] + "..."
+
+
 @dataclass
 class Attachment:
     """Reference to a media file attached to a message.
@@ -98,10 +105,6 @@ class Conversation:
         # Try to find first user message for fallback
         for msg in self.messages:
             if msg.author_role == "user" and msg.content:
-                # Truncate to reasonable length
-                preview = msg.content[:50]
-                if len(msg.content) > 50:
-                    preview += "..."
-                return preview
+                return truncate_title(msg.content)
         
         return "[Untitled]"

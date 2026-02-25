@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any, Callable
 
 from chatgpt_archive.db import init_db
-from chatgpt_archive.models import Conversation, Message, Attachment
+from chatgpt_archive.models import Conversation, Message, Attachment, truncate_title
 
 
 class ImportError(Exception):
@@ -161,11 +161,7 @@ def get_fallback_title(messages: List[Message]) -> str:
     """
     for msg in messages:
         if msg.author_role == 'user' and msg.content:
-            # Truncate to 50 chars
-            preview = msg.content[:50]
-            if len(msg.content) > 50:
-                preview += "..."
-            return preview
+            return truncate_title(msg.content)
     
     return "[Untitled]"
 
@@ -271,7 +267,8 @@ def insert_conversation(
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (openai_id, title, create_time, update_time, model_slug, int(is_archived)))
         conv_db_id_temp = cursor.lastrowid
-        assert conv_db_id_temp is not None, "Failed to get conversation ID after insert"
+        if conv_db_id_temp is None:
+            raise RuntimeError("Failed to get conversation ID after insert")
         conv_db_id: int = conv_db_id_temp
         
         # Extract and insert all messages

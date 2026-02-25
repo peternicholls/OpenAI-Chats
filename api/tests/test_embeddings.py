@@ -1,5 +1,8 @@
 """Tests for embeddings endpoints."""
 
+import sqlite3
+from unittest.mock import patch
+
 import pytest
 
 
@@ -91,3 +94,103 @@ class TestGenerateEmbeddings:
 
         assert response.status_code == 400
         assert "exceeds" in response.json()["detail"].lower()
+
+
+# ---------------------------------------------------------------------------
+# T032 — Embedding workflow unit tests
+# ---------------------------------------------------------------------------
+
+
+class TestEstimateCostUnit:
+    """Unit tests for chatgpt_archive.embeddings.estimate_cost."""
+
+    def _make_db(self, tmp_path):
+        from chatgpt_archive.db import init_db
+        from chatgpt_archive.embeddings import init_embeddings_schema
+        db_path = tmp_path / "est.db"
+        conn = init_db(db_path)
+        init_embeddings_schema(conn)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    def test_estimate_cost_returns_required_fields(self, tmp_path):
+        from chatgpt_archive.embeddings import estimate_cost
+        conn = self._make_db(tmp_path)
+        result = estimate_cost(conn)
+        conn.close()
+        assert "messages_to_embed" in result
+        assert "total_characters" in result
+        assert "price_per_million_tokens" in result
+        assert "estimated_cost_display" in result
+        assert "estimated_cost_usd" in result
+        assert "model" in result
+
+    def test_estimate_cost_no_init_embeddings_schema_side_effect(self, tmp_path):
+        """T026 guard: estimate_cost must NOT call init_embeddings_schema."""
+        from chatgpt_archive.embeddings import estimate_cost
+        conn = self._make_db(tmp_path)
+
+        # Verify that estimate_cost works on a properly-initialised DB
+        # without calling init_embeddings_schema as a side effect.
+        with patch("chatgpt_archive.embeddings.init_embeddings_schema") as mock_init:
+            estimate_cost(conn)
+            mock_init.assert_not_called()
+        conn.close()
+
+    def test_estimate_cost_empty_db_returns_zero(self, tmp_path):
+        from chatgpt_archive.embeddings import estimate_cost
+        conn = self._make_db(tmp_path)
+        result = estimate_cost(conn)
+        conn.close()
+        assert result["messages_to_embed"] == 0
+        assert result["total_characters"] == 0
+        assert result["estimated_cost_usd"] == 0.0
+
+    def test_estimate_cost_uses_requested_model(self, tmp_path):
+        from chatgpt_archive.embeddings import estimate_cost, PRICING
+        conn = self._make_db(tmp_path)
+        result = estimate_cost(conn, model="text-embedding-3-large")
+        conn.close()
+        assert result["model"] == "text-embedding-3-large"
+        assert result["price_per_million_tokens"] == PRICING["text-embedding-3-large"]
+
+
+class TestCancellationFlagUnit:
+    """Unit tests for threading.Event-based cancellation (T025)."""
+
+    def test_cancel_sets_event(self):
+        import api.services.archive_service as svc
+
+        # Reset state first
+        svc._embedding_cancelled.clear()
+        svc._embedding_progress["status"] = "processing"
+
+        assert svc.cancel_embedding_generation() is True
+        assert svc.is_embedding_cancelled() is True
+
+        # Cleanup
+        svc.clear_embedding_cancellation()
+        svc._embedding_progress["status"] = "idle"
+
+    def test_clear_cancellation_clears_event(self):
+        import api.services.archive_service as svc
+
+        svc._embedding_cancelled.set()
+        svc.clear_embedding_cancellation()
+        assert svc.is_embedding_cancelled() is False
+
+    def test_cancel_returns_false_when_idle(self):
+        import api.services.archive_service as svc
+
+        svc._embedding_cancelled.clear()
+        svc._embedding_progress["status"] = "idle"
+
+        assert svc.cancel_embedding_generation() is False
+
+    def test_reset_clears_cancellation_flag(self):
+        import api.services.archive_service as svc
+
+        svc._embedding_cancelled.set()
+        svc.reset_embedding_progress()
+        assert svc.is_embedding_cancelled() is False
+

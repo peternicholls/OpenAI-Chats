@@ -37,7 +37,7 @@ async def stream_import_progress(request: Request) -> StreamingResponse:
                 yield f"data: {progress_json}\n\n"
                 last_status = progress_json
 
-                if progress.get("status") in ("complete", "error", "idle"):
+                if progress.get("status") in ("complete", "error", "idle", "cancelled"):
                     break
 
             await asyncio.sleep(1)
@@ -78,7 +78,7 @@ async def stream_embedding_progress(request: Request) -> StreamingResponse:
                 yield f"data: {progress_json}\n\n"
                 last_status = progress_json
 
-                if progress.get("status") in ("complete", "error", "idle"):
+                if progress.get("status") in ("complete", "error", "idle", "cancelled"):
                     break
 
             await asyncio.sleep(1)

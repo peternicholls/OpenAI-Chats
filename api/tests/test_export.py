@@ -102,7 +102,7 @@ class TestExport:
         assert response.status_code == 200
         assert "content-disposition" in response.headers
         assert "attachment" in response.headers["content-disposition"]
-        assert response.headers["content-disposition"].endswith(".md\"")
+        assert ".md" in response.headers["content-disposition"]
 
     @pytest.mark.asyncio
     async def test_export_xml_returns_200(self, client):

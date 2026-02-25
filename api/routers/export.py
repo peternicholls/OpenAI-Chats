@@ -1,6 +1,7 @@
 """Export endpoints."""
 
 import logging
+import urllib.parse
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
@@ -12,6 +13,13 @@ router = APIRouter(tags=["Export"])
 logger = logging.getLogger(__name__)
 
 SUPPORTED_FORMATS = ["md", "json", "yaml", "html", "xml", "csv", "xlsx"]
+MAX_BATCH_IDS = 500
+
+
+def _content_disposition(filename: str) -> str:
+    """Build a RFC 5987-compliant Content-Disposition header value."""
+    encoded = urllib.parse.quote(filename, safe="")
+    return f"attachment; filename*=UTF-8''{encoded}"
 
 
 @router.get("/api/conversations/{conversation_id}/export")
@@ -52,7 +60,7 @@ async def export_conversation(
                 validated_ids[0], validated_format
             )
 
-        headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers = {"Content-Disposition": _content_disposition(filename)}
 
         if isinstance(content, bytes):
             return Response(content=content, media_type=content_type, headers=headers)
@@ -95,6 +103,12 @@ async def export_batch(
     if not conversation_ids:
         raise HTTPException(status_code=400, detail="No conversation IDs provided")
 
+    if len(conversation_ids) > MAX_BATCH_IDS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Batch export is limited to {MAX_BATCH_IDS} IDs; {len(conversation_ids)} provided.",
+        )
+
     # Validate each conversation ID
     validated_ids = []
     for cid in conversation_ids:
@@ -111,7 +125,7 @@ async def export_batch(
             validated_ids, validated_format
         )
 
-        headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers = {"Content-Disposition": _content_disposition(filename)}
 
         if isinstance(content, bytes):
             return Response(content=content, media_type=content_type, headers=headers)

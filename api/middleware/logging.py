@@ -1,7 +1,9 @@
 """Request logging middleware for API observability."""
 
+import ipaddress
 import json
 import logging
+import os
 import time
 from datetime import datetime, timezone
 
@@ -13,6 +15,13 @@ logger = logging.getLogger("api.requests")
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware to log all API requests in JSON format for Docker log aggregation."""
+
+    def __init__(self, app, **kwargs):
+        super().__init__(app, **kwargs)
+        trusted_proxies_env = os.getenv("TRUSTED_PROXY_IPS", "127.0.0.1,::1")
+        self.trusted_proxy_ips = {
+            ip.strip() for ip in trusted_proxies_env.split(",") if ip.strip()
+        }
 
     async def dispatch(self, request: Request, call_next) -> Response:
         """Log request details including method, path, status, and duration."""
@@ -47,21 +56,28 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         return response
 
     def _get_client_ip(self, request: Request) -> str:
-        """Extract client IP, handling proxy headers."""
-        # Check for forwarded header (behind reverse proxy)
-        forwarded = request.headers.get("x-forwarded-for")
-        if forwarded:
-            # First IP in the list is the original client
-            return forwarded.split(",")[0].strip()
+        """Extract client IP, trusting forwarded headers only from known proxies."""
+        direct_ip = request.client.host if request.client else None
 
-        # Check for real IP header
-        real_ip = request.headers.get("x-real-ip")
-        if real_ip:
-            return real_ip
+        # Only trust forwarding headers when request comes from a known proxy
+        if direct_ip and direct_ip in self.trusted_proxy_ips:
+            forwarded_for = request.headers.get("x-forwarded-for")
+            if forwarded_for:
+                candidate = forwarded_for.split(",")[0].strip()
+                try:
+                    return str(ipaddress.ip_address(candidate))
+                except ValueError:
+                    pass
 
-        # Fall back to direct client
-        if request.client:
-            return request.client.host
+            real_ip = request.headers.get("x-real-ip")
+            if real_ip:
+                try:
+                    return str(ipaddress.ip_address(real_ip.strip()))
+                except ValueError:
+                    pass
+
+        if direct_ip:
+            return direct_ip
 
         return "unknown"
 

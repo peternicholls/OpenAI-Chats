@@ -4,14 +4,16 @@ This adapter provides the API layer with access to all chatgpt_archive
 functionality without duplicating business logic (per FR-012).
 """
 
-import contextlib
 import logging
 import os
 import sqlite3
 import tempfile
+import threading
 import zipfile
 from pathlib import Path
 from typing import Any
+
+from fastapi import HTTPException
 
 from chatgpt_archive import db, importer
 from chatgpt_archive import search as search_module
@@ -100,13 +102,67 @@ _embedding_progress: dict[str, Any] = {
     "message": None,
 }
 
-# Cancellation flag for embedding generation
-_embedding_cancelled: bool = False
+# Cancellation flag for embedding generation (threading.Event for thread safety)
+_embedding_cancelled: threading.Event = threading.Event()
 
 
 def get_db_path() -> Path:
     """Get the database path from environment or default."""
     return db.get_db_path()
+
+
+def _progress_state_path() -> Path:
+    """Return path to the progress state persistence file."""
+    return db.get_db_path().parent / "progress_state.json"
+
+
+def _persist_progress_state() -> None:
+    """Write current progress dicts to disk so restarts can recover last state."""
+    try:
+        path = _progress_state_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        import json as _json
+        with open(path, "w", encoding="utf-8") as f:
+            _json.dump(
+                {"import": _import_progress, "embedding": _embedding_progress},
+                f,
+            )
+    except Exception as e:
+        logger.warning("Failed to persist progress state: %s", e)
+
+
+def load_persisted_progress() -> None:
+    """Load persisted progress state on startup.
+
+    If any job was in 'processing' state when the server last stopped, mark it
+    as 'error' (interrupted) rather than showing a misleading 'idle' status.
+    Called once from the FastAPI lifespan startup handler.
+    """
+    global _import_progress, _embedding_progress
+    import json as _json
+
+    path = _progress_state_path()
+    if not path.exists():
+        return
+
+    try:
+        stored = _json.loads(path.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.warning("Could not load persisted progress state: %s", e)
+        return
+
+    for key, target in (("import", "_import_progress"), ("embedding", "_embedding_progress")):
+        state = stored.get(key)
+        if not isinstance(state, dict):
+            continue
+        if state.get("status") in ("processing", "pending"):
+            state = {**state, "status": "error", "message": "Server restarted — job interrupted"}
+        if key == "import":
+            _import_progress = state
+        else:
+            _embedding_progress = state
+
+    logger.info("Loaded persisted progress state from %s", path)
 
 
 def get_connection(validate: bool = True) -> sqlite3.Connection:
@@ -158,21 +214,38 @@ def list_conversations(
                 conn, sort_by=sort_by, order=order, limit=limit, offset=offset
             )
 
+        if not rows:
+            return [], total
+
+        # Batch-fetch all tags for returned conversations in one query (fixes N+1)
+        conv_db_ids = [row["id"] for row in rows]
+        placeholders = ",".join("?" * len(conv_db_ids))
+        tag_map: dict[int, list[str]] = {row["id"]: [] for row in rows}
+        tag_rows = conn.execute(
+            f"""
+            SELECT ct.conversation_id, t.name
+            FROM conversation_tags ct
+            JOIN tags t ON ct.tag_id = t.id
+            WHERE ct.conversation_id IN ({placeholders})
+            ORDER BY t.name
+            """,
+            conv_db_ids,
+        ).fetchall()
+        for r in tag_rows:
+            tag_map[r[0]].append(r[1])
+
         conversations = []
         for row in rows:
-            openai_id = row["openai_id"]
-            tags = db.get_conversation_tags(conn, openai_id)
-            is_fav = _get_is_favorite(conn, row["id"])
             conversations.append(
                 {
-                    "id": openai_id,
+                    "id": row["openai_id"],
                     "title": row["title"],
                     "create_time": row["create_time"],
                     "update_time": row["update_time"],
                     "message_count": row["message_count"],
                     "model": row["model_slug"],
-                    "tags": tags,
-                    "is_favorite": is_fav,
+                    "tags": tag_map.get(row["id"], []),
+                    "is_favorite": bool(row["is_favorite"]),
                 }
             )
         return conversations, total
@@ -190,7 +263,11 @@ def get_conversation(conversation_id: str) -> dict | None:
 
         messages_rows = db.get_conversation_messages(conn, row["id"])
         tags = db.get_conversation_tags(conn, conversation_id)
-        is_fav = _get_is_favorite(conn, row["id"])
+        is_fav = bool(
+            conn.execute(
+                "SELECT is_favorite FROM conversations WHERE id = ?", (row["id"],)
+            ).fetchone()["is_favorite"]
+        )
 
         messages = [
             {
@@ -293,14 +370,23 @@ def import_archive_from_zip(zip_path: str) -> None:
         "percent": 0.0,
         "message": "Starting import...",
     }
+    _persist_progress_state()
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
 
-            # Extract ZIP
+            # Extract ZIP — validate paths to prevent ZIP Slip (path traversal)
             _import_progress["message"] = "Extracting archive..."
             with zipfile.ZipFile(zip_path, "r") as zf:
+                resolved_tmpdir = tmpdir_path.resolve()
+                for member in zf.namelist():
+                    member_path = (tmpdir_path / member).resolve()
+                    if not member_path.is_relative_to(resolved_tmpdir):
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Invalid archive: path traversal detected",
+                        )
                 zf.extractall(tmpdir_path)
 
             # Find the conversations.json - might be in a subdirectory
@@ -336,6 +422,7 @@ def import_archive_from_zip(zip_path: str) -> None:
                 "percent": 100.0,
                 "message": f"Imported {convs} conversations with {msgs} messages.",
             }
+            _persist_progress_state()
 
     except Exception as e:
         _import_progress = {
@@ -345,6 +432,7 @@ def import_archive_from_zip(zip_path: str) -> None:
             "percent": 0.0,
             "message": str(e),
         }
+        _persist_progress_state()
     finally:
         try:
             os.unlink(zip_path)
@@ -393,6 +481,19 @@ def remove_tag_from_conversation(conversation_id: str, tag_name: str) -> bool:
         conn.close()
 
 
+def rename_tag(old_name: str, new_name: str) -> bool:
+    """Rename a tag across all conversations.
+
+    Returns:
+        True if the tag was found and renamed, False if not found.
+    """
+    conn = get_connection()
+    try:
+        return db.rename_tag(conn, old_name, new_name)
+    finally:
+        conn.close()
+
+
 def toggle_favorite(conversation_id: str) -> bool:
     """Toggle the favorite status of a conversation.
 
@@ -404,9 +505,6 @@ def toggle_favorite(conversation_id: str) -> bool:
         row = db.get_conversation_by_id(conn, conversation_id)
         if row is None:
             return False
-
-        # Check if is_favorite column exists; add it if not
-        _ensure_favorite_column(conn)
 
         current = conn.execute(
             "SELECT is_favorite FROM conversations WHERE id = ?", (row["id"],)
@@ -426,8 +524,6 @@ def list_favorites(
     """List favorited conversations."""
     conn = get_connection()
     try:
-        _ensure_favorite_column(conn)
-
         sort_map = {"date": "c.create_time", "title": "c.title", "messages": "message_count"}
         sort_column = sort_map.get(sort_by, "c.create_time")
         order_clause = "DESC" if order.lower() == "desc" else "ASC"
@@ -550,15 +646,48 @@ def export_multiple_conversations(
     if not conversation_ids:
         raise ValueError("No conversation IDs provided")
 
-    # Collect all conversations
+    # Collect all conversations — use a single DB connection for the entire batch
     conversations_data = []
     missing_ids = []
-    for conv_id in conversation_ids:
-        conv_data = get_conversation(conv_id)
-        if conv_data is None:
-            missing_ids.append(conv_id)
-        else:
-            conversations_data.append(conv_data)
+    conn = get_connection()
+    try:
+        for conv_id in conversation_ids:
+            row = db.get_conversation_by_id(conn, conv_id)
+            if row is None:
+                missing_ids.append(conv_id)
+                continue
+
+            messages_rows = db.get_conversation_messages(conn, row["id"])
+            tags = db.get_conversation_tags(conn, conv_id)
+            is_fav = bool(
+                conn.execute(
+                    "SELECT is_favorite FROM conversations WHERE id = ?", (row["id"],)
+                ).fetchone()["is_favorite"]
+            )
+
+            messages = [
+                {
+                    "id": msg["openai_id"],
+                    "role": msg["author_role"],
+                    "content": msg["content"],
+                    "create_time": msg["create_time"],
+                }
+                for msg in messages_rows
+            ]
+
+            conversations_data.append({
+                "id": row["openai_id"],
+                "title": row["title"],
+                "create_time": row["create_time"],
+                "update_time": row["update_time"],
+                "message_count": row["message_count"],
+                "model": row["model_slug"],
+                "messages": messages,
+                "tags": tags,
+                "is_favorite": is_fav,
+            })
+    finally:
+        conn.close()
 
     if missing_ids:
         raise ValueError(f"Conversations not found: {', '.join(missing_ids)}")
@@ -709,26 +838,6 @@ def _build_conv_dict(conv_data: dict) -> dict:
     }
 
 
-def _ensure_favorite_column(conn: sqlite3.Connection) -> None:
-    """Ensure the is_favorite column exists on conversations table."""
-    try:
-        conn.execute("SELECT is_favorite FROM conversations LIMIT 1")
-    except sqlite3.OperationalError:
-        conn.execute("ALTER TABLE conversations ADD COLUMN is_favorite INTEGER DEFAULT 0")
-        conn.commit()
-
-
-def _get_is_favorite(conn: sqlite3.Connection, db_id: int) -> bool:
-    """Check if a conversation is favorited."""
-    try:
-        row = conn.execute(
-            "SELECT is_favorite FROM conversations WHERE id = ?", (db_id,)
-        ).fetchone()
-        return bool(row and row["is_favorite"])
-    except sqlite3.OperationalError:
-        return False
-
-
 def get_embedding_progress() -> dict[str, Any]:
     """Get current embedding generation progress state."""
     return dict(_embedding_progress)
@@ -750,11 +859,12 @@ def update_embedding_progress(
         "percent": round(pct, 1),
         "message": message,
     }
+    _persist_progress_state()
 
 
 def reset_embedding_progress() -> None:
     """Reset embedding progress to idle state."""
-    global _embedding_progress, _embedding_cancelled
+    global _embedding_progress
     _embedding_progress = {
         "status": "idle",
         "current": 0,
@@ -762,7 +872,8 @@ def reset_embedding_progress() -> None:
         "percent": 0.0,
         "message": None,
     }
-    _embedding_cancelled = False
+    _embedding_cancelled.clear()
+    _persist_progress_state()
 
 
 def cancel_embedding_generation() -> bool:
@@ -771,19 +882,17 @@ def cancel_embedding_generation() -> bool:
     Returns:
         True if cancellation was requested, False if no embedding is in progress.
     """
-    global _embedding_cancelled
     if _embedding_progress.get("status") in ("processing", "pending"):
-        _embedding_cancelled = True
+        _embedding_cancelled.set()
         return True
     return False
 
 
 def is_embedding_cancelled() -> bool:
     """Check if embedding generation has been cancelled."""
-    return _embedding_cancelled
+    return _embedding_cancelled.is_set()
 
 
 def clear_embedding_cancellation() -> None:
     """Clear the cancellation flag."""
-    global _embedding_cancelled
-    _embedding_cancelled = False
+    _embedding_cancelled.clear()

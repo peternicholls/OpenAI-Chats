@@ -7,7 +7,7 @@ date filtering, result formatting, and optional semantic/hybrid search.
 import re
 import sqlite3
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Tuple
 
 
@@ -288,7 +288,7 @@ def format_results_human(results: SearchResults) -> str:
     for i, result in enumerate(results.results, 1):
         # Format date
         if result.create_time:
-            dt = datetime.fromtimestamp(result.create_time)
+            dt = datetime.fromtimestamp(result.create_time, tz=timezone.utc)
             date_str = dt.strftime("%Y-%m-%d")
         else:
             date_str = "Unknown"

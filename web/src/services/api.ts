@@ -115,6 +115,13 @@ class APIClient {
         });
     }
 
+    async renameTag(oldName: string, newName: string): Promise<void> {
+        return this.request(`/api/tags/${encodeURIComponent(oldName)}`, {
+            method: "PUT",
+            body: JSON.stringify({ new_name: newName }),
+        });
+    }
+
     // Favorites
     async toggleFavorite(conversationId: string): Promise<{ is_favorite: boolean }> {
         return this.request(`/api/conversations/${conversationId}/favorite`, {

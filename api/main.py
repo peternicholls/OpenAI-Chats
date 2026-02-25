@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -23,7 +23,6 @@ from api.routers import (
     tags,
 )
 from api.routers import import_ as import_router
-from api.services.settings_service import get_settings_path, load_settings
 
 # Configure logging
 logging.basicConfig(
@@ -37,7 +36,7 @@ def validate_environment() -> None:
     """Validate required environment variables on startup.
 
     Raises:
-        SystemExit: If required variables are missing or invalid.
+        RuntimeError: If required variables are missing or invalid.
     """
     errors = []
 
@@ -65,16 +64,59 @@ def validate_environment() -> None:
     if errors:
         for error in errors:
             logger.error("Configuration error: %s", error)
-        sys.exit(1)
+        raise RuntimeError("Environment validation failed: " + "; ".join(errors))
 
 
-# Validate environment on module load
-validate_environment()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application startup and shutdown lifecycle."""
+    # --- Startup ---
+    validate_environment()
+
+    # Validate schema compatibility once at startup
+    from api.services.archive_service import get_connection, validate_schema_compatibility
+    try:
+        conn = get_connection(validate=False)
+        is_valid, errors = validate_schema_compatibility(conn)
+        conn.close()
+        if not is_valid:
+            logger.warning("Schema compatibility issues: %s", "; ".join(errors))
+    except Exception as e:
+        logger.warning("Schema validation skipped (DB may not exist yet): %s", e)
+
+    # Load settings on startup
+    from api.services.settings_service import get_settings_path, load_settings
+    settings_path = get_settings_path()
+    try:
+        load_settings()
+        if settings_path.exists():
+            logger.info("Settings loaded from %s", settings_path)
+        else:
+            logger.info("Using default settings (no settings file found)")
+    except Exception as e:
+        logger.warning("Failed to load settings, using defaults: %s", e)
+
+    # Restore persisted progress state (marks interrupted jobs as 'error')
+    from api.services.archive_service import load_persisted_progress
+    try:
+        load_persisted_progress()
+    except Exception as e:
+        logger.warning("Failed to load persisted progress state: %s", e)
+
+    # Warn if binding to 0.0.0.0
+    host = os.environ.get("API_HOST", "0.0.0.0")  # noqa: S104
+    if host == "0.0.0.0":  # noqa: S104
+        logger.warning("Security: API exposed on all interfaces (0.0.0.0)")
+
+    yield
+    # --- Shutdown (nothing to clean up currently) ---
+
 
 app = FastAPI(
     title="ChatGPT Archive API",
     version="1.0.0",
     description="REST API for ChatGPT Archive Web UI",
+    lifespan=lifespan,
 )
 
 # Setup CORS and security headers
@@ -97,23 +139,3 @@ app.include_router(embeddings.router)
 app.include_router(progress.router)
 app.include_router(import_router.router)
 app.include_router(settings.router)
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    """Load settings and log startup information."""
-    # Load settings on startup
-    settings_path = get_settings_path()
-    try:
-        load_settings()  # Validates settings file, we use defaults via service
-        if settings_path.exists():
-            logger.info("Settings loaded from %s", settings_path)
-        else:
-            logger.info("Using default settings (no settings file found)")
-    except Exception as e:
-        logger.warning("Failed to load settings, using defaults: %s", e)
-
-    # Warn if binding to 0.0.0.0
-    host = os.environ.get("API_HOST", "0.0.0.0")  # noqa: S104
-    if host == "0.0.0.0":  # noqa: S104
-        logger.warning("Security: API exposed on all interfaces (0.0.0.0)")

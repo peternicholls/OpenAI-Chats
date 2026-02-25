@@ -16,6 +16,7 @@ class UserSettings(BaseModel):
     openai_api_key: str | None = Field(None, description="OpenAI API key for embeddings")
     sidebar_open: bool = Field(True, description="Whether sidebar is open")
     embedding_model: str = Field("text-embedding-3-small", description="Model for embeddings")
+    items_per_page: int = Field(50, description="Number of conversations per page (FR-022)")
 
 
 class UserSettingsUpdate(BaseModel):
@@ -26,11 +27,17 @@ class UserSettingsUpdate(BaseModel):
     openai_api_key: str | None = None
     sidebar_open: bool | None = None
     embedding_model: str | None = None
+    items_per_page: int | None = None
 
 
 @router.get("/api/settings", response_model=UserSettings)
 async def get_settings() -> UserSettings:
-    """Get current user settings."""
+    """Get current user settings.
+
+    Note (S-02): The OpenAI API key is returned decrypted. This is acceptable
+    for a single-user, trusted-network deployment (FR-019). Do not expose this
+    endpoint on an untrusted network without additional access controls.
+    """
     settings = load_settings()
     return UserSettings(**settings)
 

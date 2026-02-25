@@ -1,6 +1,7 @@
 """Tag management endpoints."""
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from api.middleware.validation import validate_tag_name as validate_tag, validate_conversation_id
 from api.models.requests import TagRequest
@@ -8,6 +9,12 @@ from api.models.responses import Tag
 from api.services import archive_service
 
 router = APIRouter(tags=["Tags"])
+
+
+class RenameTagRequest(BaseModel):
+    """Request body for renaming a tag."""
+
+    new_name: str
 
 
 def validate_tag_name(tag_name: str) -> str:
@@ -76,3 +83,20 @@ async def remove_tag(conversation_id: str, tag_name: str) -> None:
     result = archive_service.remove_tag_from_conversation(validated_id, tag_name)
     if not result:
         raise HTTPException(status_code=404, detail="Conversation or tag not found")
+
+
+@router.put("/api/tags/{tag_name}")
+async def rename_tag(tag_name: str, request: RenameTagRequest) -> dict:
+    """Rename a tag across all conversations.
+
+    Returns 404 if the tag does not exist, 422 if the new name is invalid.
+    """
+    try:
+        validated_new_name = validate_tag(request.new_name)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+
+    result = archive_service.rename_tag(tag_name, validated_new_name)
+    if not result:
+        raise HTTPException(status_code=404, detail=f"Tag '{tag_name}' not found")
+    return {"name": validated_new_name}

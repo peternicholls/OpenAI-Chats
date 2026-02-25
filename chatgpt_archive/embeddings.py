@@ -112,8 +112,6 @@ def estimate_cost(
     Returns:
         Dictionary with cost estimation details
     """
-    init_embeddings_schema(conn)
-    
     # Get messages that need embedding
     cursor = conn.execute("""
         SELECT COUNT(*) as count, 

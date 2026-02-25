@@ -94,11 +94,15 @@ export interface UserSettings {
     theme: "light" | "dark" | "system";
     sidebar_open: boolean;
     embedding_model: string;
+    items_per_page: number;
 }
 
 export interface EmbeddingEstimate {
-    total_messages: number;
+    messages_to_embed: number;
+    total_characters: number;
     estimated_tokens: number;
-    estimated_cost_usd: number;
     model: string;
+    price_per_million_tokens: number;
+    estimated_cost_usd: number;
+    estimated_cost_display: string;
 }

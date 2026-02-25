@@ -348,7 +348,7 @@ chatgpt-archive import ./archive
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10+
 - No external services required (fully offline)
 
 ## Web UI (Docker)
@@ -361,11 +361,14 @@ A browser-based interface is available via Docker.
 # Build and start all services
 docker compose up -d
 
-# Web UI:  http://localhost:3001
-# API:     http://localhost:8000
+# Web UI:  http://localhost
+# API:     http://localhost/api
 ```
 
 > **First run**: the build step takes a few minutes. Subsequent starts are instant.
+>
+> All traffic is routed through an nginx reverse proxy on port 80. The `web` and `api`
+> services are not exposed directly to the host.
 
 ### Stopping
 
@@ -444,9 +447,10 @@ Environment variables (set in `.env` or `docker-compose.yml`):
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DB_PATH` | Database file path (inside container) | `/data/archive.db` |
-| `CORS_ORIGINS` | Allowed origins (JSON array) | `["http://localhost:3000"]` |
+| `CHATGPT_ARCHIVE_DB` | Database file path (inside container) | `/data/chats.db` |
+| `CORS_ORIGINS` | Allowed origins (JSON array) | `["http://localhost"]` |
 | `API_HOST` | API bind address | `0.0.0.0` |
+| `TRUSTED_PROXY_IPS` | Proxy IPs whose `X-Forwarded-For` headers are trusted | `127.0.0.1,::1` |
 
 ### Security
 

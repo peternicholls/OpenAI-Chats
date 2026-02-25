@@ -110,3 +110,72 @@ class TestConversationTags:
         data = response.json()
         assert isinstance(data, list)
         assert "conv-tag" in data
+
+
+# ---------------------------------------------------------------------------
+# T036 — Tag rename API tests (PUT /api/tags/{tag_name})
+# ---------------------------------------------------------------------------
+
+
+class TestRenameTag:
+    """Tests for PUT /api/tags/{tag_name} endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_rename_tag_returns_200(self, client):
+        """Rename a known tag — expect 200 with updated tag data."""
+        await client.post(
+            "/api/conversations/conv-001-test/tags", json={"tag_name": "old-tag"}
+        )
+        response = await client.put(
+            "/api/tags/old-tag", json={"new_name": "new-tag"}
+        )
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_rename_tag_updates_name(self, client):
+        """After rename, new name appears and old name is gone."""
+        await client.post(
+            "/api/conversations/conv-001-test/tags", json={"tag_name": "rename-me"}
+        )
+        await client.put("/api/tags/rename-me", json={"new_name": "renamed"})
+
+        tags_resp = await client.get("/api/tags")
+        names = [t["name"] for t in tags_resp.json()]
+        assert "renamed" in names
+        assert "rename-me" not in names
+
+    @pytest.mark.asyncio
+    async def test_rename_tag_propagates_to_conversations(self, client):
+        """Renamed tag must appear in conversations that had the old tag."""
+        await client.post(
+            "/api/conversations/conv-001-test/tags", json={"tag_name": "propagate-old"}
+        )
+        await client.put("/api/tags/propagate-old", json={"new_name": "propagate-new"})
+
+        conv_tags = await client.get("/api/conversations/conv-001-test/tags")
+        assert "propagate-new" in conv_tags.json()
+        assert "propagate-old" not in conv_tags.json()
+
+    @pytest.mark.asyncio
+    async def test_rename_nonexistent_tag_returns_404(self, client):
+        """Renaming a tag that doesn't exist should return 404."""
+        response = await client.put(
+            "/api/tags/ghost-tag", json={"new_name": "phantom-tag"}
+        )
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_rename_tag_empty_new_name_rejected(self, client):
+        """Empty new_name should be rejected with 422."""
+        await client.post(
+            "/api/conversations/conv-001-test/tags", json={"tag_name": "valid-tag"}
+        )
+        response = await client.put("/api/tags/valid-tag", json={"new_name": ""})
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_rename_tag_missing_new_name_rejected(self, client):
+        """Missing new_name field should be rejected with 422."""
+        response = await client.put("/api/tags/some-tag", json={})
+        assert response.status_code == 422
+
