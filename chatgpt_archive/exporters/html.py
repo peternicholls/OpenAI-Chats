@@ -212,8 +212,7 @@ class HTMLExporter(BaseExporter):
                 else ""
             )
 
-            messages_html.append(
-                f"""
+            messages_html.append(f"""
                 <div class="message {role_class}">
                     <div class="message-header">
                         <span class="message-role">{escape(role)}</span>
@@ -221,8 +220,7 @@ class HTMLExporter(BaseExporter):
                     </div>
                     <div class="message-content">{escape(content)}</div>
                 </div>
-            """
-            )
+            """)
 
         html = f"""<!DOCTYPE html>
 <html lang="en">

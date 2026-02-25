@@ -5,7 +5,7 @@ function to get the appropriate exporter for a given format.
 
 Available formats:
     - md: Markdown format
-    - json: JSON format  
+    - json: JSON format
     - yaml: YAML format
     - html: HTML with CSS styling
     - xml: XML format
