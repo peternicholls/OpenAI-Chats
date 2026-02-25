@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any, Callable
 
 from chatgpt_archive.db import init_db
-from chatgpt_archive.models import Conversation, Message, Attachment, truncate_title
+from chatgpt_archive.models import Message, truncate_title
 
 
 class ImportError(Exception):

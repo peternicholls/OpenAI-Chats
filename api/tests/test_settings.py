@@ -13,9 +13,9 @@ from api.services.settings_service import (
     ENCRYPTED_SETTINGS,
     _decrypt_value,
     _encrypt_value,
+    get_setting,
     load_settings,
     save_settings,
-    get_setting,
     update_setting,
 )
 

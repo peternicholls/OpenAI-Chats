@@ -329,8 +329,9 @@ Import a ChatGPT export archive.
 ```
 
 **Status Codes:**
-- `200`: Import started
-- `400`: Invalid file type or size
+- `202`: Import queued and running in background
+- `400`: Invalid file type or corrupt archive
+- `413`: File exceeds 500MB limit
 
 #### GET /api/import/progress
 

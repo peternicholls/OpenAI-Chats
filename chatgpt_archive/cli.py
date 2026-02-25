@@ -9,7 +9,6 @@ Commands:
 """
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -17,7 +16,7 @@ import click  # type: ignore[import-untyped]
 
 from chatgpt_archive import __version__
 from chatgpt_archive.db import (
-    get_db_path, get_connection, init_db, get_db_size,
+    get_db_path, get_connection, get_db_size,
     get_conversation_by_id, get_conversation_messages,
     list_conversations as db_list_conversations,
     delete_conversation as db_delete_conversation,
@@ -164,7 +163,7 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
             }
             click.echo(json.dumps(result, indent=2))
         else:
-            click.echo(f"\n✓ Import complete!")
+            click.echo("\n✓ Import complete!")
             click.echo(f"  Conversations: {conversations_imported}")
             click.echo(f"  Messages: {messages_imported}")
             click.echo(f"  Database: {db_path} ({db_size / 1024 / 1024:.1f} MB)")
@@ -343,7 +342,7 @@ def embed(ctx: click.Context, model: str, batch_size: int, estimate: bool, yes: 
                     if estimate:
                         sys.exit(0)
                 else:
-                    click.echo(f"Embedding cost estimate:")
+                    click.echo("Embedding cost estimate:")
                     click.echo(f"  Messages to embed: {cost_info['messages_to_embed']:,}")
                     click.echo(f"  Estimated tokens:  {cost_info['estimated_tokens']:,}")
                     click.echo(f"  Model:             {cost_info['model']}")
@@ -383,7 +382,7 @@ def embed(ctx: click.Context, model: str, batch_size: int, estimate: bool, yes: 
             
             if not json_output:
                 click.echo()  # Newline after progress
-                click.echo(f"\n✓ Embedding complete!")
+                click.echo("\n✓ Embedding complete!")
                 click.echo(f"  Embedded:  {result.completed:,}/{result.total:,} messages")
                 click.echo(f"  Remaining: {result.remaining:,}")
                 click.echo(f"  Tokens:    ~{result.tokens_used:,}")

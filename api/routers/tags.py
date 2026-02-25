@@ -3,7 +3,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from api.middleware.validation import validate_tag_name as validate_tag, validate_conversation_id
+from api.middleware.validation import validate_conversation_id
+from api.middleware.validation import validate_tag_name as validate_tag
 from api.models.requests import TagRequest
 from api.models.responses import Tag
 from api.services import archive_service
@@ -49,7 +50,7 @@ async def get_conversation_tags(conversation_id: str) -> list[str]:
         validated_id = validate_conversation_id(conversation_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
+
     conv = archive_service.get_conversation(validated_id)
     if conv is None:
         raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
@@ -63,7 +64,7 @@ async def add_tag(conversation_id: str, request: TagRequest) -> None:
         validated_id = validate_conversation_id(conversation_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
+
     # Validate tag name format
     validated_tag = validate_tag_name(request.tag_name)
 
@@ -79,7 +80,7 @@ async def remove_tag(conversation_id: str, tag_name: str) -> None:
         validated_id = validate_conversation_id(conversation_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
+
     result = archive_service.remove_tag_from_conversation(validated_id, tag_name)
     if not result:
         raise HTTPException(status_code=404, detail="Conversation or tag not found")

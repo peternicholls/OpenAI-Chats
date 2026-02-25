@@ -1,10 +1,8 @@
 """Test fixtures and configuration for API tests."""
 
 import json
-import os
-import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 import pytest_asyncio
@@ -110,7 +108,8 @@ def sample_conversations_data() -> list[dict]:
                         "author": {"role": "assistant"},
                         "content": {
                             "parts": [
-                                "Machine learning is a subset of AI that enables computers to learn from data."
+                                "Machine learning is a subset of AI that enables"
+                                " computers to learn from data."
                             ],
                             "content_type": "text",
                         },
@@ -167,7 +166,8 @@ def populated_db(
 
                 conn.execute(
                     """
-                    INSERT INTO messages (conversation_id, openai_id, parent_id, author_role, content, create_time)
+                    INSERT INTO messages
+                        (conversation_id, openai_id, parent_id, author_role, content, create_time)
                     VALUES (?, ?, ?, ?, ?, ?)
                     """,
                     (

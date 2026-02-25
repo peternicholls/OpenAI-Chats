@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "chatgpt-archive-api"
 version = "0.1.0"
 description = "Web API for ChatGPT Archive"
-requires-python = ">=3.11"
+requires-python = ">=3.11"  # API backend; the chatgpt_archive CLI/library supports >=3.10
 dependencies = [
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.27.0",
