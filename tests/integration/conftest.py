@@ -195,7 +195,7 @@ def sample_archive_zip(sample_archive_dir: Path, tmp_path: Path) -> Path:
 def env_with_test_db(populated_db: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("CHATGPT_ARCHIVE_DB", str(populated_db))
     monkeypatch.setenv("DB_PATH", str(populated_db))
-    monkeypatch.setenv("TESTING", "1")
+    monkeypatch.setenv("DISABLE_RATE_LIMIT", "1")
     return populated_db
 
 

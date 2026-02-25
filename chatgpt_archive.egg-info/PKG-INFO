@@ -378,7 +378,8 @@ chatgpt-archive import ./archive
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.10+ for CLI and library usage
+- Python 3.11+ for running the API backend locally
 - No external services required (fully offline)
 
 ## Web UI (Docker)
