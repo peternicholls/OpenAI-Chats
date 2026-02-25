@@ -1,6 +1,7 @@
 # OpenAI export archive
 6a46cf212e33de2339fe70a219a979b44d35de684e8b961a5e3b73077d3caef5-2026-01-26-08-54-37-28ec05edc89840ebbb963f264ef55875/
 6a46cf212e33de2339fe70a219a979b44d35de684e8b961a5e3b73077d3caef5-2026-01-26-08-54-37-28ec05edc89840ebbb963f264ef55875.zip
+PeterNicholls-ChatGPTArchive-2026-01-26-08-54-37.zip
 
 # macOS
 .DS_Store
@@ -19,6 +20,7 @@ eggs/
 .eggs/
 lib/
 lib64/
+!web/src/lib/
 parts/
 sdist/
 var/
@@ -59,3 +61,10 @@ test_phases_1_2.py
 # Temporary review files
 PHASE_1_2_REVIEW.md
 inspect_archive.py
+
+# Web UI
+web/node_modules/
+web/.next/
+web/out/
+web/.env.local
+api/.env

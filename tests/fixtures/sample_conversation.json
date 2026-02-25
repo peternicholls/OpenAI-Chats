@@ -1,0 +1,46 @@
+{
+    "id": "sample-conv-001",
+    "title": "Sample Test Conversation",
+    "create_time": 1700000000.0,
+    "update_time": 1700001000.0,
+    "mapping": {
+        "msg-user-001": {
+            "id": "msg-user-001",
+            "message": {
+                "id": "msg-user-001",
+                "author": {
+                    "role": "user"
+                },
+                "content": {
+                    "parts": [
+                        "Hello, how are you?"
+                    ],
+                    "content_type": "text"
+                },
+                "create_time": 1700000000.0
+            },
+            "parent": null,
+            "children": [
+                "msg-asst-001"
+            ]
+        },
+        "msg-asst-001": {
+            "id": "msg-asst-001",
+            "message": {
+                "id": "msg-asst-001",
+                "author": {
+                    "role": "assistant"
+                },
+                "content": {
+                    "parts": [
+                        "I'm doing well, thank you for asking!"
+                    ],
+                    "content_type": "text"
+                },
+                "create_time": 1700000100.0
+            },
+            "parent": "msg-user-001",
+            "children": []
+        }
+    }
+}

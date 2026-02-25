@@ -2,7 +2,6 @@
 
 import json
 import sqlite3
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -329,8 +328,3 @@ class TestFullArchiveImport:
         assert progress_calls[-1] == (5, 5)  # Final call should show 5/5
 
 
-@pytest.fixture
-def tmp_path():
-    """Create a temporary directory for testing."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)

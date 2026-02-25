@@ -1,0 +1,601 @@
+openapi: 3.1.0
+info:
+  title: ChatGPT Archive API
+  version: 1.0.0
+  description: |
+    REST API for ChatGPT Archive Web UI.
+    Provides access to all features from the CLI: import, search, list, view, export, tags, embeddings.
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: http://api:8000
+    description: Docker internal
+
+paths:
+  # Conversations
+  /api/conversations:
+    get:
+      summary: List conversations
+      operationId: listConversations
+      tags: [Conversations]
+      parameters:
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [date, title, messages]
+            default: date
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: tag
+          in: query
+          description: Filter by tag name
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated list of conversations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedConversations"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/conversations/{conversation_id}:
+    get:
+      summary: Get conversation by ID
+      operationId: getConversation
+      tags: [Conversations]
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+      responses:
+        "200":
+          description: Conversation with all messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      summary: Delete conversation
+      operationId: deleteConversation
+      tags: [Conversations]
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+      responses:
+        "204":
+          description: Conversation deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # Search
+  /api/search:
+    post:
+      summary: Search conversations
+      operationId: searchConversations
+      tags: [Search]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchRequest"
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResults"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # Tags
+  /api/tags:
+    get:
+      summary: List all tags
+      operationId: listTags
+      tags: [Tags]
+      responses:
+        "200":
+          description: List of all tags with counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+
+  /api/conversations/{conversation_id}/tags:
+    get:
+      summary: Get tags for conversation
+      operationId: getConversationTags
+      tags: [Tags]
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+      responses:
+        "200":
+          description: List of tag names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      summary: Add tag to conversation
+      operationId: addTag
+      tags: [Tags]
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagRequest"
+      responses:
+        "204":
+          description: Tag added successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/conversations/{conversation_id}/tags/{tag_name}:
+    delete:
+      summary: Remove tag from conversation
+      operationId: removeTag
+      tags: [Tags]
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+        - name: tag_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Tag removed successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # Export
+  /api/conversations/{conversation_id}/export:
+    get:
+      summary: Export conversation
+      operationId: exportConversation
+      tags: [Export]
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [md, json, yaml, html, xml, csv, xlsx]
+      responses:
+        "200":
+          description: File download
+          content:
+            text/markdown:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+            application/x-yaml:
+              schema:
+                type: string
+            text/html:
+              schema:
+                type: string
+            application/xml:
+              schema:
+                type: string
+            text/csv:
+              schema:
+                type: string
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # Import
+  /api/import:
+    post:
+      summary: Import ChatGPT archive
+      operationId: importArchive
+      tags: [Import]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: ZIP file containing ChatGPT export
+      responses:
+        "202":
+          description: Import started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportProgress"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/import/progress:
+    get:
+      summary: Get import progress
+      operationId: getImportProgress
+      tags: [Import]
+      responses:
+        "200":
+          description: Current import status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportProgress"
+
+  # Embeddings
+  /api/embeddings/estimate:
+    get:
+      summary: Estimate embedding generation cost
+      operationId: estimateEmbeddings
+      tags: [Embeddings]
+      parameters:
+        - name: model
+          in: query
+          schema:
+            type: string
+            default: text-embedding-3-small
+      responses:
+        "200":
+          description: Cost estimate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages_to_embed:
+                    type: integer
+                  estimated_tokens:
+                    type: integer
+                  model:
+                    type: string
+                  estimated_cost:
+                    type: number
+                  estimated_cost_display:
+                    type: string
+
+  /api/embeddings/generate:
+    post:
+      summary: Generate embeddings for semantic search
+      operationId: generateEmbeddings
+      tags: [Embeddings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmbeddingRequest"
+      responses:
+        "202":
+          description: Embedding generation started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportProgress"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  # Health check
+  /api/health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags: [System]
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  database:
+                    type: string
+                    example: connected
+
+components:
+  parameters:
+    ConversationId:
+      name: conversation_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: OpenAI conversation ID
+
+  schemas:
+    ConversationSummary:
+      type: object
+      required: [id, message_count]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          nullable: true
+        create_time:
+          type: number
+          format: double
+          nullable: true
+        update_time:
+          type: number
+          format: double
+          nullable: true
+        message_count:
+          type: integer
+        model:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+
+    Message:
+      type: object
+      required: [id, role]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+          nullable: true
+        create_time:
+          type: number
+          format: double
+          nullable: true
+
+    ConversationDetail:
+      allOf:
+        - $ref: "#/components/schemas/ConversationSummary"
+        - type: object
+          required: [messages]
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: "#/components/schemas/Message"
+
+    PaginatedConversations:
+      type: object
+      required: [total, offset, limit, items]
+      properties:
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationSummary"
+
+    SearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 500
+        from_date:
+          type: string
+          format: date
+          nullable: true
+        to_date:
+          type: string
+          format: date
+          nullable: true
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        search_type:
+          type: string
+          enum: [keyword, semantic, hybrid]
+          default: keyword
+
+    SearchResult:
+      type: object
+      required: [conversation_id, match_count, preview]
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          nullable: true
+        create_time:
+          type: number
+          format: double
+          nullable: true
+        match_count:
+          type: integer
+        preview:
+          type: string
+        relevance_score:
+          type: number
+          format: double
+          nullable: true
+
+    SearchResults:
+      type: object
+      required: [total, items]
+      properties:
+        total:
+          type: integer
+        offset:
+          type: integer
+          default: 0
+        limit:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResult"
+
+    Tag:
+      type: object
+      required: [name, count]
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+
+    TagRequest:
+      type: object
+      required: [tag_name]
+      properties:
+        tag_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: "^[a-zA-Z0-9_-]+$"
+
+    ImportProgress:
+      type: object
+      required: [status, current, total, percent]
+      properties:
+        status:
+          type: string
+          enum: [pending, processing, complete, error]
+        current:
+          type: integer
+        total:
+          type: integer
+        percent:
+          type: number
+          format: double
+        message:
+          type: string
+          nullable: true
+
+    EmbeddingRequest:
+      type: object
+      properties:
+        model:
+          type: string
+          default: text-embedding-3-small
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 100
+        estimate_only:
+          type: boolean
+          default: false
+
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          nullable: true
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+tags:
+  - name: Conversations
+    description: Conversation CRUD operations
+  - name: Search
+    description: Full-text and semantic search
+  - name: Tags
+    description: Tag management
+  - name: Export
+    description: Export conversations to various formats
+  - name: Import
+    description: Import ChatGPT archives
+  - name: Embeddings
+    description: Generate embeddings for semantic search
+  - name: System
+    description: System operations

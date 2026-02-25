@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+- **Python 3.10+ required for CLI/library**: The minimum Python version for the ChatGPT Archive CLI and core library has been raised from 3.8 to 3.10. Users on Python 3.8 or 3.9 must upgrade before installing this version. The API backend and API Docker image continue to require Python 3.11+.
+
+### Added
+- **Web UI Test Suite**: Comprehensive testing infrastructure for the web UI feature
+  - API integration tests (62 tests) covering all endpoints
+  - Frontend unit tests (55 tests) with vitest and testing-library
+  - E2E tests (27 tests) with Playwright
+  - MSW mocking for API requests
+  - Test utilities and fixtures
+
 ### Work in Progress
 - Documentation improvements and polish
 
@@ -122,7 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 - **Required**: 
-  - Python 3.8+
+  - Python 3.10+
   - click (CLI framework)
   - pyyaml (YAML export support)
   
