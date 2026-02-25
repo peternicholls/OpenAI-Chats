@@ -52,7 +52,7 @@ class TestImport:
         import zipfile
 
         empty_zip = tmp_path / "empty.zip"
-        with zipfile.ZipFile(empty_zip, "w") as zf:
+        with zipfile.ZipFile(empty_zip, "w"):
             pass  # Create empty zip
 
         with open(empty_zip, "rb") as f:

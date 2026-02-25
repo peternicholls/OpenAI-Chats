@@ -106,7 +106,10 @@ async def export_batch(
     if len(conversation_ids) > MAX_BATCH_IDS:
         raise HTTPException(
             status_code=422,
-            detail=f"Batch export is limited to {MAX_BATCH_IDS} IDs; {len(conversation_ids)} provided.",
+            detail=(
+                f"Batch export is limited to {MAX_BATCH_IDS} IDs; "
+                f"{len(conversation_ids)} provided."
+            ),
         )
 
     # Validate each conversation ID

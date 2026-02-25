@@ -4,12 +4,10 @@ T035: Verifies that import and embedding progress streams break on
 "complete", "error", "idle", and "cancelled" statuses (T009 fix).
 """
 
-import asyncio
 import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helper: collect all SSE events from the generator
@@ -44,8 +42,14 @@ class TestImportProgressStream:
 
     @pytest.mark.asyncio
     async def test_stream_terminates_on_complete(self):
-        progress = {"status": "complete", "current": 10, "total": 10, "percent": 100.0, "message": "Done"}
-        with patch("api.routers.progress.archive_service.get_import_progress", return_value=progress):
+        progress = {
+            "status": "complete", "current": 10, "total": 10,
+            "percent": 100.0, "message": "Done",
+        }
+        with patch(
+            "api.routers.progress.archive_service.get_import_progress",
+            return_value=progress,
+        ):
             from api.routers.progress import stream_import_progress
             response = await stream_import_progress(_idle_request())
             events = await _drain(response.body_iterator)
@@ -55,8 +59,14 @@ class TestImportProgressStream:
 
     @pytest.mark.asyncio
     async def test_stream_terminates_on_error(self):
-        progress = {"status": "error", "current": 0, "total": 0, "percent": 0.0, "message": "Oops"}
-        with patch("api.routers.progress.archive_service.get_import_progress", return_value=progress):
+        progress = {
+            "status": "error", "current": 0, "total": 0,
+            "percent": 0.0, "message": "Oops",
+        }
+        with patch(
+            "api.routers.progress.archive_service.get_import_progress",
+            return_value=progress,
+        ):
             from api.routers.progress import stream_import_progress
             response = await stream_import_progress(_idle_request())
             events = await _drain(response.body_iterator)
@@ -66,8 +76,14 @@ class TestImportProgressStream:
     @pytest.mark.asyncio
     async def test_stream_terminates_on_cancelled(self):
         """T009: 'cancelled' must cause the stream to break."""
-        progress = {"status": "cancelled", "current": 3, "total": 10, "percent": 30.0, "message": "Cancelled"}
-        with patch("api.routers.progress.archive_service.get_import_progress", return_value=progress):
+        progress = {
+            "status": "cancelled", "current": 3, "total": 10,
+            "percent": 30.0, "message": "Cancelled",
+        }
+        with patch(
+            "api.routers.progress.archive_service.get_import_progress",
+            return_value=progress,
+        ):
             from api.routers.progress import stream_import_progress
             response = await stream_import_progress(_idle_request())
             events = await _drain(response.body_iterator)
@@ -76,8 +92,14 @@ class TestImportProgressStream:
 
     @pytest.mark.asyncio
     async def test_stream_terminates_on_idle(self):
-        progress = {"status": "idle", "current": 0, "total": 0, "percent": 0.0, "message": None}
-        with patch("api.routers.progress.archive_service.get_import_progress", return_value=progress):
+        progress = {
+            "status": "idle", "current": 0, "total": 0,
+            "percent": 0.0, "message": None,
+        }
+        with patch(
+            "api.routers.progress.archive_service.get_import_progress",
+            return_value=progress,
+        ):
             from api.routers.progress import stream_import_progress
             response = await stream_import_progress(_idle_request())
             events = await _drain(response.body_iterator)
@@ -89,9 +111,12 @@ class TestImportProgressStream:
         """Stream emits events while status stays 'processing', stops on complete."""
         call_count = 0
         responses = [
-            {"status": "processing", "current": 1, "total": 10, "percent": 10.0, "message": "..."},
-            {"status": "processing", "current": 5, "total": 10, "percent": 50.0, "message": "..."},
-            {"status": "complete",   "current": 10, "total": 10, "percent": 100.0, "message": "Done"},
+            {"status": "processing", "current": 1, "total": 10,
+             "percent": 10.0, "message": "..."},
+            {"status": "processing", "current": 5, "total": 10,
+             "percent": 50.0, "message": "..."},
+            {"status": "complete", "current": 10, "total": 10,
+             "percent": 100.0, "message": "Done"},
         ]
 
         def _next_progress():
@@ -100,11 +125,16 @@ class TestImportProgressStream:
             call_count += 1
             return responses[idx]
 
-        with patch("api.routers.progress.archive_service.get_import_progress", side_effect=_next_progress):
-            with patch("asyncio.sleep", new_callable=AsyncMock):
-                from api.routers.progress import stream_import_progress
-                response = await stream_import_progress(_idle_request())
-                events = await _drain(response.body_iterator)
+        with (
+            patch(
+                "api.routers.progress.archive_service.get_import_progress",
+                side_effect=_next_progress,
+            ),
+            patch("asyncio.sleep", new_callable=AsyncMock),
+        ):
+            from api.routers.progress import stream_import_progress
+            response = await stream_import_progress(_idle_request())
+            events = await _drain(response.body_iterator)
 
         statuses = [e["status"] for e in events]
         assert "processing" in statuses
@@ -122,8 +152,14 @@ class TestEmbeddingProgressStream:
     @pytest.mark.asyncio
     async def test_stream_terminates_on_cancelled(self):
         """T009: 'cancelled' must cause the embedding stream to break."""
-        progress = {"status": "cancelled", "current": 2, "total": 5, "percent": 40.0, "message": "Cancelled"}
-        with patch("api.routers.progress.archive_service.get_embedding_progress", return_value=progress):
+        progress = {
+            "status": "cancelled", "current": 2, "total": 5,
+            "percent": 40.0, "message": "Cancelled",
+        }
+        with patch(
+            "api.routers.progress.archive_service.get_embedding_progress",
+            return_value=progress,
+        ):
             from api.routers.progress import stream_embedding_progress
             response = await stream_embedding_progress(_idle_request())
             events = await _drain(response.body_iterator)
@@ -132,8 +168,14 @@ class TestEmbeddingProgressStream:
 
     @pytest.mark.asyncio
     async def test_stream_terminates_on_complete(self):
-        progress = {"status": "complete", "current": 5, "total": 5, "percent": 100.0, "message": "Done"}
-        with patch("api.routers.progress.archive_service.get_embedding_progress", return_value=progress):
+        progress = {
+            "status": "complete", "current": 5, "total": 5,
+            "percent": 100.0, "message": "Done",
+        }
+        with patch(
+            "api.routers.progress.archive_service.get_embedding_progress",
+            return_value=progress,
+        ):
             from api.routers.progress import stream_embedding_progress
             response = await stream_embedding_progress(_idle_request())
             events = await _drain(response.body_iterator)

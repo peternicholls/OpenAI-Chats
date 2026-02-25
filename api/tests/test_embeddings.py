@@ -147,7 +147,7 @@ class TestEstimateCostUnit:
         assert result["estimated_cost_usd"] == 0.0
 
     def test_estimate_cost_uses_requested_model(self, tmp_path):
-        from chatgpt_archive.embeddings import estimate_cost, PRICING
+        from chatgpt_archive.embeddings import PRICING, estimate_cost
         conn = self._make_db(tmp_path)
         result = estimate_cost(conn, model="text-embedding-3-large")
         conn.close()

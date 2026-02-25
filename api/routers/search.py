@@ -22,7 +22,7 @@ async def search_conversations(request: SearchRequest) -> PaginatedResponse:
         validated_query = validate_query_param("query", request.query, max_length=500)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    
+
     # Validate pagination
     validated_offset, validated_limit = validate_pagination(request.offset, request.limit)
 
