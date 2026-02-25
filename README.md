@@ -381,7 +381,7 @@ docker compose down -v     # stop AND delete all data
 
 - Browse and search conversations
 - Tag and favorite conversations for organization
-- Import archives via drag-and-drop
+- Import archives via drag-and-drop (maximum 500MB per upload; use the CLI for larger archives)
 - Export to multiple formats
 - Real-time import progress tracking
 
