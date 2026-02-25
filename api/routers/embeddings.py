@@ -245,7 +245,10 @@ async def generate_embeddings(
             )
             conn = archive_service.get_connection()
             try:
-                from chatgpt_archive.embeddings import APIKeyMissingError, EmbeddingError
+                from chatgpt_archive.embeddings import (
+                    APIKeyMissingError,
+                    EmbeddingError,
+                )
 
                 result = embed_messages(
                     conn,

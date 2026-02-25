@@ -32,7 +32,9 @@ class TestValidateEmbeddingsKey:
             seen.append(api_key)
             return True, ""
 
-        monkeypatch.setattr("api.routers.embeddings.validate_openai_api_key", fake_validate)
+        monkeypatch.setattr(
+            "api.routers.embeddings.validate_openai_api_key", fake_validate
+        )
 
         response = await client.post(
             "/api/embeddings/validate-key", json={"api_key": "sk-provided"}
@@ -51,7 +53,9 @@ class TestValidateEmbeddingsKey:
             seen.append(api_key)
             return True, ""
 
-        monkeypatch.setattr("api.routers.embeddings.validate_openai_api_key", fake_validate)
+        monkeypatch.setattr(
+            "api.routers.embeddings.validate_openai_api_key", fake_validate
+        )
         monkeypatch.setattr(
             "api.routers.embeddings.settings_service.get_setting", lambda _: "sk-stored"
         )
@@ -73,7 +77,9 @@ class TestGenerateEmbeddings:
         async def fake_validate(_api_key: str):
             return True, ""
 
-        monkeypatch.setattr("api.routers.embeddings.validate_openai_api_key", fake_validate)
+        monkeypatch.setattr(
+            "api.routers.embeddings.validate_openai_api_key", fake_validate
+        )
         monkeypatch.setattr(
             "api.routers.embeddings.settings_service.get_setting", lambda _: "sk-stored"
         )
@@ -107,6 +113,7 @@ class TestEstimateCostUnit:
     def _make_db(self, tmp_path):
         from chatgpt_archive.db import init_db
         from chatgpt_archive.embeddings import init_embeddings_schema
+
         db_path = tmp_path / "est.db"
         conn = init_db(db_path)
         init_embeddings_schema(conn)
@@ -115,6 +122,7 @@ class TestEstimateCostUnit:
 
     def test_estimate_cost_returns_required_fields(self, tmp_path):
         from chatgpt_archive.embeddings import estimate_cost
+
         conn = self._make_db(tmp_path)
         result = estimate_cost(conn)
         conn.close()
@@ -128,6 +136,7 @@ class TestEstimateCostUnit:
     def test_estimate_cost_no_init_embeddings_schema_side_effect(self, tmp_path):
         """T026 guard: estimate_cost must NOT call init_embeddings_schema."""
         from chatgpt_archive.embeddings import estimate_cost
+
         conn = self._make_db(tmp_path)
 
         # Verify that estimate_cost works on a properly-initialised DB
@@ -139,6 +148,7 @@ class TestEstimateCostUnit:
 
     def test_estimate_cost_empty_db_returns_zero(self, tmp_path):
         from chatgpt_archive.embeddings import estimate_cost
+
         conn = self._make_db(tmp_path)
         result = estimate_cost(conn)
         conn.close()
@@ -148,6 +158,7 @@ class TestEstimateCostUnit:
 
     def test_estimate_cost_uses_requested_model(self, tmp_path):
         from chatgpt_archive.embeddings import PRICING, estimate_cost
+
         conn = self._make_db(tmp_path)
         result = estimate_cost(conn, model="text-embedding-3-large")
         conn.close()
@@ -193,4 +204,3 @@ class TestCancellationFlagUnit:
         svc._embedding_cancelled.set()
         svc.reset_embedding_progress()
         assert svc.is_embedding_cancelled() is False
-

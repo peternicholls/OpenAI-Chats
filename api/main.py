@@ -74,7 +74,11 @@ async def lifespan(app: FastAPI):
     validate_environment()
 
     # Validate schema compatibility once at startup
-    from api.services.archive_service import get_connection, validate_schema_compatibility
+    from api.services.archive_service import (
+        get_connection,
+        validate_schema_compatibility,
+    )
+
     try:
         conn = get_connection(validate=False)
         is_valid, errors = validate_schema_compatibility(conn)
@@ -86,6 +90,7 @@ async def lifespan(app: FastAPI):
 
     # Load settings on startup
     from api.services.settings_service import get_settings_path, load_settings
+
     settings_path = get_settings_path()
     try:
         load_settings()
@@ -98,6 +103,7 @@ async def lifespan(app: FastAPI):
 
     # Restore persisted progress state (marks interrupted jobs as 'error')
     from api.services.archive_service import load_persisted_progress
+
     try:
         load_persisted_progress()
     except Exception as e:

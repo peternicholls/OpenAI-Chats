@@ -51,7 +51,9 @@ async def import_archive(
                 tmp.write(chunk)
 
         if not tmp_path or not zipfile.is_zipfile(tmp_path):
-            raise HTTPException(status_code=400, detail="File must be a valid ZIP archive")
+            raise HTTPException(
+                status_code=400, detail="File must be a valid ZIP archive"
+            )
 
         # Run import in background
         background_tasks.add_task(archive_service.import_archive_from_zip, tmp_path)

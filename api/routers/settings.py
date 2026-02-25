@@ -13,10 +13,16 @@ class UserSettings(BaseModel):
 
     theme: str = Field("light", description="UI theme: light, dark, system")
     default_export_format: str = Field("md", description="Default export format")
-    openai_api_key: str | None = Field(None, description="OpenAI API key for embeddings")
+    openai_api_key: str | None = Field(
+        None, description="OpenAI API key for embeddings"
+    )
     sidebar_open: bool = Field(True, description="Whether sidebar is open")
-    embedding_model: str = Field("text-embedding-3-small", description="Model for embeddings")
-    items_per_page: int = Field(50, description="Number of conversations per page (FR-022)")
+    embedding_model: str = Field(
+        "text-embedding-3-small", description="Model for embeddings"
+    )
+    items_per_page: int = Field(
+        50, description="Number of conversations per page (FR-022)"
+    )
 
 
 class UserSettingsUpdate(BaseModel):

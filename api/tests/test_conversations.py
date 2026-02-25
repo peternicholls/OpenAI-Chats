@@ -47,7 +47,10 @@ class TestListConversations:
         assert len(data["items"]) == 2
         assert data["limit"] == 2
         # Default ordering is date desc: conv-003 then conv-002.
-        assert [item["id"] for item in data["items"]] == ["conv-003-test", "conv-002-test"]
+        assert [item["id"] for item in data["items"]] == [
+            "conv-003-test",
+            "conv-002-test",
+        ]
 
     @pytest.mark.asyncio
     async def test_list_conversations_pagination_offset(self, client):

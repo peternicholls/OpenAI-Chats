@@ -14,7 +14,7 @@ def truncate_title(text: str, max_length: int = 50) -> str:
 @dataclass
 class Attachment:
     """Reference to a media file attached to a message.
-    
+
     Attributes:
         id: Database primary key (None before insertion)
         message_id: Foreign key to parent message
@@ -22,6 +22,7 @@ class Attachment:
         file_type: MIME type or general type (image, audio, etc.)
         original_name: Original filename from the export
     """
+
     file_path: str
     file_type: str | None = None
     original_name: str | None = None
@@ -32,7 +33,7 @@ class Attachment:
 @dataclass
 class Message:
     """A single message/turn in a conversation.
-    
+
     Attributes:
         openai_id: Original node ID from OpenAI export
         author_role: One of: user, assistant, system, tool
@@ -46,6 +47,7 @@ class Message:
         id: Database primary key (None before insertion)
         attachments: List of attached files
     """
+
     openai_id: str
     author_role: str
     content: str | None = None
@@ -70,7 +72,7 @@ class Message:
 @dataclass
 class Conversation:
     """A complete chat session containing multiple messages.
-    
+
     Attributes:
         openai_id: Original conversation ID from OpenAI export
         title: Conversation title (may be None, use fallback)
@@ -82,6 +84,7 @@ class Conversation:
         messages: List of messages (loaded separately)
         message_count: Count of messages (for list display)
     """
+
     openai_id: str
     title: str | None = None
     create_time: float | None = None
@@ -95,16 +98,16 @@ class Conversation:
     @property
     def display_title(self) -> str:
         """Get title with fallback for untitled conversations.
-        
+
         Returns:
             Title if set, first user message preview, or "[Untitled]"
         """
         if self.title:
             return self.title
-        
+
         # Try to find first user message for fallback
         for msg in self.messages:
             if msg.author_role == "user" and msg.content:
                 return truncate_title(msg.content)
-        
+
         return "[Untitled]"

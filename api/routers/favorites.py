@@ -26,7 +26,9 @@ async def toggle_favorite(conversation_id: str) -> dict:
 
     conv = archive_service.get_conversation(validated_id)
     if conv is None:
-        raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Conversation {conversation_id} not found"
+        )
 
     is_favorite = archive_service.toggle_favorite(validated_id)
     return {"is_favorite": is_favorite}

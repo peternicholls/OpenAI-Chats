@@ -176,7 +176,9 @@ def validate_tag_name(tag: str) -> str:
 
     # Only allow alphanumeric, hyphens, underscores
     if not re.match(r"^[a-zA-Z0-9_-]+$", tag):
-        raise ValueError("Tag name can only contain letters, numbers, hyphens, and underscores")
+        raise ValueError(
+            "Tag name can only contain letters, numbers, hyphens, and underscores"
+        )
 
     return tag.lower()
 

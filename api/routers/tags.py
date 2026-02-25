@@ -53,7 +53,9 @@ async def get_conversation_tags(conversation_id: str) -> list[str]:
 
     conv = archive_service.get_conversation(validated_id)
     if conv is None:
-        raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Conversation {conversation_id} not found"
+        )
     return archive_service.get_tags_for_conversation(validated_id)
 
 
@@ -70,7 +72,9 @@ async def add_tag(conversation_id: str, request: TagRequest) -> None:
 
     result = archive_service.add_tag_to_conversation(validated_id, validated_tag)
     if not result:
-        raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Conversation {conversation_id} not found"
+        )
 
 
 @router.delete("/api/conversations/{conversation_id}/tags/{tag_name}", status_code=204)

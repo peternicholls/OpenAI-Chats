@@ -72,9 +72,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """Remove entries older than the window size."""
         cutoff = current_time - self.window_size
         entries = [
-            (ts, count)
-            for ts, count in self.request_counts[client_ip]
-            if ts > cutoff
+            (ts, count) for ts, count in self.request_counts[client_ip] if ts > cutoff
         ]
         if entries:
             self.request_counts[client_ip] = entries

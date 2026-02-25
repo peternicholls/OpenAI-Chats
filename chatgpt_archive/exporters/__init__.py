@@ -26,6 +26,7 @@ from .csv_export import CSVExporter
 # Excel exporter is optional (requires openpyxl)
 try:
     from .excel_export import ExcelExporter
+
     _HAS_EXCEL = True
 except ImportError:
     _HAS_EXCEL = False
@@ -54,10 +55,10 @@ SUPPORTED_FORMATS = ["md", "json", "yaml", "html", "xml", "csv", "xlsx"]
 
 def get_exporter(format_name: str) -> BaseExporter | None:
     """Get an exporter instance for the specified format.
-    
+
     Args:
         format_name: Export format (md, json, yaml, html, xml)
-        
+
     Returns:
         Exporter instance, or None if format not supported
     """
@@ -69,7 +70,7 @@ def get_exporter(format_name: str) -> BaseExporter | None:
 
 def get_supported_formats() -> list:
     """Get list of supported export format names.
-    
+
     Returns:
         List of format name strings
     """
@@ -78,10 +79,10 @@ def get_supported_formats() -> list:
 
 def get_file_extension(format_name: str) -> str:
     """Get the default file extension for a format.
-    
+
     Args:
         format_name: Export format name
-        
+
     Returns:
         File extension (with dot), or ".txt" if unknown
     """
@@ -93,7 +94,7 @@ def get_file_extension(format_name: str) -> str:
 
 __all__ = [
     "BaseExporter",
-    "MarkdownExporter", 
+    "MarkdownExporter",
     "JSONExporter",
     "YAMLExporter",
     "HTMLExporter",
