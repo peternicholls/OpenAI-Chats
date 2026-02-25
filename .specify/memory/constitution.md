@@ -16,6 +16,8 @@ Follow-up TODOs: None
 
 ## Core Principles
 
+Important: the development enviorment is on MacOS.
+
 ### I. Data-First Architecture
 
 All features MUST treat the ChatGPT export archive as the single source of truth.
