@@ -1,53 +1,107 @@
 # Quickstart: Frontend Formatting
 
-Developer guide for validating the formatted conversation rendering flow.
+Developer guide for validating the formatted conversation rendering flow end to end.
+
+---
 
 ## Prerequisites
 
-- Existing backend and web dependencies installed
-- Inline media feature from 003 available in the working tree
-- A conversation fixture or real archive conversation containing:
-  - markdown headings, lists, links, quotes, inline code, and fenced code blocks
-  - at least one raw structured asset payload currently leaking into the UI
+- Python environment for the API is available.
+- Node.js is installed for the Next.js app.
+- The archive media directory from feature 003 is still configured when attachment scenarios are being tested.
 
-## Step 1: Run unit and API validation
+---
 
-```bash
-cd /Users/peternicholls/Dev/OpenAI-Chats
-source .venv/bin/activate
-pytest api/tests/test_conversations.py api/tests/test_media.py
-
-cd web
-npm test -- --run __tests__/components/MessageBubble.test.tsx __tests__/services/api.test.ts
-```
-
-## Step 2: Run browser validation
+## Step 1: Install Frontend Dependencies
 
 ```bash
 cd /Users/peternicholls/Dev/OpenAI-Chats/web
-npx playwright test __tests__/e2e/conversation.spec.ts --project=chromium
+npm install
 ```
 
-## Step 3: Manual conversation check
+Expected result: the web app includes the markdown rendering dependencies declared by this feature plan.
 
-1. Start the API and web app.
-2. Open a conversation known to contain markdown-rich assistant output.
-3. Verify headings, lists, links, blockquotes, inline code, and fenced code blocks render as formatted content.
-4. Open a conversation that previously displayed raw asset-pointer dictionaries.
-5. Verify raw payload blobs are replaced by readable attachment or fallback blocks.
+---
 
-## Expected Outcomes
+## Step 2: Start the API and Web App
 
-- Common markdown no longer appears as literal source syntax.
-- Structured attachment-related payloads are not shown as raw Python-style dicts.
-- Text-only messages remain readable and ordered correctly.
-- Unsupported rich content stays readable through fallback rendering instead of breaking layout.
+In one terminal:
+
+```bash
+cd /Users/peternicholls/Dev/OpenAI-Chats/api
+python -m uvicorn main:app --reload
+```
+
+In another terminal:
+
+```bash
+cd /Users/peternicholls/Dev/OpenAI-Chats/web
+npm run dev
+```
+
+---
+
+## Step 3: Verify the Conversation API Contract
+
+Request a conversation that contains markdown and attachments:
+
+```bash
+curl -s http://localhost:8000/api/conversations/<conversation-id>
+```
+
+Expected result:
+- Each message still includes `content` and `attachments`.
+- Messages eligible for formatted rendering also include ordered `segments`.
+- Mixed messages show `markdown`, `attachment`, and `fallback` segments in the same order as the original content.
+
+---
+
+## Step 4: Verify UI Rendering
+
+Open a conversation in the browser that contains:
+- headings or lists
+- inline and fenced code
+- one or more attachment payloads
+- at least one malformed or unsupported structured payload fixture
+
+Expected result:
+- prose is formatted like a chat transcript instead of showing raw markdown markers
+- attachments render inline at the correct positions
+- unsupported structured payloads render as labeled fallback blocks instead of raw dict blobs
+- plain-text messages still read normally
+
+---
+
+## Step 5: Run Focused Tests
+
+Backend:
+
+```bash
+cd /Users/peternicholls/Dev/OpenAI-Chats/api
+pytest tests/test_conversations.py tests/test_formatting_service.py
+```
+
+Frontend unit tests:
+
+```bash
+cd /Users/peternicholls/Dev/OpenAI-Chats/web
+npm run test -- MessageBubble MarkdownRenderer
+```
+
+End-to-end:
+
+```bash
+cd /Users/peternicholls/Dev/OpenAI-Chats/web
+npm run test:e2e -- conversation.spec.ts
+```
+
+---
 
 ## Troubleshooting
 
-| Symptom | Likely Cause | Fix |
-|---------|--------------|-----|
-| Raw markdown still visible | Message renderer still uses plain text path | Verify frontend uses `segments` before raw `content` |
-| Raw dict payload still visible | Backend segment parsing missed the payload shape | Expand structured payload parsing and add a fallback segment |
-| Code blocks collapse line breaks | Markdown renderer missing break/code configuration | Verify markdown renderer plugin setup and code block styling |
-| Attachment order is wrong | Segment ordering drifted from parsed content order | Re-check segment builder tests for mixed-content messages |
+| Symptom | Likely Cause | Check |
+|---------|-------------|-------|
+| Raw markdown still appears | `segments` not present or not used by the UI | Inspect the conversation API response and confirm `MessageBubble` prefers `segments` |
+| Raw dict payload still appears inline | Parser classified it as markdown/plain text instead of fallback | Add or adjust backend segment-builder tests for that payload shape |
+| Attachments appear out of order | Segment `attachment_index` values do not match the `attachments[]` array | Verify backend ordering tests and mixed-content fixture expectations |
+| Code blocks render as plain paragraphs | Markdown renderer dependency or component mapping is missing | Confirm `react-markdown` wiring and unit test coverage |

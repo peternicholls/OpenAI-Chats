@@ -3,79 +3,103 @@
 **Phase**: 1 — Design  
 **Date**: 2026-03-25
 
-> No database schema changes. All additions are runtime response models and internal parsing models.
+This feature introduces no database schema changes. All entities below are response-time or UI-runtime models.
+
+---
 
 ## Entities
 
-### RenderSegment (runtime, API response)
+### RenderSegment
 
-Represents one ordered piece of a rendered message.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `kind` | `"markdown" \| "attachment" \| "fallback"` | Segment classification for rendering |
-| `text` | `string \| null` | Markdown or fallback text payload |
-| `attachment_index` | `integer \| null` | Index into `Message.attachments` when `kind = "attachment"` |
-| `fallback_label` | `string \| null` | Short label explaining unsupported or malformed structured content |
-
-### FormattedMessage (runtime, API response)
-
-Extends the existing `Message` response with ordered segments.
+Ordered user-visible segment derived from a message's stored content.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | `string` | OpenAI message ID |
-| `role` | `string` | Author role |
-| `content` | `string \| null` | Backward-compatible raw/cleaned content fallback |
-| `create_time` | `float \| null` | Message timestamp |
-| `attachments` | `Attachment[]` | Existing resolved media attachments from feature 003 |
-| `segments` | `RenderSegment[]` | Ordered frontend rendering contract |
+| `kind` | `"markdown" | "attachment" | "fallback"` | Segment rendering category |
+| `text` | `string | null` | Markdown or fallback body; null for attachment segments |
+| `attachment_index` | `integer | null` | Index into `Message.attachments`; set only for attachment segments |
+| `fallback_label` | `string | null` | Short label for fallback blocks, such as `Unsupported content` or `Malformed attachment payload` |
 
-### StructuredContentPayload (internal)
+**Validation rules**:
+- `markdown` segments require non-empty `text`, null `attachment_index`, null or empty `fallback_label`.
+- `attachment` segments require non-null `attachment_index`, null `text`, null `fallback_label`.
+- `fallback` segments require non-empty `text` and non-empty `fallback_label`.
+- Segment order must match the original reading order in the message source content.
 
-Represents a parsed non-prose content part from stored archive content.
+### FormattedMessage
+
+Extension of the existing API `Message` object used by the conversation view.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `raw_text` | `string` | Original stored line or block |
-| `content_type` | `string \| null` | Source content type if recognized |
-| `asset_pointer` | `string \| null` | Pointer URI if present |
-| `metadata` | `dict` | Parsed metadata payload |
-| `recognized` | `boolean` | Whether the payload maps cleanly to known UI behavior |
+| `id` | `string` | Existing OpenAI message ID |
+| `role` | `"user" | "assistant" | "system" | "tool"` | Existing message role |
+| `content` | `string | null` | Legacy text content retained for compatibility |
+| `create_time` | `number | null` | Existing timestamp |
+| `attachments` | `Attachment[]` | Existing attachment metadata from feature 003 |
+| `segments` | `RenderSegment[]` | New ordered render contract for the frontend |
 
-## Relationships
+**Validation rules**:
+- `segments` may be empty only when a message has no content and no attachments.
+- Any `attachment_index` must resolve to an existing attachment in `attachments[]`.
+- When a message includes both prose and attachments, `segments[]` must preserve the original interleaving.
 
-- `FormattedMessage.segments` is the ordered source of truth for rendering.
-- `attachment` segments refer to `FormattedMessage.attachments` by `attachment_index`.
-- `StructuredContentPayload` is an internal parser model used to derive `RenderSegment` and `Attachment` data.
+### Attachment
+
+Existing runtime attachment model reused from feature 003.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | `"image" | "audio" | "file"` | Media presentation category |
+| `url` | `string` | API URL for the attachment |
+| `filename` | `string` | Display filename |
+| `mime_type` | `string | null` | Detected MIME type |
+| `width` | `integer | null` | Image width when available |
+| `height` | `integer | null` | Image height when available |
+| `size_bytes` | `integer | null` | File size when known |
+| `found` | `boolean` | Whether the underlying file exists |
+
+### StructuredContentPayload
+
+Internal parsing concept representing dict-like or JSON-like content extracted from stored message text.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `raw_text` | `string` | Original serialized payload text from the archive-derived message content |
+| `classification` | `"attachment_metadata" | "unsupported" | "malformed"` | Parser outcome |
+| `attachment_index` | `integer | null` | Set if the payload maps to an existing resolved attachment |
+| `fallback_label` | `string | null` | Human-readable fallback title when the payload cannot be cleanly rendered as prose or attachment |
+
+---
 
 ## State Transitions
 
-### Runtime Formatting Flow
+### Message Formatting Pipeline
 
 ```text
-stored message content
-  -> split into raw prose / structured lines
-  -> parse known structured payloads
-  -> resolve attachments where applicable
-  -> build ordered RenderSegment[]
-  -> return Message + attachments + segments
+raw stored message content
+  -> detect known attachment payload lines
+  -> resolve attachments with existing media service
+  -> classify remaining content into markdown prose or structured payload blocks
+  -> emit ordered RenderSegment[]
+  -> render in MessageBubble using markdown, attachment, and fallback components
 ```
 
-### Frontend Rendering Flow
+### Fallback Classification
 
 ```text
-ConversationDetail.messages[]
-  -> MessageBubble receives segments
-  -> markdown segments render through safe markdown component
-  -> attachment segments render existing attachment UI
-  -> fallback segments render readable plain blocks
+structured payload text
+  -> recognized attachment pointer? yes -> attachment segment
+  -> safely recognized supported prose? yes -> markdown segment
+  -> malformed or unsupported structured payload -> fallback segment
 ```
 
-## Validation Rules
+---
 
-- `segments` MUST preserve the original reading order of all renderable content within a message.
-- `attachment_index` MUST reference a valid item in `attachments` when `kind = "attachment"`.
-- `markdown` segments MUST contain only user-visible text content, not raw transport payloads.
-- Unsupported structured payloads MUST become `fallback` segments instead of being dropped silently.
-- Text-only messages SHOULD produce a single `markdown` segment for the common fast path.
+## Invariants
+
+- The archive and database remain unchanged; formatting is derived at read time.
+- Render segments must never reorder content relative to the stored message.
+- Unsupported content must remain visible in some readable form.
+- Plain text messages without markdown must remain readable when routed through the new renderer.
+- The frontend must not execute raw HTML, script content, or arbitrary embedded payload data.
