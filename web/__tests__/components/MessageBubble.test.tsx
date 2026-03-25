@@ -8,6 +8,7 @@ const mockUserMessage: Message = {
     role: 'user',
     content: 'Hello, how are you?',
     create_time: 1700000000,
+    attachments: [],
 }
 
 const mockAssistantMessage: Message = {
@@ -15,6 +16,7 @@ const mockAssistantMessage: Message = {
     role: 'assistant',
     content: 'I am doing well, thank you!',
     create_time: 1700000100,
+    attachments: [],
 }
 
 describe('MessageBubble', () => {
@@ -114,6 +116,137 @@ describe('MessageBubble', () => {
             // Should not have the time span
             const timeSpan = document.querySelector('.text-xs.text-muted-foreground')
             expect(timeSpan).not.toBeInTheDocument()
+        })
+    })
+
+    describe('attachments', () => {
+        it('renders inline images from attachment tokens', () => {
+            const message: Message = {
+                ...mockAssistantMessage,
+                content: 'Before\n[[ATTACHMENT:0]]\nAfter',
+                attachments: [
+                    {
+                        type: 'image',
+                        url: '/api/media/conv/file_001',
+                        filename: 'sample.png',
+                        mime_type: 'image/png',
+                        width: 640,
+                        height: 480,
+                        size_bytes: 1024,
+                        found: true,
+                    },
+                ],
+            }
+
+            render(<MessageBubble message={message} />)
+
+            expect(screen.getByText('Before')).toBeInTheDocument()
+            expect(screen.getByText('After')).toBeInTheDocument()
+            expect(screen.getByTestId('attachment-image')).toBeInTheDocument()
+        })
+
+        it('renders file fallback cards for missing attachments', () => {
+            const message: Message = {
+                ...mockAssistantMessage,
+                content: '[[ATTACHMENT:0]]',
+                attachments: [
+                    {
+                        type: 'file',
+                        url: '/api/media/root/file-abc',
+                        filename: 'document.pdf',
+                        mime_type: 'application/pdf',
+                        width: null,
+                        height: null,
+                        size_bytes: 2048,
+                        found: false,
+                    },
+                ],
+            }
+
+            render(<MessageBubble message={message} />)
+
+            expect(screen.getByTestId('attachment-file-missing')).toBeInTheDocument()
+            expect(screen.getByText(/document.pdf/)).toBeInTheDocument()
+        })
+
+        it('renders audio attachments when content is empty', () => {
+            const message: Message = {
+                ...mockAssistantMessage,
+                content: null,
+                attachments: [
+                    {
+                        type: 'audio',
+                        url: '/api/media/conv/audio_1',
+                        filename: 'voice.wav',
+                        mime_type: 'audio/wav',
+                        width: null,
+                        height: null,
+                        size_bytes: 5000,
+                        found: true,
+                    },
+                ],
+            }
+
+            render(<MessageBubble message={message} />)
+
+            expect(screen.getByTestId('attachment-audio')).toBeInTheDocument()
+            expect(screen.queryByText('[No content]')).not.toBeInTheDocument()
+        })
+
+        it('preserves mixed text and multiple attachment ordering', () => {
+            const message: Message = {
+                ...mockAssistantMessage,
+                content: 'Intro\n[[ATTACHMENT:0]]\nBetween\n[[ATTACHMENT:1]]\nOutro\n[[ATTACHMENT:2]]',
+                attachments: [
+                    {
+                        type: 'image',
+                        url: '/api/media/conv/image_1',
+                        filename: 'image.png',
+                        mime_type: 'image/png',
+                        width: 400,
+                        height: 300,
+                        size_bytes: 1000,
+                        found: true,
+                    },
+                    {
+                        type: 'file',
+                        url: '/api/media/root/file-abc',
+                        filename: 'notes.pdf',
+                        mime_type: 'application/pdf',
+                        width: null,
+                        height: null,
+                        size_bytes: 2500,
+                        found: true,
+                    },
+                    {
+                        type: 'audio',
+                        url: '/api/media/conv/audio_1',
+                        filename: 'voice.wav',
+                        mime_type: 'audio/wav',
+                        width: null,
+                        height: null,
+                        size_bytes: 3200,
+                        found: true,
+                    },
+                ],
+            }
+
+            const { container } = render(<MessageBubble message={message} />)
+            const prose = container.querySelector('.prose')
+
+            expect(prose?.textContent).toContain('Intro')
+            expect(prose?.textContent).toContain('Between')
+            expect(prose?.textContent).toContain('Outro')
+
+            const blocks = Array.from(prose?.children ?? []).map((element) => {
+                const node = element as HTMLElement
+                if (node.querySelector('[data-testid="attachment-image"]')) return 'image'
+                if (node.querySelector('[data-testid="attachment-file"]')) return 'file'
+                if (node.querySelector('[data-testid="attachment-audio"]')) return 'audio'
+                return node.textContent?.trim() ?? ''
+            })
+
+            expect(blocks).toEqual(['Intro', 'image', 'Between', 'file', 'Outro', 'audio'])
         })
     })
 })

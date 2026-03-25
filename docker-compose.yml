@@ -33,6 +33,10 @@ services:
       # CHATGPT_ARCHIVE_DB: Path to SQLite database inside container
       # Default: /data/chats.db (maps to ~/.chatgpt-archive/chats.db on host)
       - CHATGPT_ARCHIVE_DB=/data/chats.db
+
+      # CHATGPT_ARCHIVE_DIR: Directory containing extracted archive media files.
+      # Defaults to /data/media when not explicitly set.
+      - CHATGPT_ARCHIVE_DIR=/data/media
       
       # API_HOST: Network interface to bind to
       # 0.0.0.0 = all interfaces (required for Docker), 127.0.0.1 = localhost only

@@ -57,6 +57,7 @@ That's it! The web UI is now running.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `CHATGPT_ARCHIVE_DB` | `/data/chats.db` | Database file path inside container |
+| `CHATGPT_ARCHIVE_DIR` | `/data/media` | Extracted archive directory or persistent copied media store used for inline attachments |
 | `API_HOST` | `0.0.0.0` | API bind address |
 | `API_PORT` | `8000` | API port |
 | `CORS_ORIGINS` | `["http://localhost:3001"]` | Allowed CORS origins (JSON array) |
@@ -98,13 +99,29 @@ Your data is stored in `~/.chatgpt-archive/` on the host machine:
 ~/.chatgpt-archive/
 ├── chats.db          # SQLite database
 ├── settings.json     # User settings
-└── attachments/      # Imported file attachments
+├── encryption.key    # Key for encrypted settings
+└── media/            # Imported or mounted archive media files
 ```
 
 This directory is mounted into the container at `/data/`. Data persists across:
 - Container restarts
 - Image updates
 - docker-compose down/up cycles
+
+### Inline media in Docker
+
+If you already keep an extracted OpenAI archive on the host, mount it read-only and point `CHATGPT_ARCHIVE_DIR` at it. Otherwise, imports will copy media into `/data/media` automatically.
+
+```yaml
+services:
+  api:
+    volumes:
+      - ${HOME}/.chatgpt-archive:/data
+      - /path/to/chatgpt-export:/archive:ro
+    environment:
+      - CHATGPT_ARCHIVE_DB=/data/chats.db
+      - CHATGPT_ARCHIVE_DIR=/archive
+```
 
 ### Backup
 

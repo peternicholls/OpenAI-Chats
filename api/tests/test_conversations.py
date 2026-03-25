@@ -122,6 +122,8 @@ class TestGetConversation:
         assert second["id"] == "msg-002"
         assert second["role"] == "assistant"
         assert "thank you" in second["content"]
+        assert first["attachments"] == []
+        assert second["attachments"] == []
 
     @pytest.mark.asyncio
     async def test_get_conversation_not_found(self, client):
@@ -137,6 +139,28 @@ class TestGetConversation:
 
         data = response.json()
         assert "detail" in data
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_with_media_keeps_text_and_attachment_order(
+        self, media_client
+    ):
+        response = await media_client.get(
+            "/api/conversations/68e06336-bce4-8330-b350-f7a33ffac85e"
+        )
+
+        assert response.status_code == 200
+        message = response.json()["messages"][0]
+        assert message["content"].startswith("Lead text")
+        assert "[[ATTACHMENT:0]]" in message["content"]
+        assert len(message["attachments"]) == 3
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_text_only_messages_keep_empty_attachments(self, client):
+        response = await client.get("/api/conversations/conv-002-test")
+
+        assert response.status_code == 200
+        for message in response.json()["messages"]:
+            assert message["attachments"] == []
 
 
 class TestListConversationsEmpty:

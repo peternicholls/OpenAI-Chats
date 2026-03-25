@@ -28,6 +28,7 @@ describe('API Client', () => {
             expect(result).toHaveProperty('title')
             expect(result).toHaveProperty('messages')
             expect(Array.isArray(result.messages)).toBe(true)
+            expect(result.messages[1]).toHaveProperty('attachments')
         })
 
         it('should throw error for non-existent conversation', async () => {
@@ -102,6 +103,13 @@ describe('API Client', () => {
 
             expect(result).toHaveProperty('theme')
             expect(result).toHaveProperty('default_export_format')
+            expect(result).toHaveProperty('archive_media_dir')
+        })
+
+        it('should build absolute media URLs for relative paths', () => {
+            expect(api.getMediaUrl('/api/media/root/file-123')).toBe(
+                'http://localhost:8000/api/media/root/file-123'
+            )
         })
     })
 

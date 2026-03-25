@@ -17,6 +17,7 @@ from api.routers import (
     export,
     favorites,
     health,
+    media,
     progress,
     search,
     settings,
@@ -145,3 +146,4 @@ app.include_router(embeddings.router)
 app.include_router(progress.router)
 app.include_router(import_router.router)
 app.include_router(settings.router)
+app.include_router(media.router)

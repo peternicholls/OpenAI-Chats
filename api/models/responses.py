@@ -23,6 +23,22 @@ class Message(BaseModel):
     role: str = Field(..., description="author role: user, assistant, system, tool")
     content: str | None = Field(None, description="Message content")
     create_time: float | None = Field(None, description="Unix timestamp")
+    attachments: list["Attachment"] = Field(
+        default_factory=list, description="Resolved media attachments"
+    )
+
+
+class Attachment(BaseModel):
+    """Resolved media attachment."""
+
+    type: str = Field(..., description="Attachment type: image, audio, file")
+    url: str = Field(..., description="Relative API URL to retrieve the attachment")
+    filename: str = Field(..., description="Attachment filename")
+    mime_type: str | None = Field(None, description="Detected MIME type")
+    width: int | None = Field(None, description="Image width in pixels")
+    height: int | None = Field(None, description="Image height in pixels")
+    size_bytes: int | None = Field(None, description="Attachment size in bytes")
+    found: bool = Field(..., description="Whether the attachment exists on disk")
 
 
 class ConversationDetail(BaseModel):

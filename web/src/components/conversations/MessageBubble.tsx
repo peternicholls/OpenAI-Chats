@@ -1,5 +1,12 @@
+import type { ReactNode } from "react";
 import type { Message } from "@/types";
 import { User, Bot, Terminal } from "lucide-react";
+
+import { AttachmentAudio } from "@/components/conversations/AttachmentAudio";
+import { AttachmentFile } from "@/components/conversations/AttachmentFile";
+import { AttachmentImage } from "@/components/conversations/AttachmentImage";
+
+const ATTACHMENT_TOKEN_RE = /\[\[ATTACHMENT:(\d+)\]\]/g;
 
 function formatTime(timestamp: number | null): string {
     if (!timestamp) return "";
@@ -30,20 +37,89 @@ const roleLabels = {
     tool: "Tool",
 };
 
+function renderAttachment(message: Message, index: number): ReactNode {
+    const attachment = message.attachments[index];
+    if (!attachment) {
+        return null;
+    }
+
+    if (attachment.type === "image") {
+        return <AttachmentImage attachment={attachment} />;
+    }
+    if (attachment.type === "audio") {
+        return <AttachmentAudio attachment={attachment} />;
+    }
+    return <AttachmentFile attachment={attachment} />;
+}
+
+function renderContent(message: Message): ReactNode {
+    if (!message.content && message.attachments.length === 0) {
+        return <span className="italic text-muted-foreground">[No content]</span>;
+    }
+
+    const content = message.content ?? "";
+    const parts = content.split(ATTACHMENT_TOKEN_RE);
+    const rendered: ReactNode[] = [];
+    const renderedAttachmentIndexes = new Set<number>();
+
+    for (let index = 0; index < parts.length; index += 1) {
+        const value = parts[index];
+        if (!value) {
+            continue;
+        }
+
+        if (index % 2 === 1) {
+            const attachmentIndex = Number.parseInt(value, 10);
+            renderedAttachmentIndexes.add(attachmentIndex);
+            rendered.push(
+                <div key={`attachment-${attachmentIndex}`}>
+                    {renderAttachment(message, attachmentIndex)}
+                </div>
+            );
+            continue;
+        }
+
+        rendered.push(
+            <div key={`text-${index}`} className="whitespace-pre-wrap wrap-break-word">
+                {value}
+            </div>
+        );
+    }
+
+    if (message.attachments.length > 0 && rendered.length === 0) {
+        return message.attachments.map((_attachment, index) => (
+            <div key={`attachment-only-${index}`}>{renderAttachment(message, index)}</div>
+        ));
+    }
+
+    const trailingAttachments = message.attachments
+        .map((attachment, index) => ({ attachment, index }))
+        .filter(({ index }) => !renderedAttachmentIndexes.has(index));
+
+    return (
+        <>
+            {rendered}
+            {trailingAttachments.map(({ index }) => (
+                <div key={`attachment-trailing-${index}`}>{renderAttachment(message, index)}</div>
+            ))}
+        </>
+    );
+}
+
 export function MessageBubble({ message }: { message: Message }) {
     const Icon = roleIcons[message.role] || Terminal;
     const bgColor = roleColors[message.role] || roleColors.system;
     const label = roleLabels[message.role] || message.role;
 
     return (
-        <div className={`flex gap-3 p-4 rounded-lg ${bgColor}`}>
-            <div className="flex-shrink-0 mt-0.5">
-                <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center">
+        <div className={`flex gap-3 rounded-lg p-4 ${bgColor}`} data-testid="message">
+            <div className="mt-0.5 shrink-0">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
                     <Icon className="h-4 w-4" />
                 </div>
             </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+            <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center gap-2">
                     <span className="text-sm font-semibold">{label}</span>
                     {message.create_time && (
                         <span className="text-xs text-muted-foreground">
@@ -51,8 +127,8 @@ export function MessageBubble({ message }: { message: Message }) {
                         </span>
                     )}
                 </div>
-                <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap break-words">
-                    {message.content || <span className="text-muted-foreground italic">[No content]</span>}
+                <div className="prose prose-sm max-w-none space-y-3 dark:prose-invert">
+                    {renderContent(message)}
                 </div>
             </div>
         </div>

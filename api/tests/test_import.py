@@ -1,8 +1,11 @@
 """Tests for the import endpoint."""
 
 import io
+import zipfile
 
 import pytest
+
+from api.services import media_service
 
 
 class TestImport:
@@ -49,8 +52,6 @@ class TestImport:
     @pytest.mark.asyncio
     async def test_import_empty_zip_handled(self, client, tmp_path):
         """Test that empty ZIP files are handled."""
-        import zipfile
-
         empty_zip = tmp_path / "empty.zip"
         with zipfile.ZipFile(empty_zip, "w"):
             pass  # Create empty zip
@@ -71,6 +72,15 @@ class TestImport:
         response = await client.post("/api/import", files=files)
 
         assert response.status_code == 413
+
+    def test_persist_archive_media_copies_fixture_files(self, sample_archive_dir, tmp_path):
+        destination = tmp_path / "media-store"
+
+        media_service.persist_archive_media(sample_archive_dir, destination)
+
+        assert (destination / "conversations.json").exists()
+        assert any(destination.glob("file-*-*.pdf"))
+        assert any((destination / "68e06336-bce4-8330-b350-f7a33ffac85e" / "image").iterdir())
 
 
 class TestImportProgress:

@@ -1,6 +1,63 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Conversation View', () => {
+    test('should render mixed attachment content in order', async ({ page }) => {
+        await page.route('**/api/conversations/conv-inline-media', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    id: 'conv-inline-media',
+                    title: 'Inline Media Conversation',
+                    create_time: 1700000000,
+                    update_time: 1700000100,
+                    model: 'gpt-4',
+                    message_count: 1,
+                    tags: [],
+                    is_favorite: false,
+                    messages: [
+                        {
+                            id: 'msg-inline-media',
+                            role: 'assistant',
+                            content: 'Intro\n[[ATTACHMENT:0]]\nAfter image\n[[ATTACHMENT:1]]',
+                            create_time: 1700000000,
+                            attachments: [
+                                {
+                                    type: 'image',
+                                    url: '/api/media/conv-inline-media/file_001',
+                                    filename: 'inline-image.png',
+                                    mime_type: 'image/png',
+                                    width: 400,
+                                    height: 300,
+                                    size_bytes: 1024,
+                                    found: true,
+                                },
+                                {
+                                    type: 'file',
+                                    url: '/api/media/root/file-abc123',
+                                    filename: 'inline-file.pdf',
+                                    mime_type: 'application/pdf',
+                                    width: null,
+                                    height: null,
+                                    size_bytes: 2048,
+                                    found: true,
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            })
+        })
+
+        await page.goto('/conversation/conv-inline-media')
+        await page.waitForLoadState('networkidle')
+
+        await expect(page.getByText('Intro')).toBeVisible()
+        await expect(page.getByText('After image')).toBeVisible()
+        await expect(page.getByTestId('attachment-image')).toBeVisible()
+        await expect(page.getByTestId('attachment-file')).toBeVisible()
+    })
+
     test('should navigate to conversation detail', async ({ page }) => {
         await page.goto('/')
         await page.waitForLoadState('networkidle')

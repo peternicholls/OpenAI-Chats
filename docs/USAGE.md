@@ -7,6 +7,7 @@ Comprehensive reference for all commands, options, and features.
 - [Global Options](#global-options)
 - [Commands](#commands)
   - [import](#import)
+  - [verify-media](#verify-media)
   - [search](#search)
   - [view](#view)
   - [export](#export)
@@ -128,7 +129,8 @@ Importing from ~/Downloads/chatgpt-export...
   "conversations_imported": 1778,
   "messages_imported": 63493,
   "database_path": "~/.chatgpt-archive/chats.db",
-  "database_size_bytes": 47397632
+  "database_size_bytes": 47397632,
+  "archive_media_dir": "~/.chatgpt-archive/media"
 }
 ```
 
@@ -137,6 +139,39 @@ Importing from ~/Downloads/chatgpt-export...
 - Title fallback: Uses first user message if title is missing, or "[Untitled]"
 - Attachment detection: Extracts file references from message content
 - Progress updates: Shows progress every 100 conversations (stderr)
+
+### `verify-media`
+
+Verify the archive media directory used for inline images, audio, and file attachments.
+
+**Syntax**:
+```bash
+chatgpt-archive verify-media [ARCHIVE_DIR] [OPTIONS]
+```
+
+**Arguments**:
+- `ARCHIVE_DIR` (optional): Override the configured media directory for this check
+
+**Environment Variables**:
+- `CHATGPT_ARCHIVE_DIR`: Preferred archive media directory
+- `CHATGPT_ARCHIVE_DB`: Used to derive the default fallback media directory (`<db parent>/media`)
+
+**Examples**:
+```bash
+chatgpt-archive verify-media
+chatgpt-archive verify-media ~/Downloads/chatgpt-export --json
+```
+
+**Output (JSON)**:
+```json
+{
+  "archive_media_dir": "/Users/example/Downloads/chatgpt-export",
+  "exists": true,
+  "has_conversations_json": true,
+  "root_file_count": 12,
+  "conversation_dir_count": 45
+}
+```
 
 ---
 

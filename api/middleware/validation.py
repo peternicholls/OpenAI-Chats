@@ -8,6 +8,9 @@ SQL_INJECTION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 XSS_PATTERN = re.compile(r"(<script|javascript:|on\w+=)", re.IGNORECASE)
+UUID_LIKE_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+SEDIMENT_FILE_ID_PATTERN = re.compile(r"^file_[0-9a-f]+$")
+ROOT_FILE_ID_PATTERN = re.compile(r"^file-[A-Za-z0-9]+$")
 
 
 def sanitize_string(value: str, max_length: int = 1000) -> str:
@@ -208,3 +211,28 @@ def validate_conversation_id(conversation_id: str) -> str:
         raise ValueError("Invalid conversation ID format")
 
     return conversation_id
+
+
+def validate_media_conversation_id(conversation_id: str) -> str:
+    """Validate a conversation UUID used for media lookups."""
+    if not conversation_id:
+        raise ValueError("Conversation ID is required")
+
+    conversation_id = str(conversation_id).strip().lower()
+    if not UUID_LIKE_PATTERN.match(conversation_id):
+        raise ValueError("Invalid conversation ID format")
+
+    return conversation_id
+
+
+def validate_media_file_id(file_id: str, *, root_level: bool = False) -> str:
+    """Validate a media file identifier."""
+    if not file_id:
+        raise ValueError("File ID is required")
+
+    file_id = str(file_id).strip()
+    pattern = ROOT_FILE_ID_PATTERN if root_level else SEDIMENT_FILE_ID_PATTERN
+    if not pattern.match(file_id):
+        raise ValueError("Invalid file ID format")
+
+    return file_id

@@ -6,6 +6,7 @@ import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
@@ -28,6 +29,7 @@ export function SettingsForm() {
 
     const theme = draft.theme ?? currentTheme ?? "system";
     const defaultExportFormat = draft.default_export_format ?? data?.default_export_format ?? "md";
+    const archiveMediaDir = draft.archive_media_dir ?? data?.archive_media_dir ?? "";
 
     const handleThemeChange = (value: string) => {
         setDraft((current) => ({ ...current, theme: value as "light" | "dark" | "system" }));
@@ -39,6 +41,7 @@ export function SettingsForm() {
             await updateSettings.mutateAsync({
                 theme: theme as "light" | "dark" | "system",
                 default_export_format: defaultExportFormat,
+                archive_media_dir: archiveMediaDir,
             });
             toast.success("Settings saved");
         } catch (error) {
@@ -111,6 +114,20 @@ export function SettingsForm() {
                                     <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Archive Media Directory</label>
+                            <Input
+                                value={archiveMediaDir}
+                                onChange={(event) =>
+                                    setDraft((current) => ({ ...current, archive_media_dir: event.target.value }))
+                                }
+                                placeholder="/path/to/extracted/archive"
+                            />
+                            <p className="text-sm text-muted-foreground">
+                                Optional path to an extracted archive used for inline media lookup.
+                            </p>
                         </div>
 
                         <Button onClick={handleSaveGeneral} disabled={updateSettings.isPending}>
