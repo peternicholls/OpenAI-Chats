@@ -465,6 +465,9 @@ The API includes comprehensive security:
 - **API key encryption** at rest using Fernet
 - **0.0.0.0 binding warning** logged when exposed to network
 
+### Development Notes
+The downloaded and unzipped archive is to be found at `/6a46cf212e33de2339fe70a219a979b44d35de684e8b961a5e3b73077d3caef5-2026-01-26-08-54-37-28ec05edc89840ebbb963f264ef55875` where all the media associated with the conversations are stored. This also contains the files `chat.html` and `conversations.json` which are parsed to populate the database, and remain as a check to always ensure that the data is handled correctly. The media files are not stored in the database but are instead served directly from the filesystem at request time.
+
 See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#web-ui-issues) for common issues.
 
 ## License
