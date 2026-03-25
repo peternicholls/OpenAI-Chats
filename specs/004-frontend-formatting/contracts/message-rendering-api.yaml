@@ -1,0 +1,83 @@
+openapi: "3.1.0"
+info:
+  title: ChatGPT Archive API — Message Rendering Contract
+  version: "1.0.0"
+  description: |
+    Runtime response contract for feature 004-frontend-formatting.
+    The conversation endpoint remains the same route, but Message objects gain
+    ordered rendering segments for the frontend.
+
+components:
+  schemas:
+    RenderSegment:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum: [markdown, attachment, fallback]
+        text:
+          type: string
+          nullable: true
+          description: Markdown or fallback text content for display.
+        attachment_index:
+          type: integer
+          nullable: true
+          description: Index into Message.attachments when kind = attachment.
+        fallback_label:
+          type: string
+          nullable: true
+          description: Short explanation for unsupported structured content.
+
+    Attachment:
+      type: object
+      required: [type, url, filename, found]
+      properties:
+        type:
+          type: string
+          enum: [image, audio, file]
+        url:
+          type: string
+        filename:
+          type: string
+        mime_type:
+          type: string
+          nullable: true
+        width:
+          type: integer
+          nullable: true
+        height:
+          type: integer
+          nullable: true
+        size_bytes:
+          type: integer
+          nullable: true
+        found:
+          type: boolean
+
+    Message:
+      type: object
+      required: [id, role, attachments, segments]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant, system, tool]
+        content:
+          type: string
+          nullable: true
+          description: Backward-compatible cleaned content fallback.
+        create_time:
+          type: number
+          nullable: true
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
+        segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/RenderSegment"
+          description: Ordered frontend rendering contract for the message body.
