@@ -1,0 +1,224 @@
+openapi: "3.1.0"
+info:
+  title: ChatGPT Archive API — Media Endpoints
+  version: "1.0.0"
+  description: |
+    New endpoints added for feature 003-inline-media.
+    All existing endpoints are unchanged.
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /api/media/{conv_id}/{file_id}:
+    get:
+      summary: Serve a conversation-scoped media file
+      description: |
+        Serves an image or audio file from the permanent archive media store,
+        located at `CHATGPT_ARCHIVE_DIR/{conv_id}/image/` or `.../audio/`.
+        Used for `sediment://file_{hex_id}` asset pointers.
+      operationId: get_conv_media
+      tags:
+        - Media
+      parameters:
+        - name: conv_id
+          in: path
+          required: true
+          description: OpenAI conversation UUID (e.g. 68e06336-bce4-8330-b350-f7a33ffac85e)
+          schema:
+            type: string
+            pattern: "^[0-9a-f-]{36}$"
+        - name: file_id
+          in: path
+          required: true
+          description: File ID from asset pointer (e.g. file_000000004f48620a9bfb06ccaa684b65)
+          schema:
+            type: string
+            pattern: "^file_[0-9a-f]+$"
+      responses:
+        "200":
+          description: The requested media file
+          headers:
+            Content-Type:
+              description: MIME type of the file
+              schema:
+                type: string
+            Cache-Control:
+              description: Cache directive
+              schema:
+                type: string
+                example: "public, max-age=86400, immutable"
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            audio/wav:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid path parameter format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: File not found in archive media store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/media/root/{file_id}:
+    get:
+      summary: Serve an archive root-level file
+      description: |
+        Serves a file from the root of the archive media store.
+        Used for `file-service://file-{id}` asset pointers.
+        Files are stored as `file-{id}-{original_name}.{ext}` at the archive root.
+      operationId: get_root_media
+      tags:
+        - Media
+      parameters:
+        - name: file_id
+          in: path
+          required: true
+          description: Short file ID from file-service URI (e.g. MxiG6K5nWu8CKMocj8GDbL)
+          schema:
+            type: string
+            pattern: "^file-[A-Za-z0-9]+$"
+      responses:
+        "200":
+          description: The requested file
+          headers:
+            Content-Disposition:
+              description: Suggests download filename
+              schema:
+                type: string
+                example: 'attachment; filename="Screenshot 2025-05-23 at 22.17.46.png"'
+            Cache-Control:
+              schema:
+                type: string
+                example: "public, max-age=86400, immutable"
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid path parameter format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: File not found in archive media store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    Attachment:
+      type: object
+      description: |
+        A resolved media attachment, derived at response time from message
+        asset pointer content parts. Not stored in the database.
+      required:
+        - type
+        - url
+        - filename
+        - found
+      properties:
+        type:
+          type: string
+          enum: [image, audio, file]
+          description: Media category
+        url:
+          type: string
+          description: Relative API URL to retrieve the file
+          example: "/api/media/68e06336-bce4-8330-b350-f7a33ffac85e/file_000000004f48620a"
+        filename:
+          type: string
+          description: Original filename from archive
+          example: "Screenshot 2025-05-23 at 22.17.46.png"
+        mime_type:
+          type: string
+          nullable: true
+          description: MIME type from file extension
+          example: "image/png"
+        width:
+          type: integer
+          nullable: true
+          description: Image width in pixels (images only)
+        height:
+          type: integer
+          nullable: true
+          description: Image height in pixels (images only)
+        size_bytes:
+          type: integer
+          nullable: true
+          description: File size in bytes
+        found:
+          type: boolean
+          description: Whether the file exists on disk
+
+    Message:
+      description: |
+        Extended Message response — adds `attachments` field.
+        All existing fields are unchanged.
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: string
+            role:
+              type: string
+              enum: [user, assistant, system, tool]
+            content:
+              type: string
+              nullable: true
+              description: Text content with asset pointer dicts stripped out
+            create_time:
+              type: number
+              nullable: true
+            attachments:
+              type: array
+              items:
+                $ref: "#/components/schemas/Attachment"
+              description: Resolved media attachments. Empty array for text-only messages.
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code
+          example: "not_found"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Media file not found in archive"

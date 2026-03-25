@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-02-16
 
 ## Active Technologies
+- Python 3.11+ (backend), TypeScript / Next.js 15 (frontend) + FastAPI (API), SQLite via `chatgpt_archive.db` (data layer), React + Tailwind CSS (web UI) (003-inline-media)
+- SQLite (no schema changes); local filesystem (permanent archive media store) (003-inline-media)
 
 ### Backend (Python)
 - Python 3.8+ with virtual environment (.venv/)
@@ -87,6 +89,7 @@ docker-compose up -d
 - Server components by default, 'use client' for interactivity
 
 ## Recent Changes
+- 003-inline-media: Added Python 3.11+ (backend), TypeScript / Next.js 15 (frontend) + FastAPI (API), SQLite via `chatgpt_archive.db` (data layer), React + Tailwind CSS (web UI)
 
 - **002-web-ui**: Web UI with FastAPI backend, Next.js frontend, Docker deployment
   - Test suite: 62 API tests, 55 frontend tests, 27 E2E tests
