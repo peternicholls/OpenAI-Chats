@@ -41,12 +41,25 @@ export const mockConversationDetail = {
             role: 'user',
             content: 'Hello, how are you?',
             create_time: 1700000000,
+            attachments: [],
         },
         {
             id: 'msg-002',
             role: 'assistant',
-            content: 'I am doing well, thank you for asking!',
+            content: 'I am doing well, thank you for asking!\n[[ATTACHMENT:0]]',
             create_time: 1700000100,
+            attachments: [
+                {
+                    type: 'image',
+                    url: '/api/media/conv-001-test/file_001',
+                    filename: 'sample.png',
+                    mime_type: 'image/png',
+                    width: 512,
+                    height: 512,
+                    size_bytes: 2048,
+                    found: true,
+                },
+            ],
         },
     ],
 }
@@ -191,9 +204,11 @@ export const handlers = [
         return HttpResponse.json({
             theme: 'system',
             default_export_format: 'md',
-            messages_per_page: 50,
-            default_search_type: 'keyword',
-            openai_api_key_set: false,
+            sidebar_open: true,
+            embedding_model: 'text-embedding-3-small',
+            items_per_page: 50,
+            openai_api_key: '',
+            archive_media_dir: '/tmp/archive',
         })
     }),
 
@@ -202,9 +217,11 @@ export const handlers = [
         return HttpResponse.json({
             theme: 'system',
             default_export_format: 'md',
-            messages_per_page: 50,
-            default_search_type: 'keyword',
-            openai_api_key_set: false,
+            sidebar_open: true,
+            embedding_model: 'text-embedding-3-small',
+            items_per_page: 50,
+            openai_api_key: '',
+            archive_media_dir: '/tmp/archive',
             ...body,
         })
     }),

@@ -11,6 +11,12 @@ from httpx import ASGITransport, AsyncClient
 from chatgpt_archive import db
 
 
+MEDIA_CONVERSATION_ID = "68e06336-bce4-8330-b350-f7a33ffac85e"
+MEDIA_IMAGE_FILE_ID = "file_000000004f48620a9bfb06ccaa684b65"
+MEDIA_AUDIO_FILE_ID = "file_00000000aaaaaaaaaaaaaaaaaaaaaaaa"
+MEDIA_ROOT_FILE_ID = "file-4Vdhhbs7F48DZfbPKwk1PN"
+
+
 @pytest.fixture(scope="session")
 def sample_conversations_data() -> list[dict]:
     """Sample conversation data for testing."""
@@ -204,6 +210,16 @@ def sample_archive_dir(tmp_path: Path, sample_conversations_data: list[dict]) ->
     user_file = archive_dir / "user.json"
     user_file.write_text(json.dumps({"id": "test-user", "email": "test@example.com"}))
 
+    image_dir = archive_dir / MEDIA_CONVERSATION_ID / "image"
+    image_dir.mkdir(parents=True)
+    (image_dir / f"{MEDIA_IMAGE_FILE_ID}-sample-image.jpg").write_bytes(b"fake-jpeg")
+
+    audio_dir = archive_dir / MEDIA_CONVERSATION_ID / "audio"
+    audio_dir.mkdir(parents=True)
+    (audio_dir / f"{MEDIA_AUDIO_FILE_ID}-sample-audio.wav").write_bytes(b"RIFFfake")
+
+    (archive_dir / f"{MEDIA_ROOT_FILE_ID}-Sample Document.pdf").write_bytes(b"%PDF-1.4")
+
     return archive_dir
 
 
@@ -229,6 +245,111 @@ def env_with_test_db(populated_db: Path, monkeypatch: pytest.MonkeyPatch) -> Pat
     monkeypatch.setenv("DB_PATH", str(populated_db))
     monkeypatch.setenv("DISABLE_RATE_LIMIT", "1")
     return populated_db
+
+
+@pytest.fixture
+def media_db_path(tmp_path: Path) -> Path:
+    """Create a database with one conversation containing media asset pointers."""
+    db_path = tmp_path / "media_test.db"
+    conn = db.init_db(db_path)
+
+    cursor = conn.execute(
+        """
+        INSERT INTO conversations (openai_id, title, create_time, update_time)
+        VALUES (?, ?, ?, ?)
+        """,
+        (MEDIA_CONVERSATION_ID, "Media Conversation", 1701000000.0, 1701000100.0),
+    )
+    conv_db_id = cursor.lastrowid
+
+    conn.execute(
+        """
+        INSERT INTO messages (conversation_id, openai_id, parent_id, author_role, content, create_time)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            conv_db_id,
+            "msg-media-001",
+            None,
+            "assistant",
+            "Lead text\n"
+            + str(
+                {
+                    "content_type": "image_asset_pointer",
+                    "asset_pointer": f"sediment://{MEDIA_IMAGE_FILE_ID}",
+                    "size_bytes": 1234,
+                    "width": 640,
+                    "height": 480,
+                }
+            )
+            + "\nMiddle text\n"
+            + str(
+                {
+                    "content_type": "image_asset_pointer",
+                    "asset_pointer": f"file-service://{MEDIA_ROOT_FILE_ID}",
+                    "size_bytes": 2048,
+                }
+            )
+            + "\n"
+            + str(
+                {
+                    "content_type": "audio_asset_pointer",
+                    "asset_pointer": f"sediment://{MEDIA_AUDIO_FILE_ID}",
+                    "size_bytes": 4096,
+                }
+            ),
+            1701000000.0,
+        ),
+    )
+
+    conn.execute(
+        """
+        INSERT INTO messages (conversation_id, openai_id, parent_id, author_role, content, create_time)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            conv_db_id,
+            "msg-media-002",
+            "msg-media-001",
+            "assistant",
+            str(
+                {
+                    "content_type": "image_asset_pointer",
+                    "asset_pointer": "sediment://file_00000000missingmissingmissing",
+                    "size_bytes": 5,
+                }
+            ),
+            1701000200.0,
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+    return db_path
+
+
+@pytest.fixture
+def env_with_media_db(
+    media_db_path: Path,
+    sample_archive_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Path:
+    """Set environment to use the media-capable test database and archive."""
+    monkeypatch.setenv("CHATGPT_ARCHIVE_DB", str(media_db_path))
+    monkeypatch.setenv("DB_PATH", str(media_db_path))
+    monkeypatch.setenv("CHATGPT_ARCHIVE_DIR", str(sample_archive_dir))
+    monkeypatch.setenv("DISABLE_RATE_LIMIT", "1")
+    return media_db_path
+
+
+@pytest_asyncio.fixture
+async def media_client(env_with_media_db: Path):
+    """Async test client configured for media fixtures."""
+    from api.main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
 
 
 @pytest_asyncio.fixture

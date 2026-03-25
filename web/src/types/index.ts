@@ -16,6 +16,18 @@ export interface Message {
     role: "user" | "assistant" | "system" | "tool";
     content: string | null;
     create_time: number | null;
+    attachments: Attachment[];
+}
+
+export interface Attachment {
+    type: "image" | "audio" | "file";
+    url: string;
+    filename: string;
+    mime_type: string | null;
+    width: number | null;
+    height: number | null;
+    size_bytes: number | null;
+    found: boolean;
 }
 
 export interface ConversationDetail {
@@ -95,6 +107,7 @@ export interface UserSettings {
     sidebar_open: boolean;
     embedding_model: string;
     items_per_page: number;
+    archive_media_dir?: string | null;
 }
 
 export interface EmbeddingEstimate {

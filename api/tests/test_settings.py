@@ -47,6 +47,9 @@ class TestDefaultSettings:
             assert key in settings
             assert settings[key] == value
 
+    def test_archive_media_dir_default_is_empty_string(self):
+        assert DEFAULT_SETTINGS["archive_media_dir"] == ""
+
 
 # ---------------------------------------------------------------------------
 # Encryption helpers
@@ -96,6 +99,11 @@ class TestSettingsPersistence:
         save_settings({**DEFAULT_SETTINGS, "items_per_page": 25})
         loaded = load_settings()
         assert loaded["items_per_page"] == 25
+
+    def test_save_and_load_archive_media_dir(self):
+        save_settings({**DEFAULT_SETTINGS, "archive_media_dir": "/tmp/archive"})
+        loaded = load_settings()
+        assert loaded["archive_media_dir"] == "/tmp/archive"
 
     def test_save_encrypts_api_key_on_disk(self, tmp_path):
         from api.services.settings_service import get_settings_path

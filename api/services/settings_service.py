@@ -25,6 +25,7 @@ DEFAULT_SETTINGS = {
     "openai_api_key": "",
     "embedding_model": "text-embedding-3-small",
     "items_per_page": 50,
+    "archive_media_dir": "",
 }
 
 # Settings that should be encrypted at rest

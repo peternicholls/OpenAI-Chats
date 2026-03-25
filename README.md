@@ -10,7 +10,7 @@ A CLI tool to import, search, view, and export your ChatGPT conversation archive
 - **View** - Display conversations in readable format
 - **Export** - Export to Markdown, JSON, YAML, HTML, XML, CSV, or Excel
 - **List** - Browse all imported conversations with metadata
-- **Web UI** - Browser-based interface with tagging, favorites, and import via Docker
+- **Web UI** - Browser-based interface with tagging, favorites, import via Docker, and inline media rendering
 
 ## Installation
 
@@ -36,6 +36,13 @@ Download your data from ChatGPT (Settings → Data controls → Export), extract
 chatgpt-archive import /path/to/chatgpt-export/
 ```
 
+For inline images, audio, and file cards in the web UI, point the app at an extracted archive directory too:
+
+```bash
+export CHATGPT_ARCHIVE_DIR=/path/to/chatgpt-export
+chatgpt-archive verify-media
+```
+
 **Expected output:**
 ```
 Importing from /path/to/chatgpt-export/...
@@ -47,6 +54,16 @@ Importing from /path/to/chatgpt-export/...
   Conversations: 1,778
   Messages: 63,493
   Database: ~/.chatgpt-archive/chats.db (45.2 MB)
+  Archive media: ~/.chatgpt-archive/media
+```
+
+### Archive media verification
+
+Use `verify-media` to confirm the configured archive directory is readable and contains the files needed for inline attachments:
+
+```bash
+chatgpt-archive verify-media
+chatgpt-archive verify-media /path/to/chatgpt-export --json
 ```
 
 ### 2. Search conversations

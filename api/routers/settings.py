@@ -23,6 +23,9 @@ class UserSettings(BaseModel):
     items_per_page: int = Field(
         50, description="Number of conversations per page (FR-022)"
     )
+    archive_media_dir: str | None = Field(
+        None, description="Optional path to the extracted archive media directory"
+    )
 
 
 class UserSettingsUpdate(BaseModel):
@@ -34,6 +37,7 @@ class UserSettingsUpdate(BaseModel):
     sidebar_open: bool | None = None
     embedding_model: str | None = None
     items_per_page: int | None = None
+    archive_media_dir: str | None = None
 
 
 @router.get("/api/settings", response_model=UserSettings)

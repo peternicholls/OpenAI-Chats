@@ -67,6 +67,13 @@ class APIClient {
         return this.request(`/api/conversations/${id}`);
     }
 
+    getMediaUrl(path: string): string {
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            return path;
+        }
+        return `${this.baseUrl}${path}`;
+    }
+
     async deleteConversation(id: string): Promise<void> {
         return this.request(`/api/conversations/${id}`, { method: "DELETE" });
     }

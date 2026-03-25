@@ -8,6 +8,7 @@ Documentation for using ChatGPT Archive as a Python library.
 - [Installation](#installation)
 - [Database Module](#database-module)
 - [Importer Module](#importer-module)
+- [Media Helpers](#media-helpers)
 - [Search Module](#search-module)
 - [Embeddings Module](#embeddings-module)
 - [Exporters Module](#exporters-module)
@@ -230,6 +231,28 @@ except Exception as e:
 
 - `InvalidArchiveError`: Raised when archive directory is invalid
 - `InvalidJSONError`: Raised when conversations.json is malformed
+
+---
+
+## Media Helpers
+
+`api.services.media_service` provides the runtime helpers used by the API to resolve inline archive attachments.
+
+### `get_archive_media_dir(settings: dict[str, Any] | None = None) -> Path`
+
+Returns the directory used to resolve inline media files. Resolution order is:
+
+1. `CHATGPT_ARCHIVE_DIR`
+2. persisted `archive_media_dir` setting
+3. `<db parent>/media`
+
+### `persist_archive_media(source_dir: Path, destination_dir: Path | None = None) -> Path`
+
+Copies extracted archive files into the permanent media directory used by the API and web UI.
+
+### `resolve_message_content(content: str | None, conversation_id: str) -> tuple[str | None, list[Attachment]]`
+
+Strips asset pointer dicts from stored message content, replaces them with ordering tokens, and returns resolved runtime `Attachment` objects for the API response.
 
 ---
 

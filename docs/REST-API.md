@@ -102,17 +102,32 @@ Get conversation details with all messages.
       "id": "msg-001",
       "role": "user",
       "content": "Help me build a Flask app",
-      "create_time": 1700000000
+      "create_time": 1700000000,
+      "attachments": []
     },
     {
       "id": "msg-002",
       "role": "assistant",
-      "content": "I'd be happy to help...",
-      "create_time": 1700000001
+      "content": "I'd be happy to help...\n[[ATTACHMENT:0]]",
+      "create_time": 1700000001,
+      "attachments": [
+        {
+          "type": "image",
+          "url": "/api/media/6974cc29-45d8-8327-a6dc-ef1ef0a82f46/file_000000004f48620a9bfb06ccaa684b65",
+          "filename": "sample-image.jpg",
+          "mime_type": "image/jpeg",
+          "width": 640,
+          "height": 480,
+          "size_bytes": 1234,
+          "found": true
+        }
+      ]
     }
   ]
 }
 ```
+
+Messages may include `[[ATTACHMENT:n]]` placeholders in `content` so the frontend can preserve attachment order relative to text. `attachments` is always present and is an empty array for text-only messages.
 
 **Status Codes:**
 - `200`: Success
@@ -335,13 +350,17 @@ Import a ChatGPT export archive.
 
 #### GET /api/import/progress
 
-Server-Sent Events stream for import progress.
+Read the current import progress state.
 
-**Response:** SSE stream with events:
-```
-data: {"import_id": "import-abc123", "status": "processing", "current": 50, "total": 100, "message": "Importing conversations..."}
-
-data: {"import_id": "import-abc123", "status": "completed", "current": 100, "total": 100, "conversations_imported": 50, "messages_imported": 1234}
+**Response:**
+```json
+{
+  "status": "processing",
+  "current": 50,
+  "total": 100,
+  "percent": 50.0,
+  "message": "Importing conversations..."
+}
 ```
 
 **Event Fields:**
@@ -350,6 +369,36 @@ data: {"import_id": "import-abc123", "status": "completed", "current": 100, "tot
 - `total`: Total items
 - `message`: Human-readable status
 - `error`: Error message (when status=failed)
+
+---
+
+### Media
+
+#### GET /api/media/{conv_id}/{file_id}
+
+Serve a conversation-scoped image or audio file referenced by a `sediment://` asset pointer.
+
+**Path Rules:**
+- `conv_id` must be a UUID-like OpenAI conversation ID
+- `file_id` must match `file_<hex>`
+
+**Status Codes:**
+- `200`: Media file returned
+- `400`: Invalid conversation or file identifier
+- `404`: File not found in the configured archive media directory
+
+#### GET /api/media/root/{file_id}
+
+Serve a root-level archive file referenced by a `file-service://` asset pointer.
+
+**Behavior:**
+- Returns the detected MIME type
+- Adds `Content-Disposition: attachment` so browsers can open or download the file with the original archive filename
+
+**Status Codes:**
+- `200`: File returned
+- `400`: Invalid file identifier
+- `404`: File not found
 
 ---
 
@@ -416,14 +465,17 @@ Get current user settings.
 **Response:**
 ```json
 {
-  "openai_api_key_set": true,
+  "openai_api_key": "sk-...",
   "embedding_model": "text-embedding-3-small",
-  "page_size": 50,
-  "theme": "system"
+  "items_per_page": 50,
+  "theme": "system",
+  "sidebar_open": true,
+  "default_export_format": "md",
+  "archive_media_dir": "/path/to/extracted/archive"
 }
 ```
 
-#### PATCH /api/settings
+#### PUT /api/settings
 
 Update user settings.
 
@@ -431,27 +483,16 @@ Update user settings.
 ```json
 {
   "openai_api_key": "sk-...",
-  "page_size": 25
+  "items_per_page": 25,
+  "archive_media_dir": "/path/to/extracted/archive"
 }
 ```
 
-**Note:** API key is encrypted at rest.
+**Note:** API key is encrypted at rest. `archive_media_dir` is optional and overrides the default media location for inline attachments.
 
 **Status Codes:**
 - `200`: Settings updated
 - `400`: Invalid settings value
-
-#### POST /api/settings/test-api-key
-
-Test OpenAI API key validity.
-
-**Response:**
-```json
-{
-  "valid": true,
-  "error": null
-}
-```
 
 ---
 

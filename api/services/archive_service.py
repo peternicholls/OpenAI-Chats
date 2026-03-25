@@ -17,6 +17,7 @@ from fastapi import HTTPException
 
 from chatgpt_archive import db, importer
 from chatgpt_archive import search as search_module
+from api.services import media_service
 
 logger = logging.getLogger(__name__)
 
@@ -264,7 +265,7 @@ def list_conversations(
         conn.close()
 
 
-def get_conversation(conversation_id: str) -> dict | None:
+def get_conversation(conversation_id: str, include_attachments: bool = False) -> dict | None:
     """Get a single conversation with all messages by OpenAI ID."""
     conn = get_connection()
     try:
@@ -280,15 +281,24 @@ def get_conversation(conversation_id: str) -> dict | None:
             ).fetchone()["is_favorite"]
         )
 
-        messages = [
-            {
-                "id": msg["openai_id"],
-                "role": msg["author_role"],
-                "content": msg["content"],
-                "create_time": msg["create_time"],
-            }
-            for msg in messages_rows
-        ]
+        messages = []
+        for msg in messages_rows:
+            content = msg["content"]
+            attachments = []
+            if include_attachments:
+                content, attachments = media_service.resolve_message_content(
+                    msg["content"], row["openai_id"]
+                )
+
+            messages.append(
+                {
+                    "id": msg["openai_id"],
+                    "role": msg["author_role"],
+                    "content": content,
+                    "create_time": msg["create_time"],
+                    "attachments": attachments,
+                }
+            )
 
         return {
             "id": row["openai_id"],
@@ -425,6 +435,8 @@ def import_archive_from_zip(zip_path: str) -> None:
                 db_path=get_db_path(),
                 progress_callback=progress_callback,
             )
+
+            media_service.persist_archive_media(archive_dir)
 
             _import_progress = {
                 "status": "complete",

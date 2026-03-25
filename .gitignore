@@ -56,6 +56,8 @@ env/
 htmlcov/
 *.cover
 .hypothesis/
+*.log
+.env*
 test_phases_1_2.py
 
 # Temporary review files

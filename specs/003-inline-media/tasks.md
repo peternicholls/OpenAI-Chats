@@ -19,10 +19,10 @@
 
 **Purpose**: Align configuration, settings, routing, and fixtures with the approved design before feature work starts.
 
-- [ ] T001 Add `archive_media_dir` support to persisted settings in `api/services/settings_service.py` and `api/routers/settings.py`
-- [ ] T002 [P] Extend settings types and settings UI for archive media directory configuration in `web/src/types/index.ts`, `web/src/services/api.ts`, and `web/src/components/settings/SettingsForm.tsx`
-- [ ] T003 [P] Create media router scaffold in `api/routers/media.py` and register it in `api/main.py`
-- [ ] T004 [P] Add media-capable sample archive fixtures, ZIP fixtures, and helper builders in `api/tests/conftest.py`
+- [X] T001 Add `archive_media_dir` support to persisted settings in `api/services/settings_service.py` and `api/routers/settings.py`
+- [X] T002 [P] Extend settings types and settings UI for archive media directory configuration in `web/src/types/index.ts`, `web/src/services/api.ts`, and `web/src/components/settings/SettingsForm.tsx`
+- [X] T003 [P] Create media router scaffold in `api/routers/media.py` and register it in `api/main.py`
+- [X] T004 [P] Add media-capable sample archive fixtures, ZIP fixtures, and helper builders in `api/tests/conftest.py`
 
 ---
 
@@ -32,14 +32,14 @@
 
 **⚠️ CRITICAL**: No user story work should begin until this phase is complete.
 
-- [ ] T005 Add runtime `Attachment` response models and extend `Message.attachments` in `api/models/responses.py`
-- [ ] T006 [P] Create asset-pointer parsing, archive directory resolution, and media lookup service in `api/services/media_service.py`
-- [ ] T007 [P] Add secure `conv_id` and `file_id` validation plus path traversal protection in `api/middleware/validation.py` and `api/routers/media.py`
-- [ ] T008 Move archive media persistence into shared infrastructure by updating ZIP import flow in `api/services/archive_service.py` and import regression coverage in `api/tests/test_import.py`
-- [ ] T009 Update conversation assembly in `api/services/archive_service.py` to resolve attachments at response time while preserving the text-only fast path
-- [ ] T010 [P] Add CLI support for archive media verification and `CHATGPT_ARCHIVE_DIR` configuration in `chatgpt_archive/cli.py`
-- [ ] T011 [P] Extend frontend attachment contracts and media helpers in `web/src/types/index.ts` and `web/src/services/api.ts`
-- [ ] T012 [P] Add foundational backend coverage for attachment parsing, text stripping, and no-attachment behavior in `api/tests/test_conversations.py` and `api/tests/test_media.py`
+- [X] T005 Add runtime `Attachment` response models and extend `Message.attachments` in `api/models/responses.py`
+- [X] T006 [P] Create asset-pointer parsing, archive directory resolution, and media lookup service in `api/services/media_service.py`
+- [X] T007 [P] Add secure `conv_id` and `file_id` validation plus path traversal protection in `api/middleware/validation.py` and `api/routers/media.py`
+- [X] T008 Move archive media persistence into shared infrastructure by updating ZIP import flow in `api/services/archive_service.py` and import regression coverage in `api/tests/test_import.py`
+- [X] T009 Update conversation assembly in `api/services/archive_service.py` to resolve attachments at response time while preserving the text-only fast path
+- [X] T010 [P] Add CLI support for archive media verification and `CHATGPT_ARCHIVE_DIR` configuration in `chatgpt_archive/cli.py`
+- [X] T011 [P] Extend frontend attachment contracts and media helpers in `web/src/types/index.ts` and `web/src/services/api.ts`
+- [X] T012 [P] Add foundational backend coverage for attachment parsing, text stripping, and no-attachment behavior in `api/tests/test_conversations.py` and `api/tests/test_media.py`
 
 **Checkpoint**: Shared media infrastructure is ready; image, file, and audio stories can proceed independently.
 
@@ -53,13 +53,13 @@
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Implement `GET /api/media/{conv_id}/{file_id}` for conversation-scoped media files in `api/routers/media.py`
-- [ ] T014 [US1] Implement `sediment://` image resolution, MIME detection, dimensions mapping, and missing-file handling in `api/services/media_service.py`
-- [ ] T015 [US1] Attach resolved image metadata to conversation responses in `api/services/archive_service.py` and `api/routers/conversations.py`
-- [ ] T016 [P] [US1] Create inline image rendering with graceful fallback in `web/src/components/conversations/AttachmentImage.tsx`
-- [ ] T017 [US1] Update `web/src/components/conversations/MessageBubble.tsx` to render ordered text-plus-image content without regressing text-only messages
-- [ ] T018 [P] [US1] Add backend tests for conversation-scoped image serving, invalid IDs, and missing images in `api/tests/test_media.py`
-- [ ] T019 [P] [US1] Add frontend component coverage for inline image rendering and image placeholders in `web/__tests__/components/MessageBubble.test.tsx`
+- [X] T013 [US1] Implement `GET /api/media/{conv_id}/{file_id}` for conversation-scoped media files in `api/routers/media.py`
+- [X] T014 [US1] Implement `sediment://` image resolution, MIME detection, dimensions mapping, and missing-file handling in `api/services/media_service.py`
+- [X] T015 [US1] Attach resolved image metadata to conversation responses in `api/services/archive_service.py` and `api/routers/conversations.py`
+- [X] T016 [P] [US1] Create inline image rendering with graceful fallback in `web/src/components/conversations/AttachmentImage.tsx`
+- [X] T017 [US1] Update `web/src/components/conversations/MessageBubble.tsx` to render ordered text-plus-image content without regressing text-only messages
+- [X] T018 [P] [US1] Add backend tests for conversation-scoped image serving, invalid IDs, and missing images in `api/tests/test_media.py`
+- [X] T019 [P] [US1] Add frontend component coverage for inline image rendering and image placeholders in `web/__tests__/components/MessageBubble.test.tsx`
 
 **Checkpoint**: User Story 1 is independently functional and testable.
 
@@ -73,13 +73,13 @@
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Implement `GET /api/media/root/{file_id}` for root-level archive files in `api/routers/media.py`
-- [ ] T021 [US2] Implement `file-service://` resolution, filename extraction, MIME detection, shared-root lookup, and content-disposition behavior in `api/services/media_service.py`
-- [ ] T022 [US2] Extend runtime attachment assembly in `api/services/archive_service.py` to classify non-image assets as file attachments
-- [ ] T023 [P] [US2] Create file attachment card UI with found and missing states in `web/src/components/conversations/AttachmentFile.tsx`
-- [ ] T024 [US2] Update `web/src/components/conversations/MessageBubble.tsx` to render file cards inline with surrounding message content
-- [ ] T025 [P] [US2] Add backend tests for root-level file serving, content-disposition headers, and missing files in `api/tests/test_media.py`
-- [ ] T026 [P] [US2] Add frontend component coverage for file cards, download links, and missing-file indicators in `web/__tests__/components/MessageBubble.test.tsx`
+- [X] T020 [US2] Implement `GET /api/media/root/{file_id}` for root-level archive files in `api/routers/media.py`
+- [X] T021 [US2] Implement `file-service://` resolution, filename extraction, MIME detection, shared-root lookup, and content-disposition behavior in `api/services/media_service.py`
+- [X] T022 [US2] Extend runtime attachment assembly in `api/services/archive_service.py` to classify non-image assets as file attachments
+- [X] T023 [P] [US2] Create file attachment card UI with found and missing states in `web/src/components/conversations/AttachmentFile.tsx`
+- [X] T024 [US2] Update `web/src/components/conversations/MessageBubble.tsx` to render file cards inline with surrounding message content
+- [X] T025 [P] [US2] Add backend tests for root-level file serving, content-disposition headers, and missing files in `api/tests/test_media.py`
+- [X] T026 [P] [US2] Add frontend component coverage for file cards, download links, and missing-file indicators in `web/__tests__/components/MessageBubble.test.tsx`
 
 **Checkpoint**: User Stories 1 and 2 both work independently.
 
@@ -93,12 +93,12 @@
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Extend `sediment://` resolution in `api/services/media_service.py` to detect and classify audio files
-- [ ] T028 [US3] Extend runtime attachment assembly in `api/services/archive_service.py` to return audio metadata alongside text and other attachments
-- [ ] T029 [P] [US3] Create inline audio player with missing-file fallback in `web/src/components/conversations/AttachmentAudio.tsx`
-- [ ] T030 [US3] Update `web/src/components/conversations/MessageBubble.tsx` to render audio attachments inline without breaking image and file layouts
-- [ ] T031 [P] [US3] Add backend tests for audio attachment resolution and conversation-scoped audio serving in `api/tests/test_media.py`
-- [ ] T032 [P] [US3] Add frontend component coverage for inline audio rendering and fallback states in `web/__tests__/components/MessageBubble.test.tsx`
+- [X] T027 [US3] Extend `sediment://` resolution in `api/services/media_service.py` to detect and classify audio files
+- [X] T028 [US3] Extend runtime attachment assembly in `api/services/archive_service.py` to return audio metadata alongside text and other attachments
+- [X] T029 [P] [US3] Create inline audio player with missing-file fallback in `web/src/components/conversations/AttachmentAudio.tsx`
+- [X] T030 [US3] Update `web/src/components/conversations/MessageBubble.tsx` to render audio attachments inline without breaking image and file layouts
+- [X] T031 [P] [US3] Add backend tests for audio attachment resolution and conversation-scoped audio serving in `api/tests/test_media.py`
+- [X] T032 [P] [US3] Add frontend component coverage for inline audio rendering and fallback states in `web/__tests__/components/MessageBubble.test.tsx`
 
 **Checkpoint**: All three user stories are independently functional.
 
@@ -108,15 +108,15 @@
 
 **Purpose**: Close the remaining documentation, mixed-content, settings, and performance gaps before implementation sign-off.
 
-- [ ] T033 [P] Document the media endpoints and `Message.attachments` response contract in `docs/REST-API.md` and `docs/API.md`
-- [ ] T034 [P] Document CLI media verification and archive media directory configuration in `docs/USAGE.md` and `README.md`
-- [ ] T035 [P] Document local and Docker archive media directory setup in `docs/DEPLOYMENT.md` and `docker-compose.yml`
-- [ ] T036 Add regression coverage for mixed text-plus-multiple-attachment ordering in `web/__tests__/components/MessageBubble.test.tsx` and `web/__tests__/e2e/conversation.spec.ts`
-- [ ] T037 Add archive media directory settings and import-persistence regression coverage in `api/tests/test_settings.py`, `api/tests/test_import.py`, and `web/__tests__/services/api.test.ts`
-- [ ] T038 Add performance-oriented validation for text-only conversations and conversations with 10+ attachments in `api/tests/test_conversations.py` and `api/tests/test_media.py`
-- [ ] T039 Run backend validation for `api/tests/test_media.py`, `api/tests/test_conversations.py`, `api/tests/test_import.py`, and `api/tests/test_settings.py`
-- [ ] T040 Run frontend validation for `web/__tests__/components/MessageBubble.test.tsx`, `web/__tests__/services/api.test.ts`, and `web/__tests__/e2e/conversation.spec.ts`
-- [ ] T041 Run the end-to-end quickstart validation from `specs/003-inline-media/quickstart.md` against a real extracted archive
+- [X] T033 [P] Document the media endpoints and `Message.attachments` response contract in `docs/REST-API.md` and `docs/API.md`
+- [X] T034 [P] Document CLI media verification and archive media directory configuration in `docs/USAGE.md` and `README.md`
+- [X] T035 [P] Document local and Docker archive media directory setup in `docs/DEPLOYMENT.md` and `docker-compose.yml`
+- [X] T036 Add regression coverage for mixed text-plus-multiple-attachment ordering in `web/__tests__/components/MessageBubble.test.tsx` and `web/__tests__/e2e/conversation.spec.ts`
+- [X] T037 Add archive media directory settings and import-persistence regression coverage in `api/tests/test_settings.py`, `api/tests/test_import.py`, and `web/__tests__/services/api.test.ts`
+- [X] T038 Add performance-oriented validation for text-only conversations and conversations with 10+ attachments in `api/tests/test_conversations.py` and `api/tests/test_media.py`
+- [X] T039 Run backend validation for `api/tests/test_media.py`, `api/tests/test_conversations.py`, `api/tests/test_import.py`, and `api/tests/test_settings.py`
+- [X] T040 Run frontend validation for `web/__tests__/components/MessageBubble.test.tsx`, `web/__tests__/services/api.test.ts`, and `web/__tests__/e2e/conversation.spec.ts`
+- [X] T041 Run the end-to-end quickstart validation from `specs/003-inline-media/quickstart.md` against a real extracted archive
 
 ---
 
