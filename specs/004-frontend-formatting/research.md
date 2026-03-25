@@ -1,69 +1,98 @@
 # Research: Frontend Formatting
 
-**Phase**: 0 — Resolve technical decisions for formatted conversation rendering  
+**Phase**: 0 — Resolve implementation choices and unknowns  
 **Date**: 2026-03-25
 
-## R-001: Rendering Boundary
+---
 
-**Decision**: Generate ordered render segments in the backend conversation response and let the frontend render those segments.
+## R-001: Where Should Formatting Be Derived?
 
-**Rationale**:
-- The importer stores multimodal message parts as newline-joined Python `repr` strings, so the frontend currently only sees flattened text.
-- The backend already owns attachment resolution and safe parsing of stored asset-pointer payloads.
-- A backend-produced segment list avoids duplicating parsing rules in the browser and keeps all clients consistent.
-
-**Alternatives considered**:
-- Parse everything in the frontend: rejected because it duplicates archive parsing logic and makes browser behavior drift from API behavior.
-- Keep attachment tokens only and add more frontend heuristics: rejected because it does not solve raw structured payload leaks cleanly.
-
-## R-002: Markdown Rendering Stack
-
-**Decision**: Use a safe React markdown renderer with support for the agreed markdown scope, specifically `react-markdown` with `remark-breaks`, and do not enable raw HTML rendering.
+**Decision**: Derive ordered render segments on the backend and expose them in the conversation-detail API response.
 
 **Rationale**:
-- The agreed MVP scope is headings, emphasis, lists, links, blockquotes, inline code, and fenced code blocks.
-- `react-markdown` covers the core markdown rendering path cleanly and safely.
-- `remark-breaks` preserves author-intended line breaks more closely to ChatGPT-style message formatting.
-- Omitting raw HTML support satisfies the security requirement and keeps rendering deterministic.
+- Current message rendering in `web/src/components/conversations/MessageBubble.tsx` only splits on `[[ATTACHMENT:n]]` tokens and otherwise treats all remaining content as plain text.
+- The importer flattens structured `content.parts[]` values into strings, which means raw payload dictionaries already exist in stored message content.
+- `api/services/media_service.py` only strips recognized `asset_pointer` dictionaries; unrecognized structured payloads pass through unchanged.
+- A backend segment builder centralizes the archive-specific parsing rules and gives the frontend a stable ordered structure to render.
+- The API already serves as the integration boundary between archive data and the web UI, so extending the response contract is the least surprising place for this logic.
 
 **Alternatives considered**:
-- Regex-based custom markdown formatting: rejected because it is brittle and hard to extend safely.
-- `dangerouslySetInnerHTML` with server-generated HTML: rejected because it expands the XSS surface and complicates sanitization.
+- Parse everything in the browser from raw `content`: rejected because it duplicates archive parsing rules and pushes transport-format knowledge into the UI.
+- Normalize content during import into new DB fields: rejected because the feature does not require a schema change and archive data must remain the source of truth.
 
-## R-003: Segment Model
+---
 
-**Decision**: Add a `segments` array to each message response while retaining existing `content` and `attachments` for compatibility.
+## R-002: How Should Markdown Be Rendered Safely?
+
+**Decision**: Use `react-markdown` with `remark-breaks` and explicit component overrides for the supported markdown subset.
 
 **Rationale**:
-- `segments` provides an ordered rendering contract without forcing the UI to reinterpret raw strings.
-- Keeping `content` avoids breaking existing consumers abruptly and preserves a readable fallback/debug representation.
-- Attachment segments can reference existing `attachments` by index, avoiding repeated attachment payloads in the response.
+- The supported scope in the spec is limited to headings, emphasis, lists, links, blockquotes, inline code, and fenced code blocks.
+- `react-markdown` is mature, safe by default, and avoids `dangerouslySetInnerHTML`.
+- `remark-breaks` better matches ChatGPT-style line-break behavior for message prose.
+- The frontend already uses React components and Tailwind prose styling, so component overrides can align rendered blocks with the existing message bubble presentation.
+- Unsupported constructs such as tables, raw HTML, and math can intentionally fall back to readable output without trying to fully emulate GitHub Flavored Markdown.
 
 **Alternatives considered**:
-- Replace `content` entirely: rejected because it is a larger compatibility break than this feature needs.
-- Duplicate full attachment data inside each segment: rejected because it creates redundant payloads and synchronization risk.
+- Build an in-house regex formatter: rejected because it is brittle for nested or mixed markdown.
+- Render server-produced HTML: rejected because it expands the sanitization surface and couples API output to exact presentation markup.
 
-## R-004: Structured Payload Fallback Policy
+---
 
-**Decision**: Parse known structured payload lines on the backend, convert recognized asset-related payloads into attachment segments, and preserve unsupported structured payloads as explicit fallback segments.
+## R-003: How Should Structured Payloads That Are Not Attachments Be Shown?
+
+**Decision**: Convert non-user-facing structured payloads into explicit `fallback` segments with a label and readable text body.
 
 **Rationale**:
-- The spec requires avoiding raw transport blobs when a user-facing rendering is available, not silently dropping unknown content.
-- A fallback segment preserves archive fidelity for unsupported cases while preventing broken layout.
-- This keeps malformed or unexpected content visible and readable during migration to richer rendering.
+- The spec requires graceful degradation for unsupported or malformed content rather than blank output or crashes.
+- Some dict-like payloads are transport metadata, tool output wrappers, or malformed asset blocks that should not be rendered as prose.
+- A labeled fallback block gives the user context without leaking a raw transport blob inline with prose.
+- This approach preserves content order and makes future structured segment types additive rather than breaking.
 
 **Alternatives considered**:
-- Drop unknown structured payloads entirely: rejected because it risks data loss in the UI.
-- Always show raw payload text verbatim: rejected because it preserves the current user-facing problem.
+- Drop unknown payloads silently: rejected because it risks hiding information from archived conversations.
+- Leave unknown payloads inline as raw text: rejected because it fails the primary user experience goal of the feature.
 
-## R-005: Scope Boundaries For This Feature
+---
 
-**Decision**: Fully support the clarified markdown scope only; tables, raw HTML, and math-like blocks remain plain readable fallback content in this feature phase.
+## R-004: What Segment Model Preserves Ordering Without Duplicating Data?
+
+**Decision**: Add `segments[]` to each message, with segment kinds `markdown`, `attachment`, and `fallback`, while continuing to return `attachments[]` separately.
 
 **Rationale**:
-- The feature goal is ChatGPT-like readability for the common cases, not full markdown or HTML parity.
-- This keeps the implementation small enough to validate without redesigning the message pipeline again.
-- It aligns with the clarified scope recorded in the feature spec.
+- The existing attachment system already resolves media metadata and URLs cleanly; it should be reused rather than replaced.
+- An attachment segment can reference `attachments[]` by index, which preserves order without duplicating attachment payloads inside every segment.
+- Markdown and fallback segments can carry text directly, allowing the frontend to render each block with an appropriate component.
+- The message can retain `content` for compatibility and debugging during rollout.
 
 **Alternatives considered**:
-- Add full GFM and math support immediately: rejected because it expands scope without being required for the MVP.
+- Put full attachment objects inside segments: rejected because it duplicates response data and creates consistency risks.
+- Continue tokenizing attachment positions inside `content`: rejected because it still leaves markdown and fallback parsing coupled to a raw string.
+
+---
+
+## R-005: What Is the Concrete Test Strategy?
+
+**Decision**: Cover the feature at three levels: backend segment-builder unit tests, frontend renderer unit tests, and Playwright mixed-content conversation tests.
+
+**Rationale**:
+- Backend tests validate that segment derivation preserves order and classifies structured payloads correctly.
+- Frontend tests validate markdown rendering, attachment insertion, and fallback block appearance independent of API wiring.
+- End-to-end tests ensure the conversation view no longer shows raw markdown or raw dict blobs for representative mixed-content messages.
+- The repo already has message bubble unit tests and conversation Playwright coverage, so the new tests can extend existing patterns.
+
+**Alternatives considered**:
+- Rely only on UI tests: rejected because backend parsing behavior is the core risk area.
+- Rely only on backend tests: rejected because markdown presentation and mobile-friendly rendering are frontend concerns.
+
+---
+
+## Summary Table
+
+| Topic | Decision |
+|-------|----------|
+| Formatting boundary | Backend derives ordered render segments |
+| Markdown renderer | `react-markdown` + `remark-breaks` |
+| Unsupported structured payloads | Render labeled fallback blocks |
+| Ordering model | `segments[]` referencing `attachments[]` by index |
+| Verification | pytest + Vitest + Playwright |

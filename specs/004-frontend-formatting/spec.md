@@ -93,10 +93,10 @@ As a user opening older or unusual conversations, I want unsupported or malforme
 - **FR-001a**: The initial supported markdown set MUST include headings, emphasis, lists, links, blockquotes, inline code, and fenced code blocks.
 - **FR-002**: The conversation view MUST preserve the original reading order of prose, attachments, and other structured content parts within each message.
 - **FR-003**: The system MUST avoid displaying raw asset-pointer dictionaries, transport payloads, or similar structured metadata when a user-facing rendering is available.
-- **FR-004**: Users MUST be able to distinguish prose, code, quotes, lists, links, and attachment-related content at a glance.
-- **FR-005**: The system MUST provide readable fallback rendering for unsupported or malformed structured content instead of showing a broken or blank message area.
+- **FR-004**: Users MUST be able to distinguish prose, code, quotes, lists, links, and attachment-related content through semantic rendering and visible styling differences in the conversation view.
+- **FR-005**: The system MUST provide readable fallback rendering for malformed or unsupported markdown and structured content instead of showing a broken or blank message area.
 - **FR-006**: The system MUST preserve text meaning when formatting is applied, including line breaks and code content.
-- **FR-007**: The system MUST render formatted content consistently across desktop and mobile conversation views.
+- **FR-007**: The system MUST render formatted content consistently across desktop and mobile conversation views, including preserved content order, readable code overflow handling, and readable attachment and fallback presentation.
 - **FR-008**: The system MUST keep text-only and plain-message conversations readable without introducing visual regressions.
 - **FR-009**: The system MUST treat already-resolved media attachments from feature 003 as input content to be presented cleanly, not redefined as a new attachment system.
 - **FR-010**: The system MUST avoid executing unsafe embedded content while rendering message formatting.
@@ -122,6 +122,9 @@ As a user opening older or unusual conversations, I want unsupported or malforme
 - **SC-002**: In acceptance fixtures covering structured content payloads, 100% of supported asset-related payloads display as readable UI blocks instead of raw dict or JSON-like text.
 - **SC-003**: Text, attachment blocks, and structured-content fallbacks remain in original order for 100% of mixed-content acceptance scenarios.
 - **SC-004**: Text-only conversations load with no visible formatting regression in the existing conversation validation suite.
+- **SC-005**: In desktop and mobile acceptance viewports, formatted messages, attachment blocks, and fallback blocks remain readable without overlap, clipping, or order changes.
+- **SC-006**: In acceptance fixtures containing generated assistant content and imported historical content with equivalent message structures, 100% of cases produce the same segment types in the same order.
+- **SC-007**: In malicious-content acceptance fixtures containing raw HTML or script-like payloads, 100% of cases render inert readable output or fallback UI without executing embedded content.
 
 ## Assumptions
 
