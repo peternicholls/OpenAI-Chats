@@ -1,6 +1,49 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Conversation View', () => {
+    test('should render markdown segments as formatted transcript content', async ({ page }) => {
+        await page.route('**/api/conversations/conv-formatted-markdown', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    id: 'conv-formatted-markdown',
+                    title: 'Formatted Markdown Conversation',
+                    create_time: 1700000000,
+                    update_time: 1700000100,
+                    model: 'gpt-4',
+                    message_count: 1,
+                    tags: [],
+                    is_favorite: false,
+                    messages: [
+                        {
+                            id: 'msg-markdown-001',
+                            role: 'assistant',
+                            content: '# Release Notes\n\n- Added **formatted** transcript rendering',
+                            create_time: 1700000000,
+                            attachments: [],
+                            segments: [
+                                {
+                                    kind: 'markdown',
+                                    text: '# Release Notes\n\n- Added **formatted** transcript rendering',
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            })
+        })
+
+        await page.goto('/conversation/conv-formatted-markdown')
+        await page.waitForLoadState('networkidle')
+
+        await expect(page.getByRole('heading', { name: 'Release Notes' })).toBeVisible()
+        await expect(page.getByText('Added formatted transcript rendering')).toBeVisible()
+        await expect(page.getByText('# Release Notes')).toHaveCount(0)
+    })
+
     test('should render mixed attachment content in order', async ({ page }) => {
         await page.route('**/api/conversations/conv-inline-media', async (route) => {
             await route.fulfill({

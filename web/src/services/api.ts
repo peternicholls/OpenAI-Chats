@@ -3,6 +3,7 @@
 import type {
     Conversation,
     ConversationDetail,
+    Message,
     PaginatedResponse,
     SearchResult,
     Tag,
@@ -46,6 +47,20 @@ class APIClient {
         return res.json();
     }
 
+    private normalizeMessage(message: Message): Message {
+        return {
+            ...message,
+            segments: message.segments ?? [],
+        };
+    }
+
+    private normalizeConversationDetail(conversation: ConversationDetail): ConversationDetail {
+        return {
+            ...conversation,
+            messages: conversation.messages.map((message) => this.normalizeMessage(message)),
+        };
+    }
+
     // Conversations
     async listConversations(params: {
         sortBy?: string;
@@ -64,7 +79,8 @@ class APIClient {
     }
 
     async getConversation(id: string): Promise<ConversationDetail> {
-        return this.request(`/api/conversations/${id}`);
+        const conversation = await this.request<ConversationDetail>(`/api/conversations/${id}`);
+        return this.normalizeConversationDetail(conversation);
     }
 
     getMediaUrl(path: string): string {

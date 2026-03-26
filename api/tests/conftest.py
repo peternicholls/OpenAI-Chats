@@ -415,6 +415,42 @@ def media_db_path(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def formatted_db_path(tmp_path: Path) -> Path:
+    """Create a database with one markdown-rich conversation."""
+    db_path = tmp_path / "formatted_test.db"
+    conn = db.init_db(db_path)
+
+    cursor = conn.execute(
+        """
+        INSERT INTO conversations (openai_id, title, create_time, update_time)
+        VALUES (?, ?, ?, ?)
+        """,
+        ("conv-formatted-001", "Formatted Conversation", 1702000000.0, 1702000100.0),
+    )
+    conv_db_id = cursor.lastrowid
+
+    message = build_formatted_message(content=build_formatted_message_content())
+    conn.execute(
+        """
+        INSERT INTO messages (conversation_id, openai_id, parent_id, author_role, content, create_time)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            conv_db_id,
+            message["id"],
+            message["parent"],
+            message["message"]["author"]["role"],
+            message["message"]["content"]["parts"][0],
+            message["message"]["create_time"],
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+    return db_path
+
+
+@pytest.fixture
 def env_with_media_db(
     media_db_path: Path,
     sample_archive_dir: Path,
@@ -428,9 +464,31 @@ def env_with_media_db(
     return media_db_path
 
 
+@pytest.fixture
+def env_with_formatted_db(
+    formatted_db_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Path:
+    """Set environment to use the markdown-rich formatted test database."""
+    monkeypatch.setenv("CHATGPT_ARCHIVE_DB", str(formatted_db_path))
+    monkeypatch.setenv("DB_PATH", str(formatted_db_path))
+    monkeypatch.setenv("DISABLE_RATE_LIMIT", "1")
+    return formatted_db_path
+
+
 @pytest_asyncio.fixture
 async def media_client(env_with_media_db: Path):
     """Async test client configured for media fixtures."""
+    from api.main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest_asyncio.fixture
+async def formatted_client(env_with_formatted_db: Path):
+    """Async test client configured for markdown-rich fixtures."""
     from api.main import app
 
     transport = ASGITransport(app=app)

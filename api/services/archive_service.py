@@ -17,7 +17,7 @@ from fastapi import HTTPException
 
 from chatgpt_archive import db, importer
 from chatgpt_archive import search as search_module
-from api.services import media_service
+from api.services import formatting_service, media_service
 
 logger = logging.getLogger(__name__)
 
@@ -289,6 +289,7 @@ def get_conversation(conversation_id: str, include_attachments: bool = False) ->
                 content, attachments = media_service.resolve_message_content(
                     msg["content"], row["openai_id"]
                 )
+            segments = formatting_service.build_render_segments(content, attachments)
 
             messages.append(
                 {
@@ -297,6 +298,7 @@ def get_conversation(conversation_id: str, include_attachments: bool = False) ->
                     "content": content,
                     "create_time": msg["create_time"],
                     "attachments": attachments,
+                    "segments": segments,
                 }
             )
 

@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
-import type { Message } from "@/types";
+import type { Message, RenderSegment } from "@/types";
 import { User, Bot, Terminal } from "lucide-react";
 
 import { AttachmentAudio } from "@/components/conversations/AttachmentAudio";
 import { AttachmentFile } from "@/components/conversations/AttachmentFile";
 import { AttachmentImage } from "@/components/conversations/AttachmentImage";
+import { FallbackBlock } from "@/components/conversations/FallbackBlock";
+import { MarkdownRenderer } from "@/components/conversations/MarkdownRenderer";
 
 const ATTACHMENT_TOKEN_RE = /\[\[ATTACHMENT:(\d+)\]\]/g;
 
@@ -52,7 +54,7 @@ function renderAttachment(message: Message, index: number): ReactNode {
     return <AttachmentFile attachment={attachment} />;
 }
 
-function renderContent(message: Message): ReactNode {
+function renderLegacyContent(message: Message): ReactNode {
     if (!message.content && message.attachments.length === 0) {
         return <span className="italic text-muted-foreground">[No content]</span>;
     }
@@ -104,6 +106,46 @@ function renderContent(message: Message): ReactNode {
             ))}
         </>
     );
+}
+
+function renderSegment(message: Message, segment: RenderSegment, index: number): ReactNode {
+    if (segment.kind === "markdown") {
+        return <MarkdownRenderer key={`segment-markdown-${index}`} text={segment.text} />;
+    }
+
+    if (segment.kind === "attachment") {
+        if (!message.attachments[segment.attachment_index]) {
+            return (
+                <FallbackBlock
+                    key={`segment-missing-attachment-${index}`}
+                    label="Missing attachment"
+                    text={`Attachment index ${segment.attachment_index} is not available in this message.`}
+                />
+            );
+        }
+
+        return (
+            <div key={`segment-attachment-${index}`}>
+                {renderAttachment(message, segment.attachment_index)}
+            </div>
+        );
+    }
+
+    return (
+        <FallbackBlock
+            key={`segment-fallback-${index}`}
+            label={segment.fallback_label}
+            text={segment.text}
+        />
+    );
+}
+
+function renderContent(message: Message): ReactNode {
+    if (message.segments && message.segments.length > 0) {
+        return message.segments.map((segment, index) => renderSegment(message, segment, index));
+    }
+
+    return renderLegacyContent(message);
 }
 
 export function MessageBubble({ message }: { message: Message }) {
