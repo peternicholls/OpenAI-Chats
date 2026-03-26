@@ -52,6 +52,7 @@ env/
 
 # Test files
 .pytest_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 *.cover
@@ -63,6 +64,7 @@ test_phases_1_2.py
 # Temporary review files
 PHASE_1_2_REVIEW.md
 inspect_archive.py
+uv.lock
 
 # Web UI
 web/node_modules/
