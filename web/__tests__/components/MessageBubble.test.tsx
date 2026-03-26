@@ -60,6 +60,27 @@ describe('MessageBubble', () => {
             const bubble = container.firstChild
             expect(bubble).toHaveClass('bg-gray-50')
         })
+
+        it('prefers render segments over raw markdown content', () => {
+            const segmentedMessage: Message = {
+                ...mockAssistantMessage,
+                content: '# Release Notes\n\n- Added **formatted** transcript rendering',
+                segments: [
+                    {
+                        kind: 'markdown',
+                        text: '# Release Notes\n\n- Added **formatted** transcript rendering',
+                        attachment_index: null,
+                        fallback_label: null,
+                    },
+                ],
+            }
+
+            render(<MessageBubble message={segmentedMessage} />)
+
+            expect(screen.getByRole('heading', { name: 'Release Notes' })).toBeInTheDocument()
+            expect(screen.getByText('Added formatted transcript rendering')).toBeInTheDocument()
+            expect(screen.queryByText('# Release Notes')).not.toBeInTheDocument()
+        })
     })
 
     describe('system message', () => {

@@ -1,5 +1,7 @@
 """Pydantic response models for the ChatGPT Archive API."""
 
+from typing import Annotated, Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -16,6 +18,41 @@ class ConversationSummary(BaseModel):
     is_favorite: bool = Field(False, description="Whether conversation is favorited")
 
 
+class MarkdownSegment(BaseModel):
+    """Markdown or plain-text prose segment."""
+
+    kind: Literal["markdown"]
+    text: str = Field(..., min_length=1, description="Markdown source text for display")
+    attachment_index: None = Field(None, description="Unused for markdown segments")
+    fallback_label: None = Field(None, description="Unused for markdown segments")
+
+
+class AttachmentSegment(BaseModel):
+    """Attachment reference segment."""
+
+    kind: Literal["attachment"]
+    text: None = Field(None, description="Unused for attachment segments")
+    attachment_index: int = Field(
+        ..., ge=0, description="Index into the message attachments array"
+    )
+    fallback_label: None = Field(None, description="Unused for attachment segments")
+
+
+class FallbackSegment(BaseModel):
+    """Readable fallback for unsupported structured content."""
+
+    kind: Literal["fallback"]
+    text: str = Field(..., min_length=1, description="Readable fallback body")
+    attachment_index: None = Field(None, description="Unused for fallback segments")
+    fallback_label: str = Field(..., min_length=1, description="Short fallback label")
+
+
+RenderSegment = Annotated[
+    MarkdownSegment | AttachmentSegment | FallbackSegment,
+    Field(discriminator="kind"),
+]
+
+
 class Message(BaseModel):
     """Single message in a conversation."""
 
@@ -25,6 +62,9 @@ class Message(BaseModel):
     create_time: float | None = Field(None, description="Unix timestamp")
     attachments: list["Attachment"] = Field(
         default_factory=list, description="Resolved media attachments"
+    )
+    segments: list[RenderSegment] = Field(
+        default_factory=list, description="Ordered renderable content segments"
     )
 
 

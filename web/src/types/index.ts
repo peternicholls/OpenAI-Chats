@@ -17,7 +17,31 @@ export interface Message {
     content: string | null;
     create_time: number | null;
     attachments: Attachment[];
+    segments?: RenderSegment[];
 }
+
+export interface MarkdownSegment {
+    kind: "markdown";
+    text: string;
+    attachment_index: null;
+    fallback_label: null;
+}
+
+export interface AttachmentSegment {
+    kind: "attachment";
+    text: null;
+    attachment_index: number;
+    fallback_label: null;
+}
+
+export interface FallbackSegment {
+    kind: "fallback";
+    text: string;
+    attachment_index: null;
+    fallback_label: string;
+}
+
+export type RenderSegment = MarkdownSegment | AttachmentSegment | FallbackSegment;
 
 export interface Attachment {
     type: "image" | "audio" | "file";

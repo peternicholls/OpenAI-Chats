@@ -29,6 +29,8 @@ describe('API Client', () => {
             expect(result).toHaveProperty('messages')
             expect(Array.isArray(result.messages)).toBe(true)
             expect(result.messages[1]).toHaveProperty('attachments')
+            expect(result.messages[1]).toHaveProperty('segments')
+            expect(result.messages[1].segments).toHaveLength(2)
         })
 
         it('should throw error for non-existent conversation', async () => {

@@ -124,6 +124,18 @@ class TestGetConversation:
         assert "thank you" in second["content"]
         assert first["attachments"] == []
         assert second["attachments"] == []
+        assert first["segments"] == [{
+            "kind": "markdown",
+            "text": "Hello, how are you?",
+            "attachment_index": None,
+            "fallback_label": None,
+        }]
+        assert second["segments"] == [{
+            "kind": "markdown",
+            "text": "I'm doing well, thank you for asking!",
+            "attachment_index": None,
+            "fallback_label": None,
+        }]
 
     @pytest.mark.asyncio
     async def test_get_conversation_not_found(self, client):
@@ -153,6 +165,31 @@ class TestGetConversation:
         assert message["content"].startswith("Lead text")
         assert "[[ATTACHMENT:0]]" in message["content"]
         assert len(message["attachments"]) == 3
+        assert [segment["kind"] for segment in message["segments"]] == [
+            "markdown",
+            "attachment",
+            "markdown",
+            "attachment",
+            "attachment",
+        ]
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_includes_segments_for_attachment_only_messages(
+        self, media_client
+    ):
+        response = await media_client.get(
+            "/api/conversations/68e06336-bce4-8330-b350-f7a33ffac85e"
+        )
+
+        assert response.status_code == 200
+        message = response.json()["messages"][1]
+        assert message["content"].startswith("[[ATTACHMENT:0]]")
+        assert message["segments"][0] == {
+            "kind": "attachment",
+            "text": None,
+            "attachment_index": 0,
+            "fallback_label": None,
+        }
 
     @pytest.mark.asyncio
     async def test_get_conversation_text_only_messages_keep_empty_attachments(self, client):
@@ -161,6 +198,29 @@ class TestGetConversation:
         assert response.status_code == 200
         for message in response.json()["messages"]:
             assert message["attachments"] == []
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_returns_markdown_segments_for_formatted_messages(
+        self, formatted_client
+    ):
+        response = await formatted_client.get("/api/conversations/conv-formatted-001")
+
+        assert response.status_code == 200
+        message = response.json()["messages"][0]
+        assert message["segments"] == [
+            {
+                "kind": "markdown",
+                "text": (
+                    "# Release Notes\n\n"
+                    "- Added **formatted** transcript rendering\n"
+                    "- Supports [links](https://example.com) and `inline code`\n\n"
+                    "> Blockquotes remain readable\n\n"
+                    "```python\nprint('hello')\n```"
+                ),
+                "attachment_index": None,
+                "fallback_label": None,
+            }
+        ]
 
 
 class TestListConversationsEmpty:
