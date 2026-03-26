@@ -30,9 +30,9 @@
 
 **⚠️ CRITICAL**: No user story work should begin until this phase is complete.
 
-- [ ] T003 Extend message response models with `RenderSegment` support in `api/models/responses.py` and `web/src/types/index.ts`
+- [ ] T003 Extend message response models with `RenderSegment` support in `api/models/responses.py` and `web/src/types/index.ts`; fix the contract YAML ambiguity in `specs/004-frontend-formatting/contracts/message-rendering-api.yaml` where `text` is `nullable: true` across all segment kinds — `markdown` and `fallback` segments require non-empty text, `attachment` segments require null text; tighten using per-kind `oneOf` sub-schemas or at minimum `minLength: 1` constraints with updated descriptions
 - [ ] T004 [P] Create the segment-building service scaffold and parsing helpers in `api/services/formatting_service.py`
-- [ ] T005 [P] Create reusable markdown and fallback rendering primitives in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/components/conversations/FallbackBlock.tsx`
+- [ ] T005 [P] Create reusable markdown and fallback rendering primitives in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/components/conversations/FallbackBlock.tsx`; configure `react-markdown` without `rehype-raw` from creation — safe rendering is a creation-time requirement, not a Phase 6 retrofit
 - [ ] T006 Wire segment generation into conversation detail responses in `api/services/archive_service.py` and `api/routers/conversations.py`
 - [ ] T007 [P] Extend API client handling for segmented messages in `web/src/services/api.ts` and `web/__tests__/services/api.test.ts`
 - [ ] T008 [P] Add foundational contract coverage for segmented conversation responses in `api/tests/test_conversations.py` and `api/tests/test_formatting_service.py`
@@ -50,7 +50,7 @@
 ### Tests for User Story 1
 
 - [ ] T009 [P] [US1] Add backend contract and parser tests for supported markdown segmentation in `api/tests/test_conversations.py` and `api/tests/test_formatting_service.py`
-- [ ] T010 [P] [US1] Add frontend markdown renderer tests for headings, lists, links, inline code, and fenced code blocks in `web/__tests__/components/MarkdownRenderer.test.tsx`
+- [ ] T010 [P] [US1] Add frontend renderer and fallback component tests for headings, lists, links, inline code, fenced code blocks, and fallback label rendering in `web/__tests__/components/MarkdownRenderer.test.tsx` and `web/__tests__/components/FallbackBlock.test.tsx`
 
 ### Implementation for User Story 1
 
@@ -80,7 +80,7 @@
 - [ ] T018 [US2] Classify recognized structured asset payloads into attachment segments and transport-only rendering decisions in `api/services/formatting_service.py`
 - [ ] T019 [US2] Align segment attachment indexes with the existing attachment extraction flow in `api/services/formatting_service.py` and `api/services/media_service.py`
 - [ ] T020 [US2] Render attachment and structured fallback blocks inline with prose in `web/src/components/conversations/MessageBubble.tsx` and `web/src/components/conversations/FallbackBlock.tsx`
-- [ ] T021 [US2] Add structured payload fixtures for API and browser tests in `api/tests/conftest.py` and `web/__tests__/mocks/handlers.ts`
+- [ ] T021 [US2] Extend the T002 fixtures with structured payload samples (asset-pointer dicts, mixed prose-plus-payload messages) for API and browser tests in `api/tests/conftest.py` and `web/__tests__/mocks/handlers.ts`
 - [ ] T022 [US2] Verify the segmented message response remains aligned with the API contract in `api/tests/test_conversations.py` and `web/__tests__/services/api.test.ts`
 
 **Checkpoint**: User Stories 1 and 2 work independently, and supported structured payloads no longer leak into the transcript as raw dict-like text.
@@ -117,11 +117,11 @@
 - [ ] T030 [P] Document developer validation and troubleshooting for formatted transcripts in `README.md` and `docs/TROUBLESHOOTING.md`
 - [ ] T031 Add regression coverage for the text-only fast path and mixed-content order preservation in `api/tests/test_conversations.py` and `web/__tests__/components/MessageBubble.test.tsx`
 - [ ] T032 Run backend validation for `api/tests/test_conversations.py` and `api/tests/test_formatting_service.py`
-- [ ] T033 Run frontend validation for `web/__tests__/services/api.test.ts`, `web/__tests__/components/MessageBubble.test.tsx`, `web/__tests__/components/MarkdownRenderer.test.tsx`, and `web/__tests__/e2e/conversation.spec.ts`
+- [ ] T033 Run frontend validation for `web/__tests__/services/api.test.ts`, `web/__tests__/components/MessageBubble.test.tsx`, `web/__tests__/components/MarkdownRenderer.test.tsx`, `web/__tests__/components/FallbackBlock.test.tsx`, and `web/__tests__/e2e/conversation.spec.ts`
 - [ ] T034 Run the end-to-end quickstart validation from `specs/004-frontend-formatting/quickstart.md` against representative markdown and structured payload conversations
 - [ ] T035 Add source-parity fixtures and regression coverage for generated assistant content versus imported historical content in `api/tests/conftest.py`, `api/tests/test_formatting_service.py`, and `web/__tests__/mocks/handlers.ts`
 - [ ] T036 Add backend and frontend tests for raw HTML and unsafe embedded-content payload handling in `api/tests/test_formatting_service.py`, `api/tests/test_conversations.py`, and `web/__tests__/components/MarkdownRenderer.test.tsx`
-- [ ] T037 Configure markdown rendering and fallback handling so raw HTML and unsafe embedded content render as inert text or fallback blocks in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/components/conversations/FallbackBlock.tsx`
+- [ ] T037 Verify and harden markdown rendering: confirm `MarkdownRenderer.tsx` was built without `rehype-raw`, audit that no unsafe plugins have been introduced, and verify `FallbackBlock.tsx` escapes all user-supplied label text — T005 owns the initial safe configuration; this task is a hardening audit in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/components/conversations/FallbackBlock.tsx`
 - [ ] T038 Extend browser coverage with explicit desktop and mobile viewport assertions for formatted transcript readability in `web/__tests__/e2e/conversation.spec.ts`
 - [ ] T039 Update validation coverage and quickstart checks to include source-parity and unsafe-content scenarios in `web/__tests__/services/api.test.ts` and `specs/004-frontend-formatting/quickstart.md`
 
@@ -175,7 +175,7 @@ Phase 6 (Polish & Cross-Cutting Concerns)
 
 ```text
 Task: T009 Add backend contract and parser tests in api/tests/test_conversations.py and api/tests/test_formatting_service.py
-Task: T010 Add frontend markdown renderer tests in web/__tests__/components/MarkdownRenderer.test.tsx
+Task: T010 Add frontend renderer and fallback component tests in web/__tests__/components/MarkdownRenderer.test.tsx and web/__tests__/components/FallbackBlock.test.tsx
 ```
 
 ## Parallel Example: User Story 2

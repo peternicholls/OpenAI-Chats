@@ -2,6 +2,114 @@ import { http, HttpResponse } from 'msw'
 
 const API_URL = 'http://localhost:8000'
 
+export const markdownMessageText = [
+    '# Release Notes',
+    '',
+    '- Added **formatted** transcript rendering',
+    '- Supports [links](https://example.com) and `inline code`',
+    '',
+    '> Blockquotes remain readable',
+    '',
+    '```python',
+    "print('hello')",
+    '```',
+].join('\n')
+
+export function buildRenderSegment(
+    kind: 'markdown' | 'attachment' | 'fallback',
+    overrides: Partial<{
+        text: string | null
+        attachment_index: number | null
+        fallback_label: string | null
+    }> = {}
+) {
+    return {
+        kind,
+        text: kind === 'attachment' ? null : '',
+        attachment_index: kind === 'attachment' ? 0 : null,
+        fallback_label: kind === 'fallback' ? 'Unsupported content' : null,
+        ...overrides,
+    }
+}
+
+export function buildMockMessage(
+    overrides: Partial<{
+        id: string
+        role: 'user' | 'assistant' | 'system' | 'tool'
+        content: string | null
+        create_time: number | null
+        attachments: Array<{
+            type: 'image' | 'audio' | 'file'
+            url: string
+            filename: string
+            mime_type: string | null
+            width: number | null
+            height: number | null
+            size_bytes: number | null
+            found: boolean
+        }>
+        segments: Array<ReturnType<typeof buildRenderSegment>>
+    }> = {}
+) {
+    return {
+        id: 'msg-001',
+        role: 'assistant' as const,
+        content: markdownMessageText,
+        create_time: 1700000000,
+        attachments: [],
+        segments: [
+            buildRenderSegment('markdown', { text: markdownMessageText, attachment_index: null }),
+        ],
+        ...overrides,
+    }
+}
+
+export const mixedStructuredPayloadMessage = buildMockMessage({
+    id: 'msg-mixed-structured',
+    content: [
+        'Intro paragraph before structured content.',
+        '[[ATTACHMENT:0]]',
+        'Follow-up prose after image.',
+        '[[ATTACHMENT:1]]',
+        'Trailing prose after audio.',
+        "{'content_type': 'unsupported_widget', 'metadata': {'label': 'chart', 'version': 1}}",
+    ].join('\n'),
+    attachments: [
+        {
+            type: 'image',
+            url: '/api/media/conv-001-test/file_001',
+            filename: 'sample.png',
+            mime_type: 'image/png',
+            width: 512,
+            height: 512,
+            size_bytes: 2048,
+            found: true,
+        },
+        {
+            type: 'audio',
+            url: '/api/media/conv-001-test/audio_001',
+            filename: 'sample.wav',
+            mime_type: 'audio/wav',
+            width: null,
+            height: null,
+            size_bytes: 1024,
+            found: true,
+        },
+    ],
+    segments: [
+        buildRenderSegment('markdown', { text: 'Intro paragraph before structured content.', attachment_index: null }),
+        buildRenderSegment('attachment', { text: null, attachment_index: 0 }),
+        buildRenderSegment('markdown', { text: 'Follow-up prose after image.', attachment_index: null }),
+        buildRenderSegment('attachment', { text: null, attachment_index: 1 }),
+        buildRenderSegment('markdown', { text: 'Trailing prose after audio.', attachment_index: null }),
+        buildRenderSegment('fallback', {
+            text: "{'content_type': 'unsupported_widget', 'metadata': {'label': 'chart', 'version': 1}}",
+            fallback_label: 'Unsupported content',
+            attachment_index: null,
+        }),
+    ],
+})
+
 // Sample test data
 export const mockConversations = [
     {
@@ -59,6 +167,13 @@ export const mockConversationDetail = {
                     size_bytes: 2048,
                     found: true,
                 },
+            ],
+            segments: [
+                buildRenderSegment('markdown', {
+                    text: 'I am doing well, thank you for asking!',
+                    attachment_index: null,
+                }),
+                buildRenderSegment('attachment', { text: null, attachment_index: 0 }),
             ],
         },
     ],

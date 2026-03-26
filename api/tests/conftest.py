@@ -16,6 +16,92 @@ MEDIA_IMAGE_FILE_ID = "file_000000004f48620a9bfb06ccaa684b65"
 MEDIA_AUDIO_FILE_ID = "file_00000000aaaaaaaaaaaaaaaaaaaaaaaa"
 MEDIA_ROOT_FILE_ID = "file-4Vdhhbs7F48DZfbPKwk1PN"
 
+MARKDOWN_MESSAGE_TEXT = (
+    "# Release Notes\n\n"
+    "- Added **formatted** transcript rendering\n"
+    "- Supports [links](https://example.com) and `inline code`\n\n"
+    "> Blockquotes remain readable\n\n"
+    "```python\nprint('hello')\n```"
+)
+
+
+def build_asset_pointer_payload(
+    *,
+    content_type: str = "image_asset_pointer",
+    asset_pointer: str,
+    size_bytes: int | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    metadata: dict | None = None,
+) -> str:
+    payload = {
+        "content_type": content_type,
+        "asset_pointer": asset_pointer,
+    }
+    if size_bytes is not None:
+        payload["size_bytes"] = size_bytes
+    if width is not None:
+        payload["width"] = width
+    if height is not None:
+        payload["height"] = height
+    if metadata:
+        payload["metadata"] = metadata
+    return str(payload)
+
+
+def build_formatted_message_content() -> str:
+    return MARKDOWN_MESSAGE_TEXT
+
+
+def build_mixed_content_message_content() -> str:
+    return "\n".join(
+        [
+            "Intro paragraph before structured content.",
+            build_asset_pointer_payload(
+                asset_pointer=f"sediment://{MEDIA_IMAGE_FILE_ID}",
+                size_bytes=1234,
+                width=640,
+                height=480,
+            ),
+            "Follow-up prose after image.",
+            build_asset_pointer_payload(
+                content_type="audio_asset_pointer",
+                asset_pointer=f"sediment://{MEDIA_AUDIO_FILE_ID}",
+                size_bytes=4096,
+            ),
+            "Trailing prose after audio.",
+            str(
+                {
+                    "content_type": "unsupported_widget",
+                    "metadata": {"label": "chart", "version": 1},
+                }
+            ),
+        ]
+    )
+
+
+def build_formatted_message(
+    *,
+    message_id: str = "msg-formatted-001",
+    role: str = "assistant",
+    content: str | None = None,
+    create_time: float = 1702000000.0,
+) -> dict:
+    return {
+        "id": message_id,
+        "message": {
+            "id": message_id,
+            "author": {"role": role},
+            "content": {
+                "parts": [content or build_formatted_message_content()],
+                "content_type": "text",
+            },
+            "create_time": create_time,
+        },
+        "parent": None,
+        "children": [],
+    }
+
 
 @pytest.fixture(scope="session")
 def sample_conversations_data() -> list[dict]:
