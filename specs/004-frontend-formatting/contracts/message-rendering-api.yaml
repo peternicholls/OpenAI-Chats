@@ -13,22 +13,59 @@ components:
       type: object
       required:
         - kind
-      properties:
-        kind:
-          type: string
-          enum: [markdown, attachment, fallback]
-        text:
-          type: string
-          nullable: true
-          description: Markdown or fallback text content for display.
-        attachment_index:
-          type: integer
-          nullable: true
-          description: Index into Message.attachments when kind = attachment.
-        fallback_label:
-          type: string
-          nullable: true
-          description: Short explanation for unsupported structured content.
+      discriminator:
+        propertyName: kind
+      oneOf:
+        - title: MarkdownSegment
+          description: A prose or markdown block. text is required and non-empty; attachment_index and fallback_label must be absent.
+          type: object
+          required: [kind, text]
+          properties:
+            kind:
+              type: string
+              enum: [markdown]
+            text:
+              type: string
+              minLength: 1
+              description: Markdown source text for the block.
+            attachment_index:
+              not: {}
+            fallback_label:
+              not: {}
+        - title: AttachmentSegment
+          description: An inline attachment reference. attachment_index is required; text and fallback_label must be absent.
+          type: object
+          required: [kind, attachment_index]
+          properties:
+            kind:
+              type: string
+              enum: [attachment]
+            attachment_index:
+              type: integer
+              minimum: 0
+              description: Zero-based index into Message.attachments.
+            text:
+              not: {}
+            fallback_label:
+              not: {}
+        - title: FallbackSegment
+          description: A labeled fallback block for unsupported or malformed content. Both text and fallback_label are required and non-empty; attachment_index must be absent.
+          type: object
+          required: [kind, text, fallback_label]
+          properties:
+            kind:
+              type: string
+              enum: [fallback]
+            text:
+              type: string
+              minLength: 1
+              description: Readable representation of the unsupported content.
+            fallback_label:
+              type: string
+              minLength: 1
+              description: Short explanation shown as a block label, e.g. "Unsupported content".
+            attachment_index:
+              not: {}
 
     Attachment:
       type: object
