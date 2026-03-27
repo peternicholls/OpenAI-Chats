@@ -129,6 +129,24 @@ Get conversation details with all messages.
 
 Messages may include `[[ATTACHMENT:n]]` placeholders in `content` so the frontend can preserve attachment order relative to text. `attachments` is always present and is an empty array for text-only messages.
 
+Messages may also include a `segments` array for formatted transcript rendering. This is the preferred rendering contract for the web UI.
+
+```json
+{
+  "kind": "markdown",
+  "text": "# Heading\n\nSome prose",
+  "attachment_index": null,
+  "fallback_label": null
+}
+```
+
+Segment rules:
+- `markdown`: non-empty `text`; `attachment_index` and `fallback_label` are null
+- `attachment`: `attachment_index` points into `attachments[]`; `text` and `fallback_label` are null
+- `fallback`: non-empty `text` plus a non-empty `fallback_label` for unsupported or malformed content
+
+Raw HTML and unsafe embedded payloads are returned as inert text inside markdown or fallback segments; the frontend does not execute them.
+
 **Status Codes:**
 - `200`: Success
 - `404`: Conversation not found

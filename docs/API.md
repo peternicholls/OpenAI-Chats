@@ -254,6 +254,16 @@ Copies extracted archive files into the permanent media directory used by the AP
 
 Strips asset pointer dicts from stored message content, replaces them with ordering tokens, and returns resolved runtime `Attachment` objects for the API response.
 
+### `api.services.formatting_service.build_render_segments(content: str | None, attachments: list[Attachment]) -> list[RenderSegment]`
+
+Builds the ordered render contract consumed by the web transcript UI. The function emits:
+
+- `markdown` segments for prose and markdown blocks
+- `attachment` segments referencing `attachments[]` by index
+- `fallback` segments for unsupported or malformed structured payloads
+
+The segment list preserves reading order and treats raw HTML as inert text.
+
 ---
 
 ## Search Module

@@ -44,6 +44,142 @@ test.describe('Conversation View', () => {
         await expect(page.getByText('# Release Notes')).toHaveCount(0)
     })
 
+    test('should replace structured asset payloads with attachment and fallback blocks', async ({ page }) => {
+        await page.route('**/api/conversations/conv-structured-inline', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    id: 'conv-structured-inline',
+                    title: 'Structured Payload Conversation',
+                    create_time: 1700000000,
+                    update_time: 1700000100,
+                    model: 'gpt-4',
+                    message_count: 1,
+                    tags: [],
+                    is_favorite: false,
+                    messages: [
+                        {
+                            id: 'msg-structured-001',
+                            role: 'assistant',
+                            content: [
+                                'Intro paragraph before structured content.',
+                                "{'content_type': 'image_asset_pointer', 'asset_pointer': 'sediment://file_001'}",
+                                'Follow-up prose after image.',
+                            ].join('\n'),
+                            create_time: 1700000000,
+                            attachments: [
+                                {
+                                    type: 'image',
+                                    url: '/api/media/conv-structured-inline/file_001',
+                                    filename: 'inline-image.png',
+                                    mime_type: 'image/png',
+                                    width: 400,
+                                    height: 300,
+                                    size_bytes: 1024,
+                                    found: true,
+                                },
+                            ],
+                            segments: [
+                                {
+                                    kind: 'markdown',
+                                    text: 'Intro paragraph before structured content.',
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                                {
+                                    kind: 'attachment',
+                                    text: null,
+                                    attachment_index: 0,
+                                    fallback_label: null,
+                                },
+                                {
+                                    kind: 'markdown',
+                                    text: 'Follow-up prose after image.',
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                                {
+                                    kind: 'fallback',
+                                    text: "{'content_type': 'unsupported_widget', 'metadata': {'label': 'chart'}}",
+                                    attachment_index: null,
+                                    fallback_label: 'Unsupported content',
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            })
+        })
+
+        await page.goto('/conversation/conv-structured-inline')
+        await page.waitForLoadState('networkidle')
+
+        await expect(page.getByText('Intro paragraph before structured content.')).toBeVisible()
+        await expect(page.getByTestId('attachment-image')).toBeVisible()
+        await expect(page.getByText('Follow-up prose after image.')).toBeVisible()
+        await expect(page.getByText('Unsupported content')).toBeVisible()
+        await expect(page.getByText(/image_asset_pointer/)).toHaveCount(0)
+    })
+
+    test('should degrade gracefully for invalid attachment segments and malformed markdown', async ({ page }) => {
+        await page.route('**/api/conversations/conv-fallbacks', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    id: 'conv-fallbacks',
+                    title: 'Fallback Conversation',
+                    create_time: 1700000000,
+                    update_time: 1700000100,
+                    model: 'gpt-4',
+                    message_count: 2,
+                    tags: [],
+                    is_favorite: false,
+                    messages: [
+                        {
+                            id: 'msg-fallback-001',
+                            role: 'assistant',
+                            content: '# Heading\n```python\nprint("unterminated fence")',
+                            create_time: 1700000000,
+                            attachments: [],
+                            segments: [
+                                {
+                                    kind: 'markdown',
+                                    text: '# Heading\n```python\nprint("unterminated fence")',
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                            ],
+                        },
+                        {
+                            id: 'msg-fallback-002',
+                            role: 'assistant',
+                            content: null,
+                            create_time: 1700000200,
+                            attachments: [],
+                            segments: [
+                                {
+                                    kind: 'attachment',
+                                    text: null,
+                                    attachment_index: 3,
+                                    fallback_label: null,
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            })
+        })
+
+        await page.goto('/conversation/conv-fallbacks')
+        await page.waitForLoadState('networkidle')
+
+        await expect(page.getByRole('heading', { name: 'Heading' })).toBeVisible()
+        await expect(page.getByText(/unterminated fence/)).toBeVisible()
+        await expect(page.getByText('Missing attachment')).toBeVisible()
+    })
+
     test('should render mixed attachment content in order', async ({ page }) => {
         await page.route('**/api/conversations/conv-inline-media', async (route) => {
             await route.fulfill({
