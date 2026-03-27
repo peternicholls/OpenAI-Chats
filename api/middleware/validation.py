@@ -10,7 +10,7 @@ SQL_INJECTION_PATTERN = re.compile(
 XSS_PATTERN = re.compile(r"(<script|javascript:|on\w+=)", re.IGNORECASE)
 UUID_LIKE_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 SEDIMENT_FILE_ID_PATTERN = re.compile(r"^file_[0-9a-f]+$")
-ROOT_FILE_ID_PATTERN = re.compile(r"^file-[A-Za-z0-9]+$")
+ROOT_FILE_ID_PATTERN = re.compile(r"^file[-_][A-Za-z0-9]+$")
 
 
 def sanitize_string(value: str, max_length: int = 1000) -> str:

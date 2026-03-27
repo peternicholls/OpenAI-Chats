@@ -130,6 +130,14 @@ def _build_attachment(parsed: dict[str, Any], conversation_id: str) -> Attachmen
         file_id = pointer.removeprefix("sediment://")
         path = resolve_conversation_media_path(conversation_id, file_id)
         url = f"/api/media/{conversation_id}/{file_id}"
+
+        # Fallback: many sediment:// files live at the archive root rather
+        # than inside a conversation subdirectory.
+        if path is None:
+            path = resolve_root_media_path(file_id)
+            if path is not None:
+                url = f"/api/media/root/{file_id}"
+
         attachment_type = "file"
         filename = file_id
         mime_type = None
@@ -155,13 +163,18 @@ def _build_attachment(parsed: dict[str, Any], conversation_id: str) -> Attachmen
     file_id = pointer.removeprefix("file-service://")
     path = resolve_root_media_path(file_id)
     url = f"/api/media/root/{file_id}"
+    attachment_type = "file"
     filename = file_id
     mime_type = None
     if path is not None:
         mime_type, filename = get_media_metadata(path)
+        if mime_type and mime_type.startswith("image/"):
+            attachment_type = "image"
+        elif mime_type and mime_type.startswith("audio/"):
+            attachment_type = "audio"
 
     return Attachment(
-        type="file",
+        type=attachment_type,
         url=url,
         filename=filename,
         mime_type=mime_type,
@@ -201,8 +214,17 @@ def _find_first_prefix_match(directory: Path, prefix: str) -> Path | None:
     if not directory.exists() or not directory.is_dir():
         return None
 
+    # Strip trailing "-" for the contains-match used on hash-prefixed filenames
+    bare_id = prefix.rstrip("-")
+
     for entry in sorted(directory.iterdir(), key=lambda item: item.name):
-        if entry.is_file() and entry.name.startswith(prefix):
+        if not entry.is_file():
+            continue
+        # Standard match: filename starts with the file ID prefix
+        if entry.name.startswith(prefix):
+            return entry.resolve()
+        # Hash-prefixed match: files like {hash}#{file_id}#{page}.ext
+        if f"#{bare_id}#" in entry.name:
             return entry.resolve()
     return None
 
