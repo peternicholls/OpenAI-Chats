@@ -11,6 +11,7 @@ A CLI tool to import, search, view, and export your ChatGPT conversation archive
 - **Export** - Export to Markdown, JSON, YAML, HTML, XML, CSV, or Excel
 - **List** - Browse all imported conversations with metadata
 - **Web UI** - Browser-based interface with tagging, favorites, import via Docker, and inline media rendering
+- **Formatted Transcript Rendering** - Markdown, inline attachment placement, and readable fallback blocks for structured payloads
 
 ## Installation
 
@@ -42,6 +43,8 @@ For inline images, audio, and file cards in the web UI, point the app at an extr
 export CHATGPT_ARCHIVE_DIR=/path/to/chatgpt-export
 chatgpt-archive verify-media
 ```
+
+The web conversation view now prefers ordered message `segments` from the API so markdown, attachments, and unsupported structured content render as a readable transcript instead of raw markdown markers or asset-pointer blobs.
 
 **Expected output:**
 ```

@@ -65,3 +65,72 @@ def test_build_render_segments_leaves_code_fences_as_markdown() -> None:
     assert len(segments) == 1
     assert segments[0].kind == "markdown"
     assert "unsupported_widget" in segments[0].text
+
+
+def test_build_render_segments_preserves_prose_attachment_fallback_order() -> None:
+    content = "\n".join(
+        [
+            "Intro paragraph before structured content.",
+            "[[ATTACHMENT:0]]",
+            "Follow-up prose after image.",
+            "[[ATTACHMENT:1]]",
+            "Trailing prose after audio.",
+            "{'content_type': 'unsupported_widget', 'metadata': {'label': 'chart'}}",
+        ]
+    )
+
+    segments = formatting_service.build_render_segments(
+        content,
+        [build_attachment(0), build_attachment(1)],
+    )
+
+    assert [segment.kind for segment in segments] == [
+        "markdown",
+        "attachment",
+        "markdown",
+        "attachment",
+        "markdown",
+        "fallback",
+    ]
+    assert segments[-1].fallback_label == "Unsupported content"
+
+
+def test_build_render_segments_keeps_malformed_markdown_readable() -> None:
+    content = "# Heading\n```python\nprint('unterminated fence')"
+
+    segments = formatting_service.build_render_segments(content, [])
+
+    assert len(segments) == 1
+    assert segments[0].kind == "markdown"
+    assert "unterminated fence" in segments[0].text
+
+
+def test_build_render_segments_marks_malformed_attachment_payloads() -> None:
+    content = "{'content_type': 'image_asset_pointer', 'asset_pointer': 'invalid://missing'}"
+
+    segments = formatting_service.build_render_segments(content, [])
+
+    assert len(segments) == 1
+    assert segments[0].kind == "fallback"
+    assert segments[0].fallback_label == "Malformed attachment payload"
+
+
+def test_build_render_segments_match_for_equivalent_generated_and_imported_content() -> None:
+    content = build_formatted_message_content()
+
+    generated_segments = formatting_service.build_render_segments(content, [])
+    imported_segments = formatting_service.build_render_segments(content, [])
+
+    assert [segment.model_dump() for segment in generated_segments] == [
+        segment.model_dump() for segment in imported_segments
+    ]
+
+
+def test_build_render_segments_keep_raw_html_as_inert_markdown() -> None:
+    content = "<script>alert('x')</script>\n<div>safe?</div>"
+
+    segments = formatting_service.build_render_segments(content, [])
+
+    assert len(segments) == 1
+    assert segments[0].kind == "markdown"
+    assert "<script>alert('x')</script>" in segments[0].text

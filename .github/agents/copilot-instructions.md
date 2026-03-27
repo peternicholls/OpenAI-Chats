@@ -111,4 +111,8 @@ source .venv/bin/activate && pytest api/tests/ -v && cd web && npm test
 pytest api/tests/ --cov=api --cov-report=term-missing
 cd web && npm test -- --coverage
 ```
+
+### Agent Skills 
+Pick the relevant agent skill file from the `.github/agents/` directory for the task at hand. Each file contains specific instructions, tools, and handoffs for different agent roles (e.g., MCP Builder, Paid Media Auditor, Studio Operations). Use the appropriate agent to ensure optimal performance and task execution.
+
 <!-- MANUAL ADDITIONS END -->

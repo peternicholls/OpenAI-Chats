@@ -78,7 +78,11 @@ describe('MessageBubble', () => {
             render(<MessageBubble message={segmentedMessage} />)
 
             expect(screen.getByRole('heading', { name: 'Release Notes' })).toBeInTheDocument()
-            expect(screen.getByText('Added formatted transcript rendering')).toBeInTheDocument()
+            expect(
+                screen.getByText((_, element) =>
+                    element?.textContent === 'Added formatted transcript rendering'
+                )
+            ).toBeInTheDocument()
             expect(screen.queryByText('# Release Notes')).not.toBeInTheDocument()
         })
     })
@@ -268,6 +272,83 @@ describe('MessageBubble', () => {
             })
 
             expect(blocks).toEqual(['Intro', 'image', 'Between', 'file', 'Outro', 'audio'])
+        })
+
+        it('renders structured attachment and fallback segments without showing raw asset payloads', () => {
+            const message: Message = {
+                ...mockAssistantMessage,
+                content: [
+                    'Intro paragraph before structured content.',
+                    "{'content_type': 'image_asset_pointer', 'asset_pointer': 'sediment://file_001'}",
+                    'Follow-up prose after image.',
+                ].join('\n'),
+                attachments: [
+                    {
+                        type: 'image',
+                        url: '/api/media/conv/image_1',
+                        filename: 'image.png',
+                        mime_type: 'image/png',
+                        width: 400,
+                        height: 300,
+                        size_bytes: 1000,
+                        found: true,
+                    },
+                ],
+                segments: [
+                    {
+                        kind: 'markdown',
+                        text: 'Intro paragraph before structured content.',
+                        attachment_index: null,
+                        fallback_label: null,
+                    },
+                    {
+                        kind: 'attachment',
+                        text: null,
+                        attachment_index: 0,
+                        fallback_label: null,
+                    },
+                    {
+                        kind: 'markdown',
+                        text: 'Follow-up prose after image.',
+                        attachment_index: null,
+                        fallback_label: null,
+                    },
+                    {
+                        kind: 'fallback',
+                        text: "{'content_type': 'unsupported_widget', 'metadata': {'label': 'chart'}}",
+                        attachment_index: null,
+                        fallback_label: 'Unsupported content',
+                    },
+                ],
+            }
+
+            render(<MessageBubble message={message} />)
+
+            expect(screen.getByTestId('attachment-image')).toBeInTheDocument()
+            expect(screen.getByTestId('fallback-block')).toBeInTheDocument()
+            expect(screen.queryByText(/image_asset_pointer/)).not.toBeInTheDocument()
+            expect(screen.getByText('Unsupported content')).toBeInTheDocument()
+        })
+
+        it('shows a fallback block when an attachment segment points to a missing index', () => {
+            const message: Message = {
+                ...mockAssistantMessage,
+                content: null,
+                attachments: [],
+                segments: [
+                    {
+                        kind: 'attachment',
+                        text: null,
+                        attachment_index: 9,
+                        fallback_label: null,
+                    },
+                ],
+            }
+
+            render(<MessageBubble message={message} />)
+
+            expect(screen.getByText('Missing attachment')).toBeInTheDocument()
+            expect(screen.getByText(/Attachment index 9 is not available/)).toBeInTheDocument()
         })
     })
 })

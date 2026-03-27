@@ -520,6 +520,32 @@ chatgpt-archive search "query" --hybrid
 
 ## Web UI Issues
 
+### Raw markdown markers or dict-like payloads still appear in the transcript
+
+**Problem**: The conversation page shows raw markdown syntax, `asset_pointer` dictionaries, or unformatted mixed-content blocks.
+
+**Solutions**:
+1. Inspect the conversation API response and confirm messages include `segments`.
+2. Confirm the frontend is rendering `segments` before falling back to legacy `content` parsing.
+3. Run the focused validation suites:
+   ```bash
+   cd /Users/peternicholls/Dev/OpenAI-Chats
+   PYTHONPATH=/Users/peternicholls/Dev/OpenAI-Chats uv run --with pytest --with pytest-asyncio --with httpx --with fastapi --with pydantic --with python-multipart --with cryptography python -m pytest api/tests/test_conversations.py api/tests/test_formatting_service.py
+
+   cd /Users/peternicholls/Dev/OpenAI-Chats/web
+   npm run test -- __tests__/services/api.test.ts __tests__/components/MessageBubble.test.tsx __tests__/components/MarkdownRenderer.test.tsx __tests__/components/FallbackBlock.test.tsx
+   npm run test:e2e -- --project=chrome __tests__/e2e/conversation.spec.ts
+   ```
+
+### Unsafe HTML appears to execute in the transcript
+
+**Problem**: HTML-like content appears to render as live DOM instead of inert text.
+
+**Solutions**:
+1. Verify `MarkdownRenderer` does not use `rehype-raw` or any equivalent raw HTML plugin.
+2. Run the markdown renderer tests to confirm script-like content stays inert text.
+3. If you changed the markdown pipeline, re-audit the renderer before shipping.
+
 ### Port 3000 or 8000 already in use
 
 **Problem**: When starting the web UI, you get "address already in use" error.

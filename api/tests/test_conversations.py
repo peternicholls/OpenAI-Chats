@@ -192,6 +192,25 @@ class TestGetConversation:
         }
 
     @pytest.mark.asyncio
+    async def test_get_conversation_replaces_recognized_asset_payloads_with_segments_only(
+        self, media_client
+    ):
+        response = await media_client.get(
+            "/api/conversations/68e06336-bce4-8330-b350-f7a33ffac85e"
+        )
+
+        assert response.status_code == 200
+        message = response.json()["messages"][0]
+        assert "asset_pointer" not in message["content"]
+        assert [segment["kind"] for segment in message["segments"]] == [
+            "markdown",
+            "attachment",
+            "markdown",
+            "attachment",
+            "attachment",
+        ]
+
+    @pytest.mark.asyncio
     async def test_get_conversation_text_only_messages_keep_empty_attachments(self, client):
         response = await client.get("/api/conversations/conv-002-test")
 
@@ -218,6 +237,26 @@ class TestGetConversation:
                     "```python\nprint('hello')\n```"
                 ),
                 "attachment_index": None,
+                "fallback_label": None,
+            }
+        ]
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_keeps_missing_attachment_as_attachment_segment(
+        self, media_client
+    ):
+        response = await media_client.get(
+            "/api/conversations/68e06336-bce4-8330-b350-f7a33ffac85e"
+        )
+
+        assert response.status_code == 200
+        message = response.json()["messages"][1]
+        assert message["attachments"][0]["found"] is False
+        assert message["segments"] == [
+            {
+                "kind": "attachment",
+                "text": None,
+                "attachment_index": 0,
                 "fallback_label": None,
             }
         ]

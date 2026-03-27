@@ -179,6 +179,18 @@ export const mockConversationDetail = {
     ],
 }
 
+export const mockStructuredConversationDetail = {
+    id: 'conv-structured-test',
+    title: 'Structured Conversation',
+    create_time: 1700000000,
+    update_time: 1700001000,
+    message_count: 1,
+    model: 'gpt-4',
+    tags: [],
+    is_favorite: false,
+    messages: [mixedStructuredPayloadMessage],
+}
+
 export const mockSearchResults = [
     {
         conversation_id: 'conv-001-test',
@@ -221,6 +233,9 @@ export const handlers = [
         const { id } = params
         if (id === 'conv-001-test') {
             return HttpResponse.json(mockConversationDetail)
+        }
+        if (id === 'conv-structured-test') {
+            return HttpResponse.json(mockStructuredConversationDetail)
         }
         return HttpResponse.json({ detail: 'Not found' }, { status: 404 })
     }),

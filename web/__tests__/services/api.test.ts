@@ -36,6 +36,26 @@ describe('API Client', () => {
         it('should throw error for non-existent conversation', async () => {
             await expect(api.getConversation('non-existent-id')).rejects.toThrow()
         })
+
+        it('should preserve structured attachment and fallback segments', async () => {
+            const result = await api.getConversation('conv-structured-test')
+
+            expect(result.messages[0].segments).toEqual([
+                expect.objectContaining({ kind: 'markdown', text: 'Intro paragraph before structured content.' }),
+                expect.objectContaining({ kind: 'attachment', attachment_index: 0 }),
+                expect.objectContaining({ kind: 'markdown', text: 'Follow-up prose after image.' }),
+                expect.objectContaining({ kind: 'attachment', attachment_index: 1 }),
+                expect.objectContaining({ kind: 'markdown', text: 'Trailing prose after audio.' }),
+                expect.objectContaining({ kind: 'fallback', fallback_label: 'Unsupported content' }),
+            ])
+        })
+
+        it('should keep segment parity for equivalent message structures', async () => {
+            const first = await api.getConversation('conv-001-test')
+            const second = await api.getConversation('conv-001-test')
+
+            expect(first.messages[1].segments).toEqual(second.messages[1].segments)
+        })
     })
 
     describe('search', () => {
