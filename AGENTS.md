@@ -29,6 +29,15 @@ Use `pytest` for Python and API coverage, `vitest` with Testing Library for fron
 
 Recent history follows conventional prefixes such as `fix:`, `fix(ci):`, `fix(review):`, and `style:`. Keep commits focused and imperative, for example `fix(api): handle missing export metadata`. PRs should summarize user-facing impact, list test coverage, link related issues/specs, and include screenshots for visible UI changes.
 
+## Shared Standards
+
+Canonical engineering standards and skills live in `.ai/` and are surfaced to Copilot via `.github/instructions/`. Read the relevant file before generating or modifying code in that domain:
+
+- **AI collaboration policy** — `.ai/standards/ai-collaboration.md`
+- **CSS conventions** — `.ai/standards/css-guidelines.md`
+- **Frontend UI patterns** — `.ai/patterns/frontend-ui.md`
+- **Modern CSS skill** — `.ai/skills/modern-css/SKILL.md`
+
 ## Agent-Specific Notes
 
 Keep reusable AI guidance in `.ai/` and reference it from `.codex/skills/` or `.github/agents/` instead of duplicating instructions across tool-specific files.
