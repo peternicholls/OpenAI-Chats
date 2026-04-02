@@ -11,12 +11,13 @@ The canonical shared AI guidance for this repository lives in:
 - `.ai/standards/ai-collaboration.md`
 - `.ai/standards/css-guidelines.md`
 - `.ai/patterns/frontend-ui.md`
+- `.ai/skills/modern-css/SKILL.md`
 
 When working on CSS, UI, prompts, or agent-facing guidance:
 
 - Prefer shared standards in `.ai/...` over duplicating instructions here.
+- Canonical skill definitions live in `.ai/skills/...`; `.codex/skills/...` contains thin Codex-specific entry points.
 - Keep GitHub-specific framing in `.github/...`.
-- Keep Codex skills in `.codex/skills/...`.
 
 ## Active Technologies
 

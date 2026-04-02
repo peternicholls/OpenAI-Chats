@@ -4,9 +4,10 @@ This document defines how shared AI guidance should be organized across Codex an
 
 ## Source Of Truth
 
-- Codex skills live in `.codex/skills/...`.
+- Canonical skill definitions live in `.ai/skills/...`.
+- Codex-specific skill entry points (thin wrappers) live in `.codex/skills/...`.
 - GitHub Copilot and GitHub-side agent instructions live in `.github/...`.
-- Shared standards and reusable guidance live in `.ai/...`.
+- Shared standards and reusable guidance live in `.ai/standards/...` and `.ai/patterns/...`.
 
 ## Directory Responsibilities
 
@@ -14,11 +15,11 @@ This document defines how shared AI guidance should be organized across Codex an
 
 Use this for:
 
-- Skill trigger conditions
-- Codex-specific workflows
-- Short instructions on when to load shared guidance
+- Codex-specific skill trigger conditions
+- Thin entry points that load from `.ai/skills/...`
+- Codex-exclusive reference material
 
-Do not use this for long reusable engineering standards that may also be needed by other tools.
+Do not duplicate skill content that lives in `.ai/skills/...`. Point at it instead.
 
 ### `.github`
 
@@ -34,8 +35,9 @@ Keep these files concise and point them at canonical shared guidance in `.ai/...
 
 Use this for:
 
-- Engineering standards
-- UI and architecture patterns
+- Engineering standards (`standards/`)
+- UI and architecture patterns (`patterns/`)
+- Canonical skill definitions (`skills/`)
 - Review criteria
 - Shared glossaries and terminology
 
@@ -43,6 +45,7 @@ Use this for:
 
 - Do not duplicate the same long-form guidance across `.codex`, `.github`, and `.ai`.
 - When the same rules apply to multiple tools, store them once in `.ai/...`.
+- Canonical skill definitions go in `.ai/skills/`; tool-specific entry points go in `.codex/skills/` or `.github/instructions/`.
 - When a tool needs extra constraints, add only the delta in that tool's native file.
 
 ## Writing Style
