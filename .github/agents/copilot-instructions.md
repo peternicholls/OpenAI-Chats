@@ -2,6 +2,22 @@
 
 Auto-generated from all feature plans. Last updated: 2026-02-16
 
+## Shared AI Guidance
+
+The canonical shared AI guidance for this repository lives in:
+
+- `.github/agents/shared-ai-guidance.md`
+- `.ai/README.md`
+- `.ai/standards/ai-collaboration.md`
+- `.ai/standards/css-guidelines.md`
+- `.ai/patterns/frontend-ui.md`
+
+When working on CSS, UI, prompts, or agent-facing guidance:
+
+- Prefer shared standards in `.ai/...` over duplicating instructions here.
+- Keep GitHub-specific framing in `.github/...`.
+- Keep Codex skills in `.codex/skills/...`.
+
 ## Active Technologies
 
 ### Backend (Python)
