@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint 004 Frontend Formatting: Archival/Documentary Mood Board (Gemini)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&family=Chivo:wght@300;400;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: oklch(0.98 0.01 75);
+            --bg-alt: oklch(0.95 0.01 75);
+            --bg-code: oklch(0.18 0.02 250);
+
+            --ink-primary: oklch(0.22 0.01 250);
+            --ink-secondary: oklch(0.45 0.01 250);
+            --accent: oklch(0.40 0.06 250);
+            --accent-error: oklch(0.50 0.15 25);
+            --border-subtle: oklch(0.90 0.01 75);
+
+            --font-prose: 'Newsreader', serif;
+            --font-ui: 'Chivo', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+
+            --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
+            --space-sm: clamp(0.75rem, 1vw, 1rem);
+            --space-md: clamp(1.25rem, 2vw, 1.5rem);
+            --space-lg: clamp(2rem, 4vw, 3rem);
+            --space-xl: clamp(3rem, 6vw, 5rem);
+
+            --text-xs: 0.8rem;
+            --text-sm: 0.9rem;
+            --text-base: clamp(1.05rem, 1vw + 0.9rem, 1.15rem);
+            --text-lg: clamp(1.25rem, 1.5vw + 1rem, 1.5rem);
+            --text-xl: clamp(1.5rem, 2.5vw + 1rem, 2rem);
+
+            --max-prose-width: 65ch;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--ink-primary);
+            font-family: var(--font-prose);
+            font-size: var(--text-base);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        * {
+            box-sizing: border-box;
+            border-color: var(--border-subtle);
+        }
+
+        .moodboard-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-xl);
+            padding: var(--space-lg);
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        @media (min-width: 1024px) {
+            .moodboard-container {
+                grid-template-columns: 250px 1fr;
+            }
+        }
+
+        .annotation-sidebar {
+            position: sticky;
+            top: var(--space-lg);
+            height: fit-content;
+            font-family: var(--font-ui);
+            padding-right: var(--space-md);
+        }
+
+        .annotation-title {
+            font-size: var(--text-sm);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--ink-primary);
+            margin-bottom: var(--space-md);
+            padding-bottom: var(--space-xs);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .annotation-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: var(--text-sm);
+            line-height: 1.5;
+            color: var(--ink-secondary);
+        }
+
+        .annotation-list li {
+            margin-bottom: var(--space-md);
+            position: relative;
+            padding-left: 1.5em;
+        }
+
+        .annotation-list li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            opacity: 0.7;
+        }
+
+        .components-showcase {
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+        }
+
+        .component-section {
+            position: relative;
+            margin-bottom: var(--space-xl);
+        }
+
+        .component-meta {
+            font-family: var(--font-ui);
+            font-size: var(--text-xs);
+            color: var(--ink-secondary);
+            margin-bottom: var(--space-sm);
+            display: block;
+        }
+
+        .editorial-date {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-md);
+            margin: var(--space-xl) 0;
+            font-family: var(--font-ui);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: var(--text-xs);
+            color: var(--ink-secondary);
+        }
+
+        .editorial-date::before,
+        .editorial-date::after {
+            content: "";
+            display: block;
+            width: 3rem;
+            height: 1px;
+            background-color: var(--border-subtle);
+        }
+
+        .message-row {
+            margin-bottom: var(--space-lg);
+            position: relative;
+        }
+
+        .message-author {
+            font-family: var(--font-ui);
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            margin-bottom: var(--space-xs);
+        }
+
+        .message-author.user {
+            color: var(--ink-primary);
+        }
+
+        .message-author.assistant {
+            color: var(--accent);
+        }
+
+        .message-content {
+            max-width: var(--max-prose-width);
+        }
+
+        .message-row.user .message-content {
+            font-size: var(--text-lg);
+            line-height: 1.4;
+            font-weight: 300;
+            letter-spacing: -0.01em;
+            color: var(--ink-primary);
+            padding-left: 1em;
+            border-left: 2px solid var(--border-subtle);
+        }
+
+        .message-row.assistant .message-content {
+            font-size: var(--text-base);
+            color: var(--ink-primary);
+        }
+
+        .message-content p {
+            margin: 0 0 1.25em 0;
+        }
+
+        .message-content h1,
+        .message-content h2,
+        .message-content h3 {
+            font-family: var(--font-ui);
+            margin: 2em 0 1em 0;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--ink-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .message-content h3 {
+            font-size: var(--text-lg);
+        }
+
+        .message-content pre {
+            background-color: var(--bg-code);
+            color: var(--bg-color);
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            line-height: 1.5;
+            padding: var(--space-md);
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5em 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .message-content code {
+            font-family: var(--font-mono);
+            background-color: var(--bg-alt);
+            padding: 0.2em 0.4em;
+            font-size: 0.85em;
+            border-radius: 3px;
+            color: var(--ink-primary);
+        }
+
+        .message-content pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .math-block {
+            display: block;
+            text-align: center;
+            margin: 1.5em 0;
+            font-size: 1.1em;
+        }
+
+        .thinking-block {
+            font-family: var(--font-ui);
+            font-size: var(--text-sm);
+            margin: 0 0 var(--space-md) 0;
+            border-left: 2px solid var(--accent);
+            padding-left: var(--space-md);
+        }
+
+        .thinking-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            color: var(--accent);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .thinking-body {
+            padding-top: var(--space-xs);
+            color: var(--ink-secondary);
+            max-width: 55ch;
+            line-height: 1.5;
+        }
+
+        .attachment-thumb {
+            display: block;
+            width: 100%;
+            max-width: 320px;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--border-subtle);
+            margin: 1em 0;
+            cursor: zoom-in;
+            opacity: 0.85;
+            transition: opacity 0.3s ease;
+        }
+
+        .attachment-thumb:hover {
+            opacity: 1;
+        }
+
+        .fallback-block {
+            font-family: var(--font-mono);
+            font-size: var(--text-xs);
+            color: var(--accent-error);
+            border: 1px solid var(--accent-error);
+            border-radius: 4px;
+            padding: var(--space-sm) var(--space-md);
+            display: inline-block;
+            margin: 1em 0;
+        }
+
+        .annotate-point {
+            position: absolute;
+            background: var(--bg-color);
+            color: var(--ink-secondary);
+            border: 1px solid var(--border-subtle);
+            font-family: var(--font-mono);
+            width: 1.8rem;
+            height: 1.8rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            left: -3.5rem;
+            top: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="moodboard-container">
+        <aside class="annotation-sidebar">
+            <h2 class="annotation-title">Archival & Documentary Look</h2>
+            <ul class="annotation-list">
+                <li><strong>Context-Driven:</strong> As an archive viewer, the focus pivots to an academic, timeless
+                    documentary feel. Legibility is the highest priority.</li>
+                <li><strong>Typography:</strong> <code>Newsreader</code> (serif) for dense markdown prose maximizes
+                    eye-tracking. <code>Chivo</code> offers clean UI labels, and <code>Fira Code</code> ensures
+                    technical precision.</li>
+                <li><strong>Line Length:</strong> Strict <code>65ch</code> width limits on assistant responses prevent
+                    eye fatigue.</li>
+                <li><strong>Role Hierarchy:</strong> The User prompt acts as a chapter or section intro: larger,
+                    lighter-weight serif. The Assistant response acts as the structured academic body.</li>
+                <li><strong>Minimal UI Noise:</strong> "Thinking" blocks resemble scholarly marginalia or footnotes
+                    instead of heavy accordions. Status and date labels mimic journal styling.</li>
+            </ul>
+        </aside>
+
+        <main class="components-showcase">
+            <div class="component-section">
+                <div class="annotate-point">1</div>
+                <span class="component-meta">T005b / DateSeparator.tsx</span>
+                <div class="editorial-date">15 January 2026</div>
+            </div>
+
+            <div class="component-section">
+                <div class="annotate-point">2</div>
+                <span class="component-meta">T013 / MessageBubble.tsx (User Turn)</span>
+                <div class="message-row user">
+                    <div class="message-author user">User Query</div>
+                    <div class="message-content">
+                        Can you analyze this system architecture and explain the mathematics behind the theoretical
+                        cache hit ratio probability distribution?
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <div class="annotate-point">3</div>
+                <span class="component-meta">T005a / ThinkingBlock.tsx</span>
+                <div class="message-row assistant">
+                    <div class="message-author assistant">Assistant</div>
+                    <div class="message-content">
+                        <div class="thinking-block">
+                            <div class="thinking-header">[+] Reasoning Operations</div>
+                            <div class="thinking-body">
+                                Searched web for "distributed CDN caching invalidation strategies"<br>
+                                Evaluated standard L1/L2 layouts against Zipfian probability.<br>
+                                <em>Detailed content not available in this export format</em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <div class="annotate-point">4</div>
+                <span class="component-meta">T014 / MarkdownRenderer.tsx (Math & Code)</span>
+                <div class="message-row assistant">
+                    <div class="message-content">
+                        <p>Based on the provided parameters, the primary bottleneck will naturally occur at the
+                            centralized API gateway before hitting the workers.</p>
+
+                        <h3>Zipfian Hit Ratio</h3>
+                        <p>For the probability of a cache hit given a Zipf-like distribution of requests, the
+                            distribution is calculated as follows:</p>
+
+                        <div class="math-block">
+                            p(H) = \frac{\sum (1 / i^\alpha)}{\sum (1 / n^\alpha)}
+                        </div>
+
+                        <p>Here is how you might approximate this distribution via code:</p>
+
+                        <pre><code>def calculate_hit_ratio(cache_size: int, total_items: int, alpha: float = 1.0) -> float:
+    """Calculates the theoretical hit ratio using a Zipfian distribution."""
+    denominator = sum(1.0 / (i ** alpha) for i in range(1, total_items + 1))
+    numerator = sum(1.0 / (i ** alpha) for i in range(1, cache_size + 1))
+    
+    return numerator / denominator</code></pre>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="component-section">
+                <div class="annotate-point">5</div>
+                <span class="component-meta">T005c & T005 / Media & Fallback</span>
+                <div class="message-row assistant">
+                    <div class="message-content">
+                        <p>Below is the revised architectural diagram layout generated by the analysis, along with an
+                            interactive metadata block.</p>
+
+                        <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=400&q=80"
+                            alt="Architecture Thumbnail" class="attachment-thumb">
+
+                        <div class="fallback-block">
+                            [Unsupported Payload Data: interactive_model_viewer]
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
