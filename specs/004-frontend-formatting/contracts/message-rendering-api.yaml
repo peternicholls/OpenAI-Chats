@@ -66,6 +66,27 @@ components:
               description: Short explanation shown as a block label, e.g. "Unsupported content".
             attachment_index:
               not: {}
+        - title: ThinkingSegment
+          description: A collapsible indicator representing one or more consecutive internal AI processing turns (reasoning, web search, or both) within a single response exchange. Actual content is not available in the archive export. Rendered as a collapsed pill by default; expandable to show an availability disclosure.
+          type: object
+          required: [kind, activity_type]
+          properties:
+            kind:
+              type: string
+              enum: [thinking]
+            activity_type:
+              type: string
+              enum: [reasoning, search, both]
+              description: >
+                "reasoning" — only assistant `thoughts`/`reasoning_recap` nodes were present.
+                "search" — only tool-dispatch `code` and `web.run` tool nodes were present.
+                "both" — a mix of reasoning and search nodes were present in the exchange.
+            text:
+              not: {}
+            fallback_label:
+              not: {}
+            attachment_index:
+              not: {}
 
     Attachment:
       type: object

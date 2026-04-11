@@ -5,3 +5,6 @@
 On erdosproblems this is listed as <strong>Problem #397</strong>. citeturn2view0turn1view0</p>
 
 
+here is an example of some kind of special character that is rendered usually with the word 'cite'
+
+we need to find out, from our ground truth, what is supposed to be shown, or research how these get handled. then implement the solution.
