@@ -2,7 +2,7 @@
 
 This is the authoritative repository-wide Copilot instruction file for OpenAI-Chats.
 
-Use `.github/agents/` for specialized agent handoffs and workflow-specific guidance, but keep this file as the main source of truth for shared repo context, architecture, conventions, and commands.
+Start here first for any task in this repository. Use `.github/agents/` only when the task clearly maps to a specialized workflow or agent handoff; do not default to Speckit or other workflow-specific instructions for ordinary implementation work.
 
 ## Tech Stack
 
@@ -51,6 +51,7 @@ cd web && npm ci
 cd web && npm run lint
 cd web && npx tsc --noEmit
 cd web && npm run test
+# Single frontend test file (Vitest): pass the path directly after `--`
 cd web && npm run test -- __tests__/services/api.test.ts
 cd web && npm run test:coverage
 cd web && npm run build
@@ -81,6 +82,7 @@ docker compose up -d
 - Preserve the boundary between internal DB IDs and public OpenAI IDs. API and frontend contracts use OpenAI conversation/message IDs; SQLite integer IDs stay internal.
 - When changing conversation rendering, update the whole `segments` pipeline together: backend formatter, Pydantic response models, frontend TypeScript types, API client normalization, and transcript tests.
 - In the frontend, use the shared API client and React Query hooks/query keys instead of ad hoc `fetch` calls.
+- Chronicle meaningful progress, decisions, and discoveries with `/chronicle` during multi-step work so future sessions can recover context more reliably.
 - Follow existing style tools rather than inventing local formatting rules: Black and Ruff for Python, ESLint and Prettier-compatible formatting for TypeScript and React.
 - Type hints are expected on public Python functions. React code should use functional components, with server components by default and `'use client'` only where interactivity requires it.
 - Tests are layered:
@@ -89,6 +91,12 @@ docker compose up -d
   - `web/__tests__/` contains Vitest tests, MSW mocks, and Playwright specs under `web/__tests__/e2e`
 - The repo often works in sprint branches that line up with a matching `specs/NNN-*` directory. Use the current branch and matching spec folder as context when they exist, but do not assume every task must follow or update the Specify/Speckit workflow.
 - `.github/agents/` contains specialized agent instructions. Use the relevant file there when a task explicitly maps to a specialized workflow, but do not default to those files for ordinary implementation work.
+
+## Task kickoff
+
+- At the start of sprint or feature work, check the current branch name and look for a matching `specs/NNN-*` directory.
+- Treat matching sprint/spec artifacts as important context for requirements, scope, and terminology, but not as a mandatory workflow unless the user explicitly asks for that process.
+- Start from this file first, then pull in a relevant `.github/agents/` instruction file only if the task clearly belongs to that specialized workflow.
 
 ## Current Feature Context
 
