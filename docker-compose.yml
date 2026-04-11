@@ -2,7 +2,7 @@
 # Run with: docker compose up -d
 # Access at: http://localhost (port 80 via nginx)
 #
-# For configuration options, see docs/DEPLOYMENT.md
+# For configuration options, see docs/user-guide/web-ui.md
 
 services:
   # Reverse proxy (nginx)

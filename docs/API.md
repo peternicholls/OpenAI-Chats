@@ -756,6 +756,6 @@ if __name__ == '__main__':
 ## See Also
 
 - [README.md](../README.md) - Quick start and overview
-- [USAGE.md](USAGE.md) - CLI command reference
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Development guide
+- [CLI Reference](user-guide/usage.md) - CLI command reference
+- [Contributing](../CONTRIBUTING.md) - Development guide
 - [Database Schema](../specs/001-archive-search-export/data-model.md) - Full schema documentation

@@ -93,9 +93,8 @@ OpenAI-Chats/
 │       ├── plan.md          # Technical design
 │       ├── data-model.md    # Database schema
 │       └── contracts/       # API contracts
-├── docs/                     # User documentation
-│   ├── USAGE.md             # Command reference
-│   ├── TROUBLESHOOTING.md   # Common issues
+├── docs/                     # User and API documentation
+│   ├── user-guide/          # End-user guides
 │   └── API.md               # Programmatic usage
 ├── pyproject.toml            # Package configuration
 ├── README.md                 # Project overview
@@ -495,7 +494,7 @@ For a new feature:
 - [ ] Implement core logic (e.g., `chatgpt_archive/importer.py`)
 - [ ] Add CLI command or option (`chatgpt_archive/cli.py`)
 - [ ] Write comprehensive tests (`tests/`)
-- [ ] Add documentation (`docs/USAGE.md`)
+- [ ] Add documentation (`docs/user-guide/usage.md`)
 - [ ] Update README if user-facing
 - [ ] Add to CHANGELOG
 
@@ -557,7 +556,7 @@ def test_csv_export(sample_conversation, sample_messages):
 
 5. **Update documentation**:
    - `README.md` - Add CSV to export formats table
-   - `docs/USAGE.md` - Add CSV examples
+   - `docs/user-guide/usage.md` - Add CSV examples
    - Add docstrings to new code
 
 ---
