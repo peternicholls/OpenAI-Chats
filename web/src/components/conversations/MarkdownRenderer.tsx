@@ -1,11 +1,73 @@
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+import { useState, useCallback, type ReactNode } from "react";
+import { Check, Copy } from "lucide-react";
+
+/**
+ * Strip PUA citation tokens injected by ChatGPT's retrieval system.
+ * Pattern: \uE200(file)?cite(\uE202turnNsearchM|\uE202turnNviewM|\uE202turnNfileM)+\uE201
+ */
+const CITATION_RE = /\uE200(?:file)?cite(?:\uE202turn\d+(?:search|view|file)\d+)+\uE201/g;
+
+/**
+ * Normalize ChatGPT's LaTeX delimiters to standard KaTeX-compatible ones.
+ * \[...\] → $$...$$ (display math)   \(...\) → $...$ (inline math)
+ * Must run before remark-math sees the text.
+ */
+function preprocess(text: string): string {
+    let result = text.replace(CITATION_RE, "");
+
+    // Display math: \[...\] → $$...$$
+    result = result.replace(/\\\[([\s\S]*?)\\\]/g, (_match, inner) => `$$${inner}$$`);
+    // Inline math: \(...\) → $...$
+    result = result.replace(/\\\(([\s\S]*?)\\\)/g, (_match, inner) => `$${inner}$`);
+
+    return result;
+}
+
+function CopyButton({ text }: { text: string }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = useCallback(() => {
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    }, [text]);
+
+    return (
+        <button
+            type="button"
+            onClick={handleCopy}
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+            aria-label={copied ? "Copied" : "Copy code"}
+        >
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            {copied ? "Copied" : "Copy"}
+        </button>
+    );
+}
+
+function extractTextContent(children: ReactNode): string {
+    if (typeof children === "string") return children;
+    if (Array.isArray(children)) return children.map(extractTextContent).join("");
+    if (children && typeof children === "object" && "props" in children) {
+        return extractTextContent((children as { props: { children?: ReactNode } }).props.children);
+    }
+    return String(children ?? "");
+}
 
 export function MarkdownRenderer({ text }: { text: string }) {
+    const processed = preprocess(text);
+
     return (
         <div className="space-y-3 text-sm leading-7 text-foreground" data-testid="markdown-renderer">
             <ReactMarkdown
-                remarkPlugins={[remarkBreaks]}
+                remarkPlugins={[remarkBreaks, remarkMath]}
+                rehypePlugins={[rehypeKatex]}
                 components={{
                     h1: ({ children }) => (
                         <h1 className="text-xl font-semibold tracking-tight text-foreground">{children}</h1>
@@ -35,11 +97,32 @@ export function MarkdownRenderer({ text }: { text: string }) {
                             {children}
                         </a>
                     ),
-                    pre: ({ children }) => (
-                        <pre className="overflow-x-auto rounded-lg bg-slate-950 p-4 text-sm text-slate-50">
-                            {children}
-                        </pre>
-                    ),
+                    pre: ({ children }) => {
+                        const codeText = extractTextContent(children);
+                        // Extract language from the child <code> element's className
+                        let language: string | null = null;
+                        if (children && typeof children === "object" && "props" in children) {
+                            const codeClass = (children as { props: { className?: string } }).props.className;
+                            if (codeClass) {
+                                const match = codeClass.match(/language-(\w+)/);
+                                if (match) language = match[1];
+                            }
+                        }
+
+                        return (
+                            <div className="group relative overflow-hidden rounded-lg bg-slate-950" data-testid="code-block">
+                                <div className="flex items-center justify-between border-b border-slate-800 px-4 py-1.5">
+                                    <span className="text-[11px] font-medium text-slate-400">
+                                        {language || "text"}
+                                    </span>
+                                    <CopyButton text={codeText} />
+                                </div>
+                                <pre className="overflow-x-auto p-4 text-sm text-slate-50">
+                                    {children}
+                                </pre>
+                            </div>
+                        );
+                    },
                     code: ({ children, className }) => (
                         <code
                             className={
@@ -53,7 +136,7 @@ export function MarkdownRenderer({ text }: { text: string }) {
                     ),
                 }}
             >
-                {text}
+                {processed}
             </ReactMarkdown>
         </div>
     );

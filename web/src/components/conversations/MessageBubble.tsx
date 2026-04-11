@@ -7,6 +7,7 @@ import { AttachmentFile } from "@/components/conversations/AttachmentFile";
 import { AttachmentImage } from "@/components/conversations/AttachmentImage";
 import { FallbackBlock } from "@/components/conversations/FallbackBlock";
 import { MarkdownRenderer } from "@/components/conversations/MarkdownRenderer";
+import { ThinkingBlock } from "@/components/conversations/ThinkingBlock";
 
 const ATTACHMENT_TOKEN_RE = /\[\[ATTACHMENT:(\d+)\]\]/g;
 
@@ -109,6 +110,10 @@ function renderLegacyContent(message: Message): ReactNode {
 }
 
 function renderSegment(message: Message, segment: RenderSegment, index: number): ReactNode {
+    if (segment.kind === "thinking") {
+        return <ThinkingBlock key={`segment-thinking-${index}`} activityType={segment.activity_type} />;
+    }
+
     if (segment.kind === "markdown") {
         return <MarkdownRenderer key={`segment-markdown-${index}`} text={segment.text} />;
     }

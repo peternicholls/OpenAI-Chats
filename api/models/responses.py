@@ -47,8 +47,20 @@ class FallbackSegment(BaseModel):
     fallback_label: str = Field(..., min_length=1, description="Short fallback label")
 
 
+class ThinkingSegment(BaseModel):
+    """Collapsed indicator for AI reasoning/search activity."""
+
+    kind: Literal["thinking"]
+    activity_type: Literal["reasoning", "search", "both"] = Field(
+        ..., description="Type of AI activity: reasoning, search, or both"
+    )
+    text: None = Field(None, description="Unused for thinking segments")
+    attachment_index: None = Field(None, description="Unused for thinking segments")
+    fallback_label: None = Field(None, description="Unused for thinking segments")
+
+
 RenderSegment = Annotated[
-    MarkdownSegment | AttachmentSegment | FallbackSegment,
+    MarkdownSegment | AttachmentSegment | FallbackSegment | ThinkingSegment,
     Field(discriminator="kind"),
 ]
 
