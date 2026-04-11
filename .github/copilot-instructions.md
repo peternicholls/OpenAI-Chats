@@ -1,8 +1,30 @@
 # Copilot Instructions for OpenAI-Chats
 
-This file complements `.github/agents/copilot-instructions.md`. Use the agent-specific guidance in `.github/agents/` when it is relevant to the task, but do not assume a specialized agent or the Specify workflow is required for every change.
+This is the authoritative repository-wide Copilot instruction file for OpenAI-Chats.
 
-## Build, test, and lint commands
+Use `.github/agents/` for specialized agent handoffs and workflow-specific guidance, but keep this file as the main source of truth for shared repo context, architecture, conventions, and commands.
+
+## Tech Stack
+
+- Backend: Python 3.10+ with FastAPI, Pydantic, SQLite, and pytest
+- Frontend: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS, shadcn/ui, Vitest, and Playwright
+- Infrastructure: Docker Compose with nginx reverse proxy
+- Data and search: SQLite via `chatgpt_archive.db`, FTS5 search, and filesystem-backed media storage
+
+## Project Structure
+
+```text
+chatgpt_archive/         # Core Python library and source of truth for archive logic
+api/                     # FastAPI adapter over the core library
+web/                     # Next.js frontend
+tests/                   # Core library tests
+api/tests/               # API integration tests
+web/__tests__/           # Frontend unit and E2E tests
+specs/                   # Feature and sprint design artifacts
+docker/                  # Container build and runtime files
+```
+
+## Build, Test, and Lint Commands
 
 ```bash
 # Python setup
@@ -59,9 +81,34 @@ docker compose up -d
 - Preserve the boundary between internal DB IDs and public OpenAI IDs. API and frontend contracts use OpenAI conversation/message IDs; SQLite integer IDs stay internal.
 - When changing conversation rendering, update the whole `segments` pipeline together: backend formatter, Pydantic response models, frontend TypeScript types, API client normalization, and transcript tests.
 - In the frontend, use the shared API client and React Query hooks/query keys instead of ad hoc `fetch` calls.
+- Follow existing style tools rather than inventing local formatting rules: Black and Ruff for Python, ESLint and Prettier-compatible formatting for TypeScript and React.
+- Type hints are expected on public Python functions. React code should use functional components, with server components by default and `'use client'` only where interactivity requires it.
 - Tests are layered:
   - `tests/` and `tests/unit/` cover the core Python package
   - `api/tests/` exercises FastAPI behavior with temporary SQLite databases and shared fixtures in `api/tests/conftest.py`
   - `web/__tests__/` contains Vitest tests, MSW mocks, and Playwright specs under `web/__tests__/e2e`
 - The repo often works in sprint branches that line up with a matching `specs/NNN-*` directory. Use the current branch and matching spec folder as context when they exist, but do not assume every task must follow or update the Specify/Speckit workflow.
-- `.github/agents/copilot-instructions.md` and other files under `.github/agents/` contain additional agent-oriented context. Reuse their relevant guidance, but keep standard implementation sessions lightweight when no specialized workflow is needed.
+- `.github/agents/` contains specialized agent instructions. Use the relevant file there when a task explicitly maps to a specialized workflow, but do not default to those files for ordinary implementation work.
+
+## Current Feature Context
+
+- Recent feature work includes `003-inline-media` and `004-frontend-formatting`.
+- Inline media depends on filesystem-backed archive media exposed by the API and rendered through the frontend transcript pipeline.
+- Frontend formatting work depends on the backend `segments` pipeline and may involve `react-markdown` and `remark-breaks` for safe markdown rendering.
+
+## Agent Guidance
+
+- If a task calls for a specialized agent workflow, pick the matching instruction file from `.github/agents/`.
+- Treat generated or workflow-specific instruction files as supplemental context unless the task explicitly belongs to that workflow.
+- Avoid duplicating repository-wide guidance across multiple instruction files. Update this file when shared repo guidance changes.
+
+## Quick Reference
+
+```bash
+# All tests at once
+source .venv/bin/activate && pytest api/tests/ -v && cd web && npm test
+
+# Coverage
+source .venv/bin/activate && pytest api/tests/ --cov=api --cov-report=term-missing
+cd web && npm test -- --coverage
+```
