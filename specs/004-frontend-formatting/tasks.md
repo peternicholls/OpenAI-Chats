@@ -122,7 +122,7 @@
 **Purpose**: Finish documentation, regression coverage, and implementation validation across stories.
 
 - [ ] T029 [P] Document segmented conversation responses and fallback behavior in `docs/API.md` and `docs/REST-API.md`
-- [ ] T030 [P] Document developer validation and troubleshooting for formatted transcripts in `README.md` and `docs/TROUBLESHOOTING.md`
+- [ ] T030 [P] Document developer validation and troubleshooting for formatted transcripts in `README.md` and `docs/user-guide/troubleshooting.md`
 - [ ] T031 Add regression coverage for the text-only fast path, mixed-content order preservation, and thinking block correctness in `api/tests/test_conversations.py` and `web/__tests__/components/MessageBubble.test.tsx`; include a fixture built from the "Staving off Height Loss" conversation node set and assert that 0 out of the rendered message bubbles show `[No content]` and that at least one `ThinkingBlock` element is present with the correct activity type
 - [ ] T032 Run backend validation for `api/tests/test_conversations.py` and `api/tests/test_formatting_service.py`
 - [ ] T033 Run frontend validation for `web/__tests__/services/api.test.ts`, `web/__tests__/components/MessageBubble.test.tsx`, `web/__tests__/components/MarkdownRenderer.test.tsx`, `web/__tests__/components/FallbackBlock.test.tsx`, `web/__tests__/components/ThinkingBlock.test.tsx`, `web/__tests__/components/DateSeparator.test.tsx`, `web/__tests__/components/ImageModal.test.tsx`, and `web/__tests__/e2e/conversation.spec.ts`

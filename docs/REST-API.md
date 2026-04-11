@@ -551,6 +551,6 @@ Interactive API documentation is available at:
 ## See Also
 
 - [README.md](../README.md) - Quick start
-- [DEPLOYMENT.md](DEPLOYMENT.md) - Docker deployment
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Common issues
+- [Web UI Guide](user-guide/web-ui.md) - Docker deployment
+- [Troubleshooting](user-guide/troubleshooting.md) - Common issues
 - [API.md](API.md) - Python library API
