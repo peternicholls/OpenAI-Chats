@@ -10,6 +10,7 @@ from api.models.responses import (
     FallbackSegment,
     MarkdownSegment,
     RenderSegment,
+    ThinkingSegment,
 )
 from api.services import media_service
 

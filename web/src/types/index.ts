@@ -41,7 +41,15 @@ export interface FallbackSegment {
     fallback_label: string;
 }
 
-export type RenderSegment = MarkdownSegment | AttachmentSegment | FallbackSegment;
+export interface ThinkingSegment {
+    kind: "thinking";
+    activity_type: "reasoning" | "search" | "both";
+    text: null;
+    attachment_index: null;
+    fallback_label: null;
+}
+
+export type RenderSegment = MarkdownSegment | AttachmentSegment | FallbackSegment | ThinkingSegment;
 
 export interface Attachment {
     type: "image" | "audio" | "file";

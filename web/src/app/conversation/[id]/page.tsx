@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useConversation } from "@/hooks/useConversations";
 import { ConversationHeader } from "@/components/conversations/ConversationHeader";
 import { MessageBubble } from "@/components/conversations/MessageBubble";
+import { DateSeparator } from "@/components/conversations/DateSeparator";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ExportDialog } from "@/components/export/ExportDialog";
 import {
@@ -102,9 +103,30 @@ export default function ConversationDetailPage() {
             />
 
             <div className="space-y-2">
-                {conversation.messages.map((message) => (
-                    <MessageBubble key={message.id} message={message} />
-                ))}
+                {conversation.messages.map((message, index) => {
+                    const elements: React.ReactNode[] = [];
+
+                    // Insert DateSeparator when calendar date changes between messages
+                    if (index > 0 && message.create_time) {
+                        const prevMessage = conversation.messages[index - 1];
+                        if (prevMessage.create_time) {
+                            const currentDate = new Date(message.create_time * 1000);
+                            const prevDate = new Date(prevMessage.create_time * 1000);
+                            const dateChanged =
+                                currentDate.getFullYear() !== prevDate.getFullYear() ||
+                                currentDate.getMonth() !== prevDate.getMonth() ||
+                                currentDate.getDate() !== prevDate.getDate();
+                            if (dateChanged) {
+                                elements.push(
+                                    <DateSeparator key={`date-${message.id}`} date={currentDate} />
+                                );
+                            }
+                        }
+                    }
+
+                    elements.push(<MessageBubble key={message.id} message={message} />);
+                    return elements;
+                })}
             </div>
 
             <ExportDialog

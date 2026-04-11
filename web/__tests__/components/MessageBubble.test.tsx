@@ -167,7 +167,7 @@ describe('MessageBubble', () => {
 
             expect(screen.getByText('Before')).toBeInTheDocument()
             expect(screen.getByText('After')).toBeInTheDocument()
-            expect(screen.getByTestId('attachment-image')).toBeInTheDocument()
+            expect(screen.getByTestId('attachment-image-thumbnail-button')).toBeInTheDocument()
         })
 
         it('renders file fallback cards for missing attachments', () => {
@@ -265,7 +265,7 @@ describe('MessageBubble', () => {
 
             const blocks = Array.from(prose?.children ?? []).map((element) => {
                 const node = element as HTMLElement
-                if (node.querySelector('[data-testid="attachment-image"]')) return 'image'
+                if (node.querySelector('[data-testid="attachment-image-thumbnail-button"]')) return 'image'
                 if (node.querySelector('[data-testid="attachment-file"]')) return 'file'
                 if (node.querySelector('[data-testid="attachment-audio"]')) return 'audio'
                 return node.textContent?.trim() ?? ''
@@ -324,7 +324,7 @@ describe('MessageBubble', () => {
 
             render(<MessageBubble message={message} />)
 
-            expect(screen.getByTestId('attachment-image')).toBeInTheDocument()
+            expect(screen.getByTestId('attachment-image-thumbnail-button')).toBeInTheDocument()
             expect(screen.getByTestId('fallback-block')).toBeInTheDocument()
             expect(screen.queryByText(/image_asset_pointer/)).not.toBeInTheDocument()
             expect(screen.getByText('Unsupported content')).toBeInTheDocument()

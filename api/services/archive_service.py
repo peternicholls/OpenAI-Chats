@@ -265,6 +265,50 @@ def list_conversations(
         conn.close()
 
 
+def _is_processing_turn(msg: dict) -> bool:
+    """Check if a message row is an internal processing turn (thinking/search)."""
+    ct = msg["content_type"]
+    role = msg["author_role"]
+    content = msg["content"]
+
+    # Reasoning/recap nodes from thinking models
+    if ct in ("thoughts", "reasoning_recap"):
+        return True
+    # Tool dispatch code blocks (assistant code execution for search/browsing)
+    if role == "assistant" and ct == "code":
+        return True
+    # Tool response nodes with empty content
+    if role == "tool" and (not content or not content.strip()):
+        return True
+    return False
+
+
+def _is_empty_bootstrap(msg: dict) -> bool:
+    """Check if a message is an empty assistant bootstrap placeholder."""
+    return (
+        msg["author_role"] == "assistant"
+        and msg["content_type"] == "text"
+        and (not msg["content"] or not msg["content"].strip())
+    )
+
+
+def _classify_activity_type(cluster: list[dict]) -> str:
+    """Derive activity_type from a cluster of processing turns."""
+    has_reasoning = any(
+        m["content_type"] in ("thoughts", "reasoning_recap") for m in cluster
+    )
+    has_search = any(
+        (m["author_role"] == "assistant" and m["content_type"] == "code")
+        or (m["author_role"] == "tool")
+        for m in cluster
+    )
+    if has_reasoning and has_search:
+        return "both"
+    if has_search:
+        return "search"
+    return "reasoning"
+
+
 def get_conversation(conversation_id: str, include_attachments: bool = False) -> dict | None:
     """Get a single conversation with all messages by OpenAI ID."""
     conn = get_connection()
@@ -281,8 +325,22 @@ def get_conversation(conversation_id: str, include_attachments: bool = False) ->
             ).fetchone()["is_favorite"]
         )
 
+        # First pass: classify each message and collect processing clusters
         messages = []
+        pending_cluster: list[dict] = []
+        visible_count = 0
+
         for msg in messages_rows:
+            # Skip empty bootstrap placeholders
+            if _is_empty_bootstrap(msg):
+                continue
+
+            # Accumulate processing turns into a cluster
+            if _is_processing_turn(msg):
+                pending_cluster.append(msg)
+                continue
+
+            # Non-processing turn: resolve content and build segments
             content = msg["content"]
             attachments = []
             if include_attachments:
@@ -290,6 +348,15 @@ def get_conversation(conversation_id: str, include_attachments: bool = False) ->
                     msg["content"], row["openai_id"]
                 )
             segments = formatting_service.build_render_segments(content, attachments)
+
+            # Prepend ThinkingSegment from any pending cluster
+            if pending_cluster:
+                activity_type = _classify_activity_type(pending_cluster)
+                thinking_seg = formatting_service.ThinkingSegment(
+                    kind="thinking", activity_type=activity_type
+                )
+                segments = [thinking_seg] + list(segments)
+                pending_cluster = []
 
             messages.append(
                 {
@@ -301,13 +368,14 @@ def get_conversation(conversation_id: str, include_attachments: bool = False) ->
                     "segments": segments,
                 }
             )
+            visible_count += 1
 
         return {
             "id": row["openai_id"],
             "title": row["title"],
             "create_time": row["create_time"],
             "update_time": row["update_time"],
-            "message_count": row["message_count"],
+            "message_count": visible_count,
             "model": row["model_slug"],
             "messages": messages,
             "tags": tags,

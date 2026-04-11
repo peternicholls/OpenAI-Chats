@@ -12,9 +12,16 @@ function formatDate(timestamp: number | null): string {
         year: "numeric",
         month: "long",
         day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
     });
+}
+
+function isSameDay(t1: number | null, t2: number | null): boolean {
+    if (!t1 || !t2) return false;
+    const d1 = new Date(t1 * 1000);
+    const d2 = new Date(t2 * 1000);
+    return d1.getFullYear() === d2.getFullYear()
+        && d1.getMonth() === d2.getMonth()
+        && d1.getDate() === d2.getDate();
 }
 
 interface ConversationHeaderProps {
@@ -71,6 +78,9 @@ export function ConversationHeader({
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span>{formatDate(conversation.create_time)}</span>
+                {conversation.update_time && !isSameDay(conversation.create_time, conversation.update_time) && (
+                    <span>Updated {formatDate(conversation.update_time)}</span>
+                )}
                 <span>{conversation.message_count} messages</span>
                 {conversation.model && <span>{conversation.model}</span>}
             </div>
