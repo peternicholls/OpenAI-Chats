@@ -11,6 +11,9 @@ export default defineConfig({
         exclude: ['**/node_modules/**', '**/e2e/**'],
         globals: true,
         css: true,
+        typecheck: {
+            tsconfig: './tsconfig.test.json',
+        },
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
