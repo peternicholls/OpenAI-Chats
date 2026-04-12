@@ -26,6 +26,8 @@ class UserSettings(BaseModel):
     archive_media_dir: str | None = Field(
         None, description="Optional path to the extracted archive media directory"
     )
+    code_line_numbers: bool = Field(False, description="Show line numbers in code blocks")
+    long_prompt_truncation: bool = Field(True, description="Truncate user prompts longer than 500 characters")
 
 
 class UserSettingsUpdate(BaseModel):
@@ -38,6 +40,8 @@ class UserSettingsUpdate(BaseModel):
     embedding_model: str | None = None
     items_per_page: int | None = None
     archive_media_dir: str | None = None
+    code_line_numbers: bool | None = None
+    long_prompt_truncation: bool | None = None
 
 
 @router.get("/api/settings", response_model=UserSettings)
