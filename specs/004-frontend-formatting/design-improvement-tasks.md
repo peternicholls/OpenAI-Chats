@@ -38,7 +38,7 @@ These rules apply to every task in this file without exception.
 
 **Purpose**: Write test fixtures and extend settings contracts before any UI work begins.
 
-- [x] T001 Write test fixtures covering long user prompts (>500 chars), dense nested lists, markdown tables, and fenced code blocks in at least three languages in `web/__tests__/components/MarkdownRenderer.test.tsx`, `web/__tests__/components/MessageBubble.test.tsx`, and `web/__tests__/e2e/conversation.spec.ts`
+- [x] T001 Write test fixtures covering long user prompts (>1600 chars), dense nested lists, markdown tables, and fenced code blocks in at least three languages in `web/__tests__/components/MarkdownRenderer.test.tsx`, `web/__tests__/components/MessageBubble.test.tsx`, and `web/__tests__/e2e/conversation.spec.ts`
 - [x] T002 [P] Add two persisted settings fields — `codeLineNumbers: boolean` and `longPromptTruncation: boolean` — to the settings schema, API route, TypeScript types, API client, and settings form in `api/services/settings_service.py`, `api/routers/settings.py`, `web/src/types/index.ts`, `web/src/services/api.ts`, and `web/src/components/settings/SettingsForm.tsx`
 
 ---
@@ -82,18 +82,18 @@ These rules apply to every task in this file without exception.
 
 ## Phase 4: User Story 2 — Turn-Level Actions and Long Prompt Handling (Priority: P2)
 
-**Scope**: Every turn exposes a copy button and a text-to-speech button. User-authored turns longer than 500 characters are collapsed to 500 characters with a "Read more" expand toggle.
+**Scope**: Every turn exposes a copy button and a text-to-speech button. User-authored turns longer than 1600 characters are collapsed to 1600 characters with a "Read more" expand toggle.
 
-**Acceptance check**: Run the app in the browser. Open a conversation with a user prompt longer than 500 characters and at least one assistant reply. Visually verify: the user turn is truncated at 500 characters with a visible "Read more" button; clicking "Read more" expands to the full text; both user and assistant turns show a copy button and a speak button; clicking copy writes the full raw text to the clipboard (paste it somewhere to verify); clicking speak produces audible output via the browser speech API. Fix any visual or functional discrepancy before marking the phase complete.
+**Acceptance check**: Run the app in the browser. Open a conversation with a user prompt longer than 1600 characters and at least one assistant reply. Visually verify: the user turn is truncated at 1600 characters with a visible "Read more" button; clicking "Read more" expands to the full text; both user and assistant turns show a copy button and a speak button; clicking copy writes the full raw text to the clipboard (paste it somewhere to verify); clicking speak produces audible output via the browser speech API. Fix any visual or functional discrepancy before marking the phase complete.
 
 ### Tests for User Story 2
 
-- [ ] T013 [P] [US2] Write tests that assert: the copy button on each turn writes the full raw text to the clipboard; the speak button calls `window.speechSynthesis.speak`; user turns with text longer than 500 characters render with truncated content and a "Read more" button; clicking "Read more" renders the full text; assistant turns are never truncated in `web/__tests__/components/MessageBubble.test.tsx`, `web/__tests__/components/ThinkingBlock.test.tsx`, and `web/__tests__/e2e/conversation.spec.ts`
+- [ ] T013 [P] [US2] Write tests that assert: the copy button on each turn writes the full raw text to the clipboard; the speak button calls `window.speechSynthesis.speak`; user turns with text longer than 1600 characters render with truncated content and a "Read more" button; clicking "Read more" renders the full text; assistant turns are never truncated in `web/__tests__/components/MessageBubble.test.tsx`, `web/__tests__/components/ThinkingBlock.test.tsx`, and `web/__tests__/e2e/conversation.spec.ts`
 
 ### Implementation for User Story 2
 
 - [ ] T014 [US2] Mount `TurnActions` at the bottom of every rendered turn with a copy button (copies full raw message text) and a speak button (calls `window.speechSynthesis.speak` with the raw text) in `web/src/components/conversations/TurnActions.tsx`, `web/src/components/conversations/MessageBubble.tsx`, and `web/src/components/conversations/AssistantTurn.tsx`
-- [ ] T015 [US2] In `MessageBubble`, when the turn role is `user` and the raw text length exceeds 500 characters, display only the first 500 characters followed by a "Read more" button; clicking the button replaces the truncated view with the full text and a "Show less" button; the copy button always writes the full untruncated text in `web/src/components/conversations/MessageBubble.tsx` and `web/src/app/globals.css`
+- [ ] T015 [US2] In `MessageBubble`, when the turn role is `user` and the raw text length exceeds 1600 characters, display only the first 1600 characters followed by a "Read more" button; clicking the button replaces the truncated view with the full text and a "Show less" button; the copy button always writes the full untruncated text in `web/src/components/conversations/MessageBubble.tsx` and `web/src/app/globals.css`
 
 **Checkpoint**: All T013 tests pass. Then open the app in the browser, load a conversation with a long user prompt, and visually confirm each item in the acceptance check above. Fix anything that fails before moving to Phase 5.
 
