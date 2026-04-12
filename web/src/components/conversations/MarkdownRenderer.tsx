@@ -42,7 +42,7 @@ function CopyButton({ text }: { text: string }) {
         <button
             type="button"
             onClick={handleCopy}
-            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-widest text-slate-500 transition-colors hover:text-slate-300"
             aria-label={copied ? "Copied" : "Copy code"}
         >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -64,26 +64,26 @@ export function MarkdownRenderer({ text }: { text: string }) {
     const processed = preprocess(text);
 
     return (
-        <div className="space-y-3 text-sm leading-7 text-foreground" data-testid="markdown-renderer">
+        <div className="space-y-2 text-[14px] leading-[1.55] text-foreground" data-testid="markdown-renderer">
             <ReactMarkdown
                 remarkPlugins={[remarkBreaks, remarkMath]}
-                rehypePlugins={[rehypeKatex]}
+                rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: "var(--color-muted-foreground)" }]]}
                 components={{
                     h1: ({ children }) => (
-                        <h1 className="text-xl font-semibold tracking-tight text-foreground">{children}</h1>
+                        <h1 className="text-[17px] font-semibold leading-tight tracking-tight text-foreground">{children}</h1>
                     ),
                     h2: ({ children }) => (
-                        <h2 className="text-lg font-semibold tracking-tight text-foreground">{children}</h2>
+                        <h2 className="text-[15px] font-semibold leading-tight tracking-tight text-foreground">{children}</h2>
                     ),
                     h3: ({ children }) => (
-                        <h3 className="text-base font-semibold tracking-tight text-foreground">{children}</h3>
+                        <h3 className="text-[14px] font-semibold leading-tight tracking-tight text-foreground">{children}</h3>
                     ),
                     p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc space-y-1 pl-6">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal space-y-1 pl-6">{children}</ol>,
-                    li: ({ children }) => <li className="pl-1">{children}</li>,
+                    ul: ({ children }) => <ul className="list-disc space-y-0.5 pl-4.5">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal space-y-0.5 pl-4.5">{children}</ol>,
+                    li: ({ children }) => <li className="pl-0.5">{children}</li>,
                     blockquote: ({ children }) => (
-                        <blockquote className="border-l-2 border-border pl-4 italic text-muted-foreground">
+                        <blockquote className="border-l-2 border-border pl-3 italic text-muted-foreground">
                             {children}
                         </blockquote>
                     ),
@@ -111,14 +111,14 @@ export function MarkdownRenderer({ text }: { text: string }) {
 
                         return (
                             <div className="group relative overflow-hidden rounded-lg bg-slate-950" data-testid="code-block">
-                                <div className="flex items-center justify-between border-b border-slate-800 px-4 py-1.5">
-                                    <span className="text-[11px] font-medium text-slate-400">
+                                <div className="flex items-center justify-between bg-slate-800 px-3.5 py-1">
+                                    <span className="font-mono text-[11px] text-slate-400">
                                         {language || "text"}
                                     </span>
                                     <CopyButton text={codeText} />
                                 </div>
-                                <pre className="overflow-x-auto p-4 text-sm text-slate-50">
-                                    {children}
+                                <pre className="overflow-x-auto px-3.5 py-2.5 text-[12px] leading-[1.6] text-slate-200">
+                                    <code className="font-mono">{codeText}</code>
                                 </pre>
                             </div>
                         );
@@ -127,8 +127,8 @@ export function MarkdownRenderer({ text }: { text: string }) {
                         <code
                             className={
                                 className
-                                    ? `${className} font-mono text-sm`
-                                    : "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.9em] text-foreground"
+                                    ? `${className} font-mono text-[13px]`
+                                    : "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.88em] text-foreground"
                             }
                         >
                             {children}
