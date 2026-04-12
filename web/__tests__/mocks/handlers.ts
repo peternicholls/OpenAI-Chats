@@ -16,25 +16,13 @@ export const markdownMessageText = [
 ].join('\n')
 
 export function buildRenderSegment(
-    kind: 'markdown' | 'attachment' | 'fallback' | 'thinking',
+    kind: 'markdown' | 'attachment' | 'fallback',
     overrides: Partial<{
         text: string | null
         attachment_index: number | null
         fallback_label: string | null
-        activity_type: 'reasoning' | 'search' | 'both'
     }> = {}
 ) {
-    if (kind === 'thinking') {
-        return {
-            kind,
-            activity_type: overrides.activity_type ?? 'reasoning',
-            text: null,
-            attachment_index: null,
-            fallback_label: null,
-            ...overrides,
-        }
-    }
-
     return {
         kind,
         text: kind === 'attachment' ? null : '',

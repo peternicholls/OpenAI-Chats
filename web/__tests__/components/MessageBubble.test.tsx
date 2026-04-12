@@ -33,11 +33,11 @@ describe('MessageBubble', () => {
             expect(screen.getByText('You')).toBeInTheDocument()
         })
 
-        it('has the message test ID', () => {
+        it('has user-specific styling class', () => {
             const { container } = render(<MessageBubble message={mockUserMessage} />)
 
             const bubble = container.firstChild
-            expect(bubble).toHaveAttribute('data-testid', 'message')
+            expect(bubble).toHaveClass('bg-blue-50')
         })
     })
 
@@ -54,11 +54,11 @@ describe('MessageBubble', () => {
             expect(screen.getByText('Assistant')).toBeInTheDocument()
         })
 
-        it('has the message test ID', () => {
+        it('has assistant-specific styling class', () => {
             const { container } = render(<MessageBubble message={mockAssistantMessage} />)
 
             const bubble = container.firstChild
-            expect(bubble).toHaveAttribute('data-testid', 'message')
+            expect(bubble).toHaveClass('bg-gray-50')
         })
 
         it('prefers render segments over raw markdown content', () => {
@@ -127,8 +127,8 @@ describe('MessageBubble', () => {
 
             // Timestamp 1700000000 = Nov 14, 2023 at some time
             // The exact time will depend on timezone, so just check it exists
-            const timeElement = document.querySelector('time')
-            expect(timeElement).toBeInTheDocument()
+            const container = document.querySelector('.text-xs.text-muted-foreground')
+            expect(container).toBeInTheDocument()
         })
 
         it('does not render time when create_time is null', () => {
@@ -138,9 +138,9 @@ describe('MessageBubble', () => {
             }
             render(<MessageBubble message={noTimeMessage} />)
 
-            // Should not have the time element
-            const timeElement = document.querySelector('time')
-            expect(timeElement).not.toBeInTheDocument()
+            // Should not have the time span
+            const timeSpan = document.querySelector('.text-xs.text-muted-foreground')
+            expect(timeSpan).not.toBeInTheDocument()
         })
     })
 
@@ -256,14 +256,22 @@ describe('MessageBubble', () => {
                 ],
             }
 
-            render(<MessageBubble message={message} />)
+            const { container } = render(<MessageBubble message={message} />)
+            const prose = container.querySelector('.prose')
 
-            expect(screen.getByText('Intro')).toBeInTheDocument()
-            expect(screen.getByText('Between')).toBeInTheDocument()
-            expect(screen.getByText('Outro')).toBeInTheDocument()
-            expect(screen.getByTestId('attachment-image-thumbnail-button')).toBeInTheDocument()
-            expect(screen.getByTestId('attachment-file')).toBeInTheDocument()
-            expect(screen.getByTestId('attachment-audio')).toBeInTheDocument()
+            expect(prose?.textContent).toContain('Intro')
+            expect(prose?.textContent).toContain('Between')
+            expect(prose?.textContent).toContain('Outro')
+
+            const blocks = Array.from(prose?.children ?? []).map((element) => {
+                const node = element as HTMLElement
+                if (node.querySelector('[data-testid="attachment-image-thumbnail-button"]')) return 'image'
+                if (node.querySelector('[data-testid="attachment-file"]')) return 'file'
+                if (node.querySelector('[data-testid="attachment-audio"]')) return 'audio'
+                return node.textContent?.trim() ?? ''
+            })
+
+            expect(blocks).toEqual(['Intro', 'image', 'Between', 'file', 'Outro', 'audio'])
         })
 
         it('renders structured attachment and fallback segments without showing raw asset payloads', () => {

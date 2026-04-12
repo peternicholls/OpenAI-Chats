@@ -3,10 +3,8 @@
 import { useParams, useRouter } from "next/navigation";
 import { useConversation } from "@/hooks/useConversations";
 import { ConversationHeader } from "@/components/conversations/ConversationHeader";
-import { AssistantTurn } from "@/components/conversations/AssistantTurn";
 import { MessageBubble } from "@/components/conversations/MessageBubble";
 import { DateSeparator } from "@/components/conversations/DateSeparator";
-import type { Message } from "@/types";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ExportDialog } from "@/components/export/ExportDialog";
 import {
@@ -26,33 +24,6 @@ import { queryKeys } from "@/hooks/queryKeys";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-
-type MessageTurn =
-    | { type: "user-or-system"; message: Message }
-    | { type: "assistant"; messages: Message[] };
-
-function groupIntoTurns(messages: Message[]): MessageTurn[] {
-    const turns: MessageTurn[] = [];
-    let buffer: Message[] = [];
-
-    for (const message of messages) {
-        if (message.role === "user" || message.role === "system") {
-            if (buffer.length > 0) {
-                turns.push({ type: "assistant", messages: buffer });
-                buffer = [];
-            }
-            turns.push({ type: "user-or-system", message });
-        } else {
-            buffer.push(message);
-        }
-    }
-
-    if (buffer.length > 0) {
-        turns.push({ type: "assistant", messages: buffer });
-    }
-
-    return turns;
-}
 
 export default function ConversationDetailPage() {
     const params = useParams();
@@ -122,7 +93,7 @@ export default function ConversationDetailPage() {
     }
 
     return (
-        <article className="mx-auto max-w-3xl">
+        <div className="max-w-4xl mx-auto">
             <ConversationHeader
                 conversation={conversation}
                 onExport={() => setShowExport(true)}
@@ -131,60 +102,32 @@ export default function ConversationDetailPage() {
                 isFavorite={conversation.is_favorite}
             />
 
-            <section className="flex flex-col gap-2">
-                {groupIntoTurns(conversation.messages).map((turn, index, turns) => {
+            <div className="space-y-2">
+                {conversation.messages.map((message, index) => {
                     const elements: React.ReactNode[] = [];
 
-                    const turnTime =
-                        turn.type === "user-or-system"
-                            ? turn.message.create_time
-                            : (turns[index] as { type: "assistant"; messages: Message[] }).messages.find(
-                                (m) => m.create_time
-                            )?.create_time ?? null;
-
-                    // Insert DateSeparator when calendar date changes between turns
-                    if (index > 0 && turnTime) {
-                        const prevTurn = turns[index - 1];
-                        const prevTime =
-                            prevTurn.type === "user-or-system"
-                                ? prevTurn.message.create_time
-                                : (prevTurn as { type: "assistant"; messages: Message[] }).messages
-                                    .filter((m) => m.create_time)
-                                    .at(-1)?.create_time ?? null;
-
-                        if (prevTime) {
-                            const currentDate = new Date(turnTime * 1000);
-                            const prevDate = new Date(prevTime * 1000);
+                    // Insert DateSeparator when calendar date changes between messages
+                    if (index > 0 && message.create_time) {
+                        const prevMessage = conversation.messages[index - 1];
+                        if (prevMessage.create_time) {
+                            const currentDate = new Date(message.create_time * 1000);
+                            const prevDate = new Date(prevMessage.create_time * 1000);
                             const dateChanged =
                                 currentDate.getFullYear() !== prevDate.getFullYear() ||
                                 currentDate.getMonth() !== prevDate.getMonth() ||
                                 currentDate.getDate() !== prevDate.getDate();
                             if (dateChanged) {
-                                const sepKey =
-                                    turn.type === "user-or-system"
-                                        ? `date-${turn.message.id}`
-                                        : `date-${(turn as { type: "assistant"; messages: Message[] }).messages[0].id}`;
-                                elements.push(<DateSeparator key={sepKey} date={currentDate} />);
+                                elements.push(
+                                    <DateSeparator key={`date-${message.id}`} date={currentDate} />
+                                );
                             }
                         }
                     }
 
-                    if (turn.type === "user-or-system") {
-                        elements.push(
-                            <MessageBubble key={turn.message.id} message={turn.message} />
-                        );
-                    } else {
-                        elements.push(
-                            <AssistantTurn
-                                key={`assistant-turn-${turn.messages[0].id}`}
-                                messages={turn.messages}
-                            />
-                        );
-                    }
-
+                    elements.push(<MessageBubble key={message.id} message={message} />);
                     return elements;
                 })}
-            </section>
+            </div>
 
             <ExportDialog
                 conversationId={id}
@@ -220,6 +163,6 @@ export default function ConversationDetailPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </article>
+        </div>
     );
 }
