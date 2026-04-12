@@ -11,6 +11,23 @@ const mockUserMessage: Message = {
     attachments: [],
 }
 
+const longUserPromptContent =
+    'I have been thinking about this problem for a while now and wanted to get your perspective. ' +
+    'The situation is fairly complex: we have a distributed system with multiple services that need to ' +
+    'coordinate state changes across a network partition. The challenge is that we cannot guarantee ' +
+    'message delivery ordering, and at the same time we need to ensure that no two services apply ' +
+    'conflicting updates simultaneously. I have read about the Raft consensus algorithm and also about ' +
+    'CRDTs as potential solutions, but I am not sure which approach fits our constraints best given that ' +
+    'our throughput requirements are quite high and we also need to keep latency under 50 milliseconds.'
+
+const mockLongUserMessage: Message = {
+    id: 'msg-long-001',
+    role: 'user',
+    content: longUserPromptContent,
+    create_time: 1700000000,
+    attachments: [],
+}
+
 const mockAssistantMessage: Message = {
     id: 'msg-002',
     role: 'assistant',
@@ -341,6 +358,23 @@ describe('MessageBubble', () => {
 
             expect(screen.getByText('Missing attachment')).toBeInTheDocument()
             expect(screen.getByText(/Attachment index 9 is not available/)).toBeInTheDocument()
+        })
+    })
+
+    describe('long user prompt', () => {
+        it('renders a long user prompt (>500 chars) without error', () => {
+            render(<MessageBubble message={mockLongUserMessage} />)
+
+            expect(screen.getByText('You')).toBeInTheDocument()
+            // The full content should be present in the DOM
+            const bubble = document.querySelector('[data-testid="message"]')
+            expect(bubble?.textContent?.length).toBeGreaterThan(500)
+        })
+
+        it('shows the "You" label for a long user prompt', () => {
+            render(<MessageBubble message={mockLongUserMessage} />)
+
+            expect(screen.getByText('You')).toBeInTheDocument()
         })
     })
 })

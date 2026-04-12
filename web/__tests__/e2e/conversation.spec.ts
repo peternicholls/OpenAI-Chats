@@ -312,4 +312,66 @@ test.describe('Conversation View', () => {
             }
         }
     })
+
+    // Fixture: a user message exceeding 500 characters
+    const longUserPromptText =
+        'I have been thinking about this problem for a while now and wanted to get your perspective. ' +
+        'The situation is fairly complex: we have a distributed system with multiple services that need to ' +
+        'coordinate state changes across a network partition. The challenge is that we cannot guarantee ' +
+        'message delivery ordering, and at the same time we need to ensure that no two services apply ' +
+        'conflicting updates simultaneously. I have read about the Raft consensus algorithm and also about ' +
+        'CRDTs as potential solutions, but I am not sure which approach fits our constraints best given that ' +
+        'our throughput requirements are quite high and we also need to keep latency under 50 milliseconds.'
+
+    test('should render a long user prompt (>500 chars) in full', async ({ page }) => {
+        await page.route('**/api/conversations/conv-long-user-prompt', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    id: 'conv-long-user-prompt',
+                    title: 'Long User Prompt Conversation',
+                    create_time: 1700000000,
+                    update_time: 1700000100,
+                    model: 'gpt-4',
+                    message_count: 2,
+                    tags: [],
+                    is_favorite: false,
+                    messages: [
+                        {
+                            id: 'msg-long-user-001',
+                            role: 'user',
+                            content: longUserPromptText,
+                            create_time: 1700000000,
+                            attachments: [],
+                        },
+                        {
+                            id: 'msg-long-assistant-001',
+                            role: 'assistant',
+                            content: 'Great question. Let me walk through both approaches.',
+                            create_time: 1700000100,
+                            attachments: [],
+                            segments: [
+                                {
+                                    kind: 'markdown',
+                                    text: 'Great question. Let me walk through both approaches.',
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            })
+        })
+
+        await page.goto('/conversation/conv-long-user-prompt')
+        await page.waitForLoadState('networkidle')
+
+        // The long user prompt should be present in the DOM
+        await expect(page.getByText(/I have been thinking about this problem/)).toBeVisible()
+        await expect(page.getByText(/CRDTs as potential solutions/)).toBeVisible()
+        // The assistant reply should also be visible
+        await expect(page.getByText('Great question. Let me walk through both approaches.')).toBeVisible()
+    })
 })
