@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Message, RenderSegment } from "@/types";
-import { User, Bot, Terminal } from "lucide-react";
+
+import { Bot, Terminal, User } from "lucide-react";
 
 import { AttachmentAudio } from "@/components/conversations/AttachmentAudio";
 import { AttachmentFile } from "@/components/conversations/AttachmentFile";
@@ -19,6 +20,13 @@ function formatTime(timestamp: number | null): string {
     });
 }
 
+const roleLabels = {
+    user: "You",
+    assistant: "Assistant",
+    system: "System",
+    tool: "Tool",
+};
+
 const roleIcons = {
     user: User,
     assistant: Bot,
@@ -26,18 +34,18 @@ const roleIcons = {
     tool: Terminal,
 };
 
-const roleColors = {
-    user: "bg-blue-50 dark:bg-blue-950/30",
-    assistant: "bg-gray-50 dark:bg-gray-900/30",
-    system: "bg-yellow-50 dark:bg-yellow-950/30",
-    tool: "bg-purple-50 dark:bg-purple-950/30",
+const roleBubbleColors = {
+    user: "bg-blue-50 dark:bg-blue-950/20",
+    assistant: "bg-gray-50 dark:bg-gray-900/20",
+    system: "bg-yellow-50/60 dark:bg-yellow-950/10",
+    tool: "bg-violet-50/60 dark:bg-violet-950/10",
 };
 
-const roleLabels = {
-    user: "You",
-    assistant: "Assistant",
-    system: "System",
-    tool: "Tool",
+const roleIconColors = {
+    user: "bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300",
+    assistant: "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+    system: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+    tool: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
 };
 
 function renderAttachment(message: Message, index: number): ReactNode {
@@ -57,7 +65,7 @@ function renderAttachment(message: Message, index: number): ReactNode {
 
 function renderLegacyContent(message: Message): ReactNode {
     if (!message.content && message.attachments.length === 0) {
-        return <span className="italic text-muted-foreground">[No content]</span>;
+        return <span className="text-sm italic text-muted-foreground">[No content]</span>;
     }
 
     const content = message.content ?? "";
@@ -155,26 +163,31 @@ function renderContent(message: Message): ReactNode {
 
 export function MessageBubble({ message }: { message: Message }) {
     const Icon = roleIcons[message.role] || Terminal;
-    const bgColor = roleColors[message.role] || roleColors.system;
+    const iconColor = roleIconColors[message.role] || roleIconColors.system;
     const label = roleLabels[message.role] || message.role;
 
+    const bubbleColor = roleBubbleColors[message.role] || roleBubbleColors.assistant;
+
     return (
-        <div className={`flex gap-3 rounded-lg p-4 ${bgColor}`} data-testid="message">
+        <div className={`flex gap-3 rounded-lg p-3 ${bubbleColor}`} data-testid="message">
             <div className="mt-0.5 shrink-0">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
-                    <Icon className="h-4 w-4" />
+                <div className={`flex h-7 w-7 items-center justify-center rounded-full ${iconColor}`}>
+                    <Icon className="h-3.5 w-3.5" />
                 </div>
             </div>
             <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-center gap-2">
-                    <span className="text-sm font-semibold">{label}</span>
+                <div className="mb-2 flex items-baseline gap-2">
+                    <span className="text-sm font-semibold text-foreground">{label}</span>
                     {message.create_time && (
-                        <span className="text-xs text-muted-foreground">
+                        <time
+                            className="text-xs text-muted-foreground/70"
+                            dateTime={new Date(message.create_time * 1000).toISOString()}
+                        >
                             {formatTime(message.create_time)}
-                        </span>
+                        </time>
                     )}
                 </div>
-                <div className="prose prose-sm max-w-none space-y-3 dark:prose-invert">
+                <div className="space-y-3">
                     {renderContent(message)}
                 </div>
             </div>
