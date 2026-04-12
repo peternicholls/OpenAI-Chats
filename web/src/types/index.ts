@@ -140,6 +140,8 @@ export interface UserSettings {
     embedding_model: string;
     items_per_page: number;
     archive_media_dir?: string | null;
+    code_line_numbers: boolean;
+    long_prompt_truncation: boolean;
 }
 
 export interface EmbeddingEstimate {

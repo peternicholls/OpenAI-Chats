@@ -30,6 +30,8 @@ export function SettingsForm() {
     const theme = draft.theme ?? currentTheme ?? "system";
     const defaultExportFormat = draft.default_export_format ?? data?.default_export_format ?? "md";
     const archiveMediaDir = draft.archive_media_dir ?? data?.archive_media_dir ?? "";
+    const codeLineNumbers = draft.code_line_numbers ?? data?.code_line_numbers ?? false;
+    const longPromptTruncation = draft.long_prompt_truncation ?? data?.long_prompt_truncation ?? true;
 
     const handleThemeChange = (value: string) => {
         setDraft((current) => ({ ...current, theme: value as "light" | "dark" | "system" }));
@@ -42,6 +44,8 @@ export function SettingsForm() {
                 theme: theme as "light" | "dark" | "system",
                 default_export_format: defaultExportFormat,
                 archive_media_dir: archiveMediaDir,
+                code_line_numbers: codeLineNumbers,
+                long_prompt_truncation: longPromptTruncation,
             });
             toast.success("Settings saved");
         } catch (error) {
@@ -128,6 +132,36 @@ export function SettingsForm() {
                             <p className="text-sm text-muted-foreground">
                                 Optional path to an extracted archive used for inline media lookup.
                             </p>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <label className="text-sm font-medium">Code Line Numbers</label>
+                                <p className="text-sm text-muted-foreground">Show line numbers in code blocks.</p>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={codeLineNumbers}
+                                onChange={(e) =>
+                                    setDraft((current) => ({ ...current, code_line_numbers: e.target.checked }))
+                                }
+                                className="h-4 w-4"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <label className="text-sm font-medium">Truncate Long Prompts</label>
+                                <p className="text-sm text-muted-foreground">Collapse user prompts longer than 500 characters with a "Read more" toggle.</p>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={longPromptTruncation}
+                                onChange={(e) =>
+                                    setDraft((current) => ({ ...current, long_prompt_truncation: e.target.checked }))
+                                }
+                                className="h-4 w-4"
+                            />
                         </div>
 
                         <Button onClick={handleSaveGeneral} disabled={updateSettings.isPending}>
