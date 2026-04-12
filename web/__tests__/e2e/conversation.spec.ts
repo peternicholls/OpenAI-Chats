@@ -116,7 +116,7 @@ test.describe('Conversation View', () => {
         await page.waitForLoadState('networkidle')
 
         await expect(page.getByText('Intro paragraph before structured content.')).toBeVisible()
-        await expect(page.getByTestId('attachment-image-thumbnail-button')).toBeVisible()
+        await expect(page.getByTestId('attachment-image')).toBeVisible()
         await expect(page.getByText('Follow-up prose after image.')).toBeVisible()
         await expect(page.getByText('Unsupported content')).toBeVisible()
         await expect(page.getByText(/image_asset_pointer/)).toHaveCount(0)
@@ -233,7 +233,7 @@ test.describe('Conversation View', () => {
 
         await expect(page.getByText('Intro')).toBeVisible()
         await expect(page.getByText('After image')).toBeVisible()
-        await expect(page.getByTestId('attachment-image-thumbnail-button')).toBeVisible()
+        await expect(page.getByTestId('attachment-image')).toBeVisible()
         await expect(page.getByTestId('attachment-file')).toBeVisible()
     })
 

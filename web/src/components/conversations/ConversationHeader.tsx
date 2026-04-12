@@ -8,7 +8,7 @@ import type { ConversationDetail } from "@/types";
 
 function formatDate(timestamp: number | null): string {
     if (!timestamp) return "Unknown";
-    return new Date(timestamp * 1000).toLocaleDateString("en-GB", {
+    return new Date(timestamp * 1000).toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -39,65 +39,55 @@ export function ConversationHeader({
     onToggleFavorite,
     isFavorite,
 }: ConversationHeaderProps) {
-    const visibleMessageCount = conversation.messages
-        ? conversation.messages.filter((m) => m.role === "user" || m.role === "assistant").length
-        : conversation.message_count;
-
     return (
-        <header className="mb-8 flex flex-col gap-3">
+        <div className="flex flex-col gap-3 mb-6">
             <div className="flex items-center gap-2">
                 <Link href="/">
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </Link>
-                <h1 className="text-[17px] font-bold tracking-[-0.015em] leading-[1.3] flex-1 line-clamp-2">
+                <h1 className="text-xl font-bold flex-1 line-clamp-1">
                     {conversation.title || "[Untitled]"}
                 </h1>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                     {onToggleFavorite && (
                         <Button
-                            variant="ghost"
-                            size="icon"
+                            variant="outline"
+                            size="sm"
                             onClick={onToggleFavorite}
-                            className={`h-8 w-8 ${isFavorite ? "text-yellow-500" : "text-muted-foreground"}`}
+                            className={isFavorite ? "text-yellow-500" : ""}
                         >
-                            <Star className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+                            <Star className={`h-4 w-4 mr-1 ${isFavorite ? "fill-current" : ""}`} />
+                            {isFavorite ? "Favorited" : "Favorite"}
                         </Button>
                     )}
                     {onExport && (
-                        <Button variant="ghost" size="icon" onClick={onExport} className="h-8 w-8 text-muted-foreground">
-                            <Download className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={onExport}>
+                            <Download className="h-4 w-4 mr-1" />
+                            Export
                         </Button>
                     )}
                     {onDelete && (
-                        <Button variant="ghost" size="icon" onClick={onDelete} className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={onDelete} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
                         </Button>
                     )}
                 </div>
             </div>
-            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] text-muted-foreground">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span>{formatDate(conversation.create_time)}</span>
                 {conversation.update_time && !isSameDay(conversation.create_time, conversation.update_time) && (
-                    <>
-                        <span aria-hidden>·</span>
-                        <span className="italic text-muted-foreground/70">Updated {formatDate(conversation.update_time)}</span>
-                    </>
+                    <span>Updated {formatDate(conversation.update_time)}</span>
                 )}
-                <span aria-hidden>·</span>
-                <span>{visibleMessageCount} messages</span>
-                {conversation.model && (
-                    <>
-                        <span aria-hidden>·</span>
-                        <span>{conversation.model}</span>
-                    </>
-                )}
+                <span>{conversation.message_count} messages</span>
+                {conversation.model && <span>{conversation.model}</span>}
             </div>
             <TagEditor
                 conversationId={conversation.id}
                 tags={conversation.tags}
             />
-        </header>
+        </div>
     );
 }
