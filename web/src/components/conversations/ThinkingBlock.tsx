@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronUp, CircleHelp } from "lucide-react";
 
 const activityLabels = {
-    reasoning: "Reasoned about this",
+    reasoning: "Reasoning",
     search: "Searched the web",
-    both: "Reasoned and searched the web",
+    both: "Reasoning and web search",
 } as const;
 
 export type ActivityType = keyof typeof activityLabels;
@@ -16,21 +16,28 @@ export function ThinkingBlock({ activityType }: { activityType: ActivityType }) 
     const label = activityLabels[activityType] ?? activityLabels.reasoning;
 
     return (
-        <div data-testid="thinking-block">
+        <div
+            data-testid="thinking-block"
+            className={`rounded-md bg-muted text-[12.5px] font-medium text-muted-foreground ${expanded ? "flex w-full flex-col" : "inline-flex flex-col"
+                }`}
+        >
             <button
                 type="button"
                 onClick={() => setExpanded((prev) => !prev)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex items-center gap-1.5 px-3 py-1 transition-colors hover:text-foreground"
             >
-                <ChevronRight
-                    className={`h-3 w-3 shrink-0 transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
-                />
+                <CircleHelp className="h-3.5 w-3.5 shrink-0" />
                 {label}
+                {expanded ? (
+                    <ChevronUp className="h-3 w-3 shrink-0" />
+                ) : (
+                    <ChevronDown className="h-3 w-3 shrink-0" />
+                )}
             </button>
             {expanded && (
-                <div className="mt-2 rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs leading-5 text-muted-foreground">
-                    Detailed reasoning and search content is not included in the ChatGPT export format.
-                </div>
+                <p className="px-3 pb-2.5 pt-0 text-[12.5px] italic leading-relaxed text-muted-foreground/75">
+                    Detailed reasoning content is not included in the ChatGPT export format.
+                </p>
             )}
         </div>
     );
