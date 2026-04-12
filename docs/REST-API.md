@@ -144,6 +144,21 @@ Segment rules:
 - `markdown`: non-empty `text`; `attachment_index` and `fallback_label` are null
 - `attachment`: `attachment_index` points into `attachments[]`; `text` and `fallback_label` are null
 - `fallback`: non-empty `text` plus a non-empty `fallback_label` for unsupported or malformed content
+- `thinking`: indicates a reasoning/search processing turn; has an `activity_type` field (`"reasoning"`, `"search"`, or `"both"`); `text`, `attachment_index`, and `fallback_label` are null
+
+```json
+{
+  "kind": "thinking",
+  "activity_type": "reasoning",
+  "text": null,
+  "attachment_index": null,
+  "fallback_label": null
+}
+```
+
+The `message_count` field on conversation detail reflects only user-visible messages after suppressing system bootstrap nodes and internal processing turns. The frontend uses this count directly and does not need to recount.
+
+Date separators are derived client-side from message `create_time` timestamps. A separator is inserted between consecutive messages when the calendar date changes. No separator appears before the first message.
 
 Raw HTML and unsafe embedded payloads are returned as inert text inside markdown or fallback segments; the frontend does not execute them.
 
