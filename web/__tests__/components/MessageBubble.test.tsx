@@ -18,7 +18,17 @@ const longUserPromptContent =
     'message delivery ordering, and at the same time we need to ensure that no two services apply ' +
     'conflicting updates simultaneously. I have read about the Raft consensus algorithm and also about ' +
     'CRDTs as potential solutions, but I am not sure which approach fits our constraints best given that ' +
-    'our throughput requirements are quite high and we also need to keep latency under 50 milliseconds.'
+    'our throughput requirements are quite high and we also need to keep latency under 50 milliseconds. ' +
+    'One key concern is the operational complexity of running a Raft cluster: we would need an odd number of ' +
+    'nodes to maintain quorum, and leadership elections could introduce latency spikes that violate our SLA. ' +
+    'On the other hand, CRDTs are naturally commutative and do not require coordination, which appeals to us, ' +
+    'but they impose constraints on the data model that might force us to redesign how we represent state. ' +
+    'I am also weighing whether a hybrid approach — using CRDTs for eventual-consistency data and a lightweight ' +
+    'consensus protocol only for the critical path — could give us the best of both worlds without the full ' +
+    'overhead of a complete Raft implementation across every service in the mesh. ' +
+    'We currently serve around twelve thousand requests per second at peak, and any solution must gracefully ' +
+    'degrade under network partitions without corrupting shared state or requiring a full cluster restart. ' +
+    'Could you walk me through the trade-offs so I can make an informed decision before our next architecture review?'
 
 const mockLongUserMessage: Message = {
     id: 'msg-long-001',
@@ -362,13 +372,13 @@ describe('MessageBubble', () => {
     })
 
     describe('long user prompt', () => {
-        it('renders a long user prompt (>500 chars) without error', () => {
+        it('renders a long user prompt (>1600 chars) without error', () => {
             render(<MessageBubble message={mockLongUserMessage} />)
 
             expect(screen.getByText('You')).toBeInTheDocument()
             // The full content should be present in the DOM
             const bubble = document.querySelector('[data-testid="message"]')
-            expect(bubble?.textContent?.length).toBeGreaterThan(500)
+            expect(bubble?.textContent?.length).toBeGreaterThan(1600)
         })
 
         it('shows the "You" label for a long user prompt', () => {
