@@ -152,7 +152,7 @@ export function SettingsForm() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <label className="text-sm font-medium">Truncate Long Prompts</label>
-                                <p className="text-sm text-muted-foreground">Collapse user prompts longer than 500 characters with a "Read more" toggle.</p>
+                                <p className="text-sm text-muted-foreground">Collapse user prompts longer than 500 characters with a &ldquo;Read more&rdquo; toggle.</p>
                             </div>
                             <input
                                 type="checkbox"
