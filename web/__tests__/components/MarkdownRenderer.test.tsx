@@ -110,3 +110,23 @@ describe('MarkdownRenderer', () => {
         expect(renderer.textContent).toContain('After math')
     })
 })
+
+// Fixture: a long user prompt exceeding 500 characters
+export const longUserPromptFixture =
+    'I have been thinking about this problem for a while now and wanted to get your perspective. ' +
+    'The situation is fairly complex: we have a distributed system with multiple services that need to ' +
+    'coordinate state changes across a network partition. The challenge is that we cannot guarantee ' +
+    'message delivery ordering, and at the same time we need to ensure that no two services apply ' +
+    'conflicting updates simultaneously. I have read about the Raft consensus algorithm and also about ' +
+    'CRDTs as potential solutions, but I am not sure which approach fits our constraints best given that ' +
+    'our throughput requirements are quite high and we also need to keep latency under 50 milliseconds.'
+
+describe('MarkdownRenderer — long user prompt', () => {
+    it('renders a long user prompt (>500 chars) without truncation or error', () => {
+        render(<MarkdownRenderer text={longUserPromptFixture} />)
+
+        const renderer = screen.getByTestId('markdown-renderer')
+        expect(renderer.textContent).toContain('I have been thinking about this problem')
+        expect(renderer.textContent?.length).toBeGreaterThan(500)
+    })
+})
