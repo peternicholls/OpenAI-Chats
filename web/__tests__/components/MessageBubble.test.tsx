@@ -387,4 +387,20 @@ describe('MessageBubble', () => {
             expect(screen.getByText('You')).toBeInTheDocument()
         })
     })
+
+    describe('rule lines (T010)', () => {
+        it('does not insert an hr element between message content sections', () => {
+            render(<MessageBubble message={mockAssistantMessage} />)
+
+            const bubble = document.querySelector('[data-testid="message"]')
+            expect(bubble?.querySelector('hr')).not.toBeInTheDocument()
+        })
+
+        it('does not insert an hr element in user messages', () => {
+            render(<MessageBubble message={mockUserMessage} />)
+
+            const bubble = document.querySelector('[data-testid="message"]')
+            expect(bubble?.querySelector('hr')).not.toBeInTheDocument()
+        })
+    })
 })

@@ -122,7 +122,7 @@ export default function ConversationDetailPage() {
     }
 
     return (
-        <article className="mx-auto max-w-3xl">
+        <article className="mx-auto max-w-4xl">
             <ConversationHeader
                 conversation={conversation}
                 onExport={() => setShowExport(true)}

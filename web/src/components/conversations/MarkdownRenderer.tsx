@@ -1,10 +1,11 @@
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useState, useCallback, Fragment, type ReactNode, type CSSProperties } from "react";
+import { useState, useCallback, useRef, Fragment, type ReactNode, type CSSProperties } from "react";
 import { Check, Copy } from "lucide-react";
 
 /**
@@ -61,6 +62,38 @@ function extractTextContent(children: ReactNode): string {
     return String(children ?? "");
 }
 
+function TableBlock({ children }: { children: ReactNode }) {
+    const tableRef = useRef<HTMLTableElement>(null);
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = useCallback(() => {
+        const text = tableRef.current?.innerText ?? extractTextContent(children);
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    }, [children]);
+
+    return (
+        <div className="group/table relative my-6" data-testid="table-block">
+            <div className="overflow-x-auto">
+                <table ref={tableRef} className="w-full border-collapse text-sm">
+                    {children}
+                </table>
+            </div>
+            <button
+                type="button"
+                onClick={handleCopy}
+                className="absolute right-1 top-1 flex items-center gap-1 rounded px-1.5 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-widest text-muted-foreground opacity-0 transition-opacity group-hover/table:opacity-100 hover:text-foreground"
+                aria-label={copied ? "Copied" : "Copy table"}
+            >
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied ? "Copied" : "Copy"}
+            </button>
+        </div>
+    );
+}
+
 // Token node shape emitted by react-syntax-highlighter's internal renderer API.
 // All token elements in Prism output are <span> tags, so tagName is always "span".
 // value is string | number to match RSH's rendererNode type exactly.
@@ -68,7 +101,7 @@ interface SyntaxToken {
     type: "element" | "text";
     value?: string | number;
     tagName?: string;
-    properties?: { className?: string[]; [key: string]: unknown };
+    properties?: { className?: string[];[key: string]: unknown };
     children?: SyntaxToken[];
 }
 
@@ -98,7 +131,7 @@ export function MarkdownRenderer({ text }: { text: string }) {
     return (
         <div className="space-y-2 text-[14px] leading-[1.55] text-foreground" data-testid="markdown-renderer">
             <ReactMarkdown
-                remarkPlugins={[remarkBreaks, remarkMath]}
+                remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
                 rehypePlugins={[[rehypeKatex, { throwOnError: false, errorColor: "var(--color-muted-foreground)" }]]}
                 components={{
                     h1: ({ children }) => (
@@ -111,9 +144,9 @@ export function MarkdownRenderer({ text }: { text: string }) {
                         <h3 className="text-[14px] font-semibold leading-tight tracking-tight text-foreground">{children}</h3>
                     ),
                     p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc space-y-0.5 pl-4.5">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal space-y-0.5 pl-4.5">{children}</ol>,
-                    li: ({ children }) => <li className="pl-0.5">{children}</li>,
+                    ul: ({ children }) => <ul className="list-disc space-y-1.5 pl-4.5">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal space-y-1.5 pl-4.5">{children}</ol>,
+                    li: ({ children }) => <li className="markdown-list-item pl-0.5">{children}</li>,
                     blockquote: ({ children }) => (
                         <blockquote className="border-l-2 border-border pl-3 italic text-muted-foreground">
                             {children}
@@ -128,6 +161,20 @@ export function MarkdownRenderer({ text }: { text: string }) {
                         >
                             {children}
                         </a>
+                    ),
+                    table: ({ children }) => <TableBlock>{children}</TableBlock>,
+                    th: ({ children }) => (
+                        <th className="border-b-2 border-border px-3 py-2 text-left text-xs font-semibold text-foreground">
+                            {children}
+                        </th>
+                    ),
+                    td: ({ children }) => (
+                        <td className="border-b border-border/80 px-3 py-2.5 text-foreground">
+                            {children}
+                        </td>
+                    ),
+                    hr: () => (
+                        <hr className="my-4 border-t border-border" />
                     ),
                     pre: ({ children }) => {
                         const codeText = extractTextContent(children);

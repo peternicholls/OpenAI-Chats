@@ -179,3 +179,111 @@ describe('MarkdownRenderer — long user prompt', () => {
         expect(renderer.textContent?.length).toBeGreaterThan(1600)
     })
 })
+
+describe('MarkdownRenderer — tables (T008)', () => {
+    const tableMarkdown = [
+        '| Name | Age | City |',
+        '| --- | --- | --- |',
+        '| Alice | 30 | London |',
+        '| Bob | 25 | Paris |',
+    ].join('\n')
+
+    it('renders a markdown table as an HTML table inside a table-block container', () => {
+        render(<MarkdownRenderer text={tableMarkdown} />)
+
+        const block = screen.getByTestId('table-block')
+        expect(block).toBeInTheDocument()
+
+        const table = block.querySelector('table')
+        expect(table).toBeInTheDocument()
+        expect(table?.querySelectorAll('th').length).toBe(3)
+        expect(table?.querySelectorAll('td').length).toBe(6)
+    })
+
+    it('renders table headers with heavier bottom border and no vertical borders', () => {
+        render(<MarkdownRenderer text={tableMarkdown} />)
+
+        const block = screen.getByTestId('table-block')
+        const headers = block.querySelectorAll('th')
+        headers.forEach((th) => {
+            expect(th.className).toContain('border-b-2')
+            expect(th.className).not.toContain('border-l')
+            expect(th.className).not.toContain('border-r')
+        })
+    })
+
+    it('renders table cells with lightweight bottom border and no vertical borders', () => {
+        render(<MarkdownRenderer text={tableMarkdown} />)
+
+        const block = screen.getByTestId('table-block')
+        const cells = block.querySelectorAll('td')
+        cells.forEach((td) => {
+            expect(td.className).toContain('border-b')
+            expect(td.className).not.toContain('border-l')
+            expect(td.className).not.toContain('border-r')
+        })
+    })
+
+    it('includes a copy button for the table', () => {
+        render(<MarkdownRenderer text={tableMarkdown} />)
+
+        const copyButton = screen.getByRole('button', { name: /copy table/i })
+        expect(copyButton).toBeInTheDocument()
+    })
+
+    it('renders table content correctly', () => {
+        render(<MarkdownRenderer text={tableMarkdown} />)
+
+        const block = screen.getByTestId('table-block')
+        expect(block.textContent).toContain('Alice')
+        expect(block.textContent).toContain('Bob')
+        expect(block.textContent).toContain('London')
+        expect(block.textContent).toContain('Paris')
+    })
+})
+
+describe('MarkdownRenderer — list spacing (T009)', () => {
+    it('applies increased between-item spacing on unordered lists', () => {
+        const text = '- Item one\n- Item two\n- Item three'
+        render(<MarkdownRenderer text={text} />)
+
+        const ul = screen.getByTestId('markdown-renderer').querySelector('ul')
+        expect(ul?.className).toContain('space-y-1.5')
+    })
+
+    it('applies increased between-item spacing on ordered lists', () => {
+        const text = '1. First\n2. Second\n3. Third'
+        render(<MarkdownRenderer text={text} />)
+
+        const ol = screen.getByTestId('markdown-renderer').querySelector('ol')
+        expect(ol?.className).toContain('space-y-1.5')
+    })
+
+    it('applies markdown-list-item class for CSS targeting of within-item spacing', () => {
+        const text = '- **Heading**: Some content here'
+        render(<MarkdownRenderer text={text} />)
+
+        const li = screen.getByTestId('markdown-renderer').querySelector('li')
+        expect(li?.className).toContain('markdown-list-item')
+    })
+})
+
+describe('MarkdownRenderer — horizontal rules (T010)', () => {
+    it('renders an hr when markdown contains an explicit thematic break', () => {
+        const text = 'Above\n\n---\n\nBelow'
+        render(<MarkdownRenderer text={text} />)
+
+        const hr = screen.getByTestId('markdown-renderer').querySelector('hr')
+        expect(hr).toBeInTheDocument()
+        expect(hr?.className).toContain('border-t')
+        expect(hr?.className).toContain('border-border')
+    })
+
+    it('does not render an hr when no thematic break is in the source', () => {
+        const text = 'First paragraph\n\nSecond paragraph'
+        render(<MarkdownRenderer text={text} />)
+
+        const hr = screen.getByTestId('markdown-renderer').querySelector('hr')
+        expect(hr).not.toBeInTheDocument()
+    })
+})
