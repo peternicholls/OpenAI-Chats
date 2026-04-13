@@ -2,7 +2,8 @@ import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useState, useCallback, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 
@@ -110,16 +111,26 @@ export function MarkdownRenderer({ text }: { text: string }) {
                         }
 
                         return (
-                            <div className="group relative overflow-hidden rounded-lg bg-slate-950" data-testid="code-block">
-                                <div className="flex items-center justify-between bg-slate-800 px-3.5 py-1">
+                            <div className="group relative mt-4 overflow-hidden rounded-lg bg-slate-950" data-testid="code-block">
+                                <div className="flex items-center justify-between bg-slate-800 px-3.5 pb-1 pt-2">
                                     <span className="font-mono text-[11px] text-slate-400">
                                         {language || "text"}
                                     </span>
                                     <CopyButton text={codeText} />
                                 </div>
-                                <pre className="overflow-x-auto px-3.5 py-2.5 text-[12px] leading-[1.6] text-slate-200">
-                                    <code className="font-mono">{codeText}</code>
-                                </pre>
+                                <SyntaxHighlighter
+                                    language={language || "text"}
+                                    style={oneDark}
+                                    PreTag="div"
+                                    className="overflow-x-auto px-3.5 py-2.5 text-[12px] leading-[1.6]"
+                                    // customStyle must stay inline: these three values counteract inline styles
+                                    // injected by react-syntax-highlighter itself. CSS classes cannot override
+                                    // inline styles; only another inline style wins.
+                                    customStyle={{ margin: 0, borderRadius: 0, background: "transparent" }}
+                                    codeTagProps={{ className: "code-block-code" }}
+                                >
+                                    {codeText}
+                                </SyntaxHighlighter>
                             </div>
                         );
                     },
