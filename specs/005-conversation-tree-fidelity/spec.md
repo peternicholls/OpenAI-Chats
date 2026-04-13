@@ -248,14 +248,14 @@ All test cases MUST use **synthetic in-memory `mapping` dicts** constructed dire
 
 ### FR-010 — API Tests
 
-`api/tests/` MUST have integration tests covering:
+`tests/api/` MUST have integration tests covering:
 - Conversation detail endpoint returns expected message sequence for a conversation with known branch structure (using a fixture, not the live DB)
 - `message_count` matches the active-path count, not the raw node count
 - `author_name` is present on tool-role messages in the response
 - `metadata` values in the response are valid JSON strings
 - A message with cite tokens returns those tokens intact in the `content` field
 
-**Acceptance criterion:** All tests in `api/tests/test_conversations.py` pass.
+**Acceptance criterion:** All tests in `tests/api/test_conversations.py` pass.
 
 ---
 

@@ -8,7 +8,7 @@
 - Reviewed and preserved the moodboard snapshot set in [specs/004-frontend-formatting/claude-opus-4.6/snapshots](specs/004-frontend-formatting/claude-opus-4.6/snapshots) so redesign work can be compared against fixed visual references instead of relying only on the source HTML.
 - Reviewed the backend and frontend transcript-formatting code path, including the segment contract, fixture builders, renderer safety path, and conversation route layout.
 - Re-ran focused validation on the current branch:
-  - Backend: `api/tests/test_formatting_service.py` and `api/tests/test_conversations.py` — 29 passed
+  - Backend: `tests/api/test_formatting_service.py` and `tests/api/test_conversations.py` — 29 passed
   - Frontend unit tests: `MarkdownRenderer`, `MessageBubble`, `FallbackBlock`, and `api` client tests — 41 passed
   - Playwright: `web/__tests__/e2e/conversation.spec.ts` — 7 passed, 2 failed
 - Distinguished between:
