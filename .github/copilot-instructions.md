@@ -39,6 +39,25 @@ Follow these rules unless the user explicitly asks otherwise:
 - Use functional React components. Default to server components. Add `'use client'` only when interactivity requires it.
 - Record meaningful progress, decisions, and discoveries with `/chronicle` during multi-step work.
 
+## Frontend Styling
+
+Play to the strengths of each approach rather than defaulting entirely to one.
+
+**Use Tailwind for:**
+- Component-local layout, spacing, and sizing — utilities co-located with markup are easy to read and change.
+- Responsive variants (`sm:`, `lg:`, etc.) and state variants (`hover:`, `focus:`, `dark:`).
+- One-off values that don't belong in a shared token (`text-[11px]`, `mt-4`).
+- shadcn/ui integration, where Tailwind class names are already the convention.
+
+**Use modern CSS (`globals.css` or a CSS module) for:**
+- Design tokens and custom properties (`--color-brand`, `--font-mono`), which Tailwind `var()` calls reference.
+- Rules that override third-party library inline styles — CSS cannot beat an inline style; only another inline style can. Document why when you do it.
+- Complex selectors, pseudo-elements, `:has()`, container queries, and `@keyframes` — these are cleaner in CSS than in Tailwind.
+- Shared base styles that apply across many unrelated components and would bloat every class list if repeated.
+- Font-family assignments for injected markup you don't control (e.g. syntax highlighter token wrappers).
+
+**Decision rule:** If the styling is component-local and expressible as a simple utility, use Tailwind. If it's global, shared, inherently cascade-dependent, or overriding a library default, use CSS. Never duplicate a rule in both.
+
 ## Validation And Completion
 
 Do the following at the end of every task:
