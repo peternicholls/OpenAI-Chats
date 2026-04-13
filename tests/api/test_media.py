@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from api.services import media_service
-from api.tests.conftest import (
+from tests.api.conftest import (
     MEDIA_AUDIO_FILE_ID,
     MEDIA_CONVERSATION_ID,
     MEDIA_IMAGE_FILE_ID,

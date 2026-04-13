@@ -36,7 +36,7 @@ jobs:
 
       - name: Run library unit tests
         run: |
-          pytest tests/ -v --tb=short --ignore=tests/unit -q
+          pytest tests/ -v --tb=short --ignore=tests/unit --ignore=tests/api -q
 
       - name: Run unit tests
         run: |
@@ -44,11 +44,11 @@ jobs:
 
       - name: Run API integration tests
         run: |
-          pytest api/tests/ -v --tb=short
+          pytest tests/api/ -v --tb=short
 
       - name: Run all tests with coverage
         run: |
-          pytest tests/ api/tests/ --cov=chatgpt_archive --cov=api --cov-report=term-missing --cov-fail-under=60 -q
+          pytest tests/ --cov=chatgpt_archive --cov=api --cov-report=term-missing --cov-fail-under=60 -q
 
   frontend-tests:
     name: Frontend Tests
