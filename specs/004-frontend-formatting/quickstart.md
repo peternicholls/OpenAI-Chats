@@ -80,7 +80,7 @@ Backend:
 
 ```bash
 cd /Users/peternicholls/Dev/OpenAI-Chats
-PYTHONPATH=/Users/peternicholls/Dev/OpenAI-Chats uv run --with pytest --with pytest-asyncio --with httpx --with fastapi --with pydantic --with python-multipart --with cryptography python -m pytest api/tests/test_conversations.py api/tests/test_formatting_service.py
+PYTHONPATH=/Users/peternicholls/Dev/OpenAI-Chats uv run --with pytest --with pytest-asyncio --with httpx --with fastapi --with pydantic --with python-multipart --with cryptography python -m pytest tests/api/test_conversations.py tests/api/test_formatting_service.py
 ```
 
 Frontend unit tests:
