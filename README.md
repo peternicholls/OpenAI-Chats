@@ -86,7 +86,7 @@ OpenAI-Chats/
 ├── docs/                   # User guide plus Python and REST API docs
 │   └── user-guide/         # End-user CLI, web UI, and troubleshooting guides
 ├── docker/                 # nginx config and Dockerfiles
-├── tests/                  # Core package tests
+├── tests/                  # Python tests for the core package and API
 ├── specs/                  # Feature specs, plans, and contracts
 ├── docker-compose.yml      # Local Docker stack: nginx + api + web
 └── pyproject.toml          # Root Python package metadata
@@ -208,7 +208,7 @@ Backend and core package:
 
 ```bash
 source .venv/bin/activate
-pytest tests api/tests -q
+pytest tests -q
 ```
 
 Frontend:

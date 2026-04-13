@@ -124,13 +124,13 @@ Additional repository rules:
 
 ```bash
 # Core library tests
-source .venv/bin/activate && pytest tests/ -v --tb=short --ignore=tests/unit -q
+source .venv/bin/activate && pytest tests/ -v --tb=short --ignore=tests/unit --ignore=tests/api -q
 
 # Core unit tests
 source .venv/bin/activate && pytest tests/unit/ -v --tb=short
 
 # API tests
-source .venv/bin/activate && pytest api/tests/ -v --tb=short
+source .venv/bin/activate && pytest tests/api/ -v --tb=short
 
 # Frontend checks
 cd web && npm run lint
@@ -187,21 +187,22 @@ Stage only the files relevant to your change. Do not include unrelated working t
 
 Tests are organized by layer:
 
-- `tests/` and `tests/unit/` for the core Python package
-- `api/tests/` for FastAPI behavior using temporary SQLite databases and shared fixtures
+- `tests/` as the single root Python test directory
+- `tests/unit/` for focused core-library unit tests
+- `tests/api/` for FastAPI behavior using temporary SQLite databases and shared fixtures
 - `web/__tests__/` for frontend unit tests, MSW-backed service tests, and Playwright specs under `web/__tests__/e2e`
 
 ### Running Tests
 
 ```bash
 # === Core package ===
-source .venv/bin/activate && pytest tests/ -v --tb=short --ignore=tests/unit -q
+source .venv/bin/activate && pytest tests/ -v --tb=short --ignore=tests/unit --ignore=tests/api -q
 source .venv/bin/activate && pytest tests/unit/ -v --tb=short
 source .venv/bin/activate && pytest tests/unit/test_search.py::test_sanitize_query_empty_raises -q
 
 # === API ===
-source .venv/bin/activate && pytest api/tests/ -v --tb=short
-source .venv/bin/activate && pytest api/tests/test_formatting_service.py::test_build_render_segments_returns_markdown_for_plain_text -q
+source .venv/bin/activate && pytest tests/api/ -v --tb=short
+source .venv/bin/activate && pytest tests/api/test_formatting_service.py::test_build_render_segments_returns_markdown_for_plain_text -q
 
 # === Python lint / format ===
 source .venv/bin/activate && ruff check chatgpt_archive/ api/
@@ -449,7 +450,7 @@ For a new feature:
 - [ ] Keep `api/` limited to HTTP orchestration and response shaping
 - [ ] Use `web/src/services/api.ts` and aligned frontend contract types for browser work
 - [ ] If transcript rendering changes, update the backend formatter, API response models, and frontend renderer together
-- [ ] Add or update the smallest relevant tests in `tests/`, `api/tests/`, or `web/__tests__/`
+- [ ] Add or update the smallest relevant tests in `tests/`, `tests/api/`, or `web/__tests__/`
 - [ ] Add documentation in `docs/user-guide/usage.md`, `docs/user-guide/web-ui.md`, or other affected guides
 - [ ] Update README if user-facing
 - [ ] Add to CHANGELOG
