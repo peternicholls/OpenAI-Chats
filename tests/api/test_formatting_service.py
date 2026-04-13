@@ -1,6 +1,6 @@
 """Tests for render segment building."""
 
-from api.tests.conftest import build_formatted_message_content
+from tests.api.conftest import build_formatted_message_content
 from api.models.responses import Attachment
 from api.services import formatting_service
 
