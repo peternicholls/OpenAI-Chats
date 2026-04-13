@@ -17,6 +17,7 @@ class UserSettings(BaseModel):
         None, description="OpenAI API key for embeddings"
     )
     sidebar_open: bool = Field(True, description="Whether sidebar is open")
+    sidebar_collapsed: bool = Field(False, description="Whether sidebar is collapsed")
     embedding_model: str = Field(
         "text-embedding-3-small", description="Model for embeddings"
     )
@@ -37,6 +38,7 @@ class UserSettingsUpdate(BaseModel):
     default_export_format: str | None = None
     openai_api_key: str | None = None
     sidebar_open: bool | None = None
+    sidebar_collapsed: bool | None = None
     embedding_model: str | None = None
     items_per_page: int | None = None
     archive_media_dir: str | None = None

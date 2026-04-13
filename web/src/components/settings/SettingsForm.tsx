@@ -30,6 +30,7 @@ export function SettingsForm() {
     const theme = draft.theme ?? currentTheme ?? "system";
     const defaultExportFormat = draft.default_export_format ?? data?.default_export_format ?? "md";
     const archiveMediaDir = draft.archive_media_dir ?? data?.archive_media_dir ?? "";
+    const sidebarCollapsed = draft.sidebar_collapsed ?? data?.sidebar_collapsed ?? false;
     const codeLineNumbers = draft.code_line_numbers ?? data?.code_line_numbers ?? false;
     const longPromptTruncation = draft.long_prompt_truncation ?? data?.long_prompt_truncation ?? true;
 
@@ -44,6 +45,7 @@ export function SettingsForm() {
                 theme: theme as "light" | "dark" | "system",
                 default_export_format: defaultExportFormat,
                 archive_media_dir: archiveMediaDir,
+                sidebar_collapsed: sidebarCollapsed,
                 code_line_numbers: codeLineNumbers,
                 long_prompt_truncation: longPromptTruncation,
             });
@@ -132,6 +134,21 @@ export function SettingsForm() {
                             <p className="text-sm text-muted-foreground">
                                 Optional path to an extracted archive used for inline media lookup.
                             </p>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <label className="text-sm font-medium">Sidebar Collapsed</label>
+                                <p className="text-sm text-muted-foreground">Persist the sidebar collapsed state across reloads.</p>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={sidebarCollapsed}
+                                onChange={(e) =>
+                                    setDraft((current) => ({ ...current, sidebar_collapsed: e.target.checked }))
+                                }
+                                className="h-4 w-4"
+                            />
                         </div>
 
                         <div className="flex items-center justify-between">

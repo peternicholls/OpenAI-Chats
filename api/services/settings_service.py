@@ -22,6 +22,7 @@ DEFAULT_SETTINGS = {
     "theme": "light",
     "default_export_format": "md",
     "sidebar_open": True,
+    "sidebar_collapsed": False,
     "openai_api_key": "",
     "embedding_model": "text-embedding-3-small",
     "items_per_page": 50,
