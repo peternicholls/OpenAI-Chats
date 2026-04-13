@@ -74,8 +74,7 @@ Use these directories for orientation:
 chatgpt_archive/         # Core library and source of truth for archive logic
 api/                     # FastAPI adapter over the core library
 web/                     # Next.js frontend
-tests/                   # Core library tests
-api/tests/               # API integration tests
+tests/                   # Python tests for the core library and API
 web/__tests__/           # Frontend unit and E2E tests
 specs/                   # Feature and sprint design artifacts
 docker/                  # Container build and runtime files
@@ -83,8 +82,9 @@ docker/                  # Container build and runtime files
 
 Use this test layout:
 
-- `tests/` and `tests/unit/` for the core Python package
-- `api/tests/` for FastAPI behavior with temporary SQLite databases and shared fixtures in `api/tests/conftest.py`
+- `tests/` as the single root Python test directory
+- `tests/unit/` for the core Python package
+- `tests/api/` for FastAPI behavior with temporary SQLite databases and shared fixtures in `tests/api/conftest.py`
 - `web/__tests__/` for Vitest tests, MSW mocks, and Playwright specs under `web/__tests__/e2e`
 
 ## Tech Stack
@@ -108,13 +108,13 @@ pip install -e ".[dev,excel]"
 (cd api && pip install -e ".[dev]")
 
 # Core library tests
-source .venv/bin/activate && pytest tests/ -v --tb=short --ignore=tests/unit -q
+source .venv/bin/activate && pytest tests/ -v --tb=short --ignore=tests/unit --ignore=tests/api -q
 source .venv/bin/activate && pytest tests/unit/ -v --tb=short
 source .venv/bin/activate && pytest tests/unit/test_search.py::test_sanitize_query_empty_raises -q
 
 # API tests
-source .venv/bin/activate && pytest api/tests/ -v --tb=short
-source .venv/bin/activate && pytest api/tests/test_formatting_service.py::test_build_render_segments_returns_markdown_for_plain_text -q
+source .venv/bin/activate && pytest tests/api/ -v --tb=short
+source .venv/bin/activate && pytest tests/api/test_formatting_service.py::test_build_render_segments_returns_markdown_for_plain_text -q
 
 # Python lint / format checks
 source .venv/bin/activate && ruff check chatgpt_archive/ api/
@@ -177,9 +177,9 @@ Use these common commands when you need broad validation:
 
 ```bash
 # All tests at once
-source .venv/bin/activate && pytest api/tests/ -v && cd web && npm test
+source .venv/bin/activate && pytest tests/api/ -v && cd web && npm test
 
 # Coverage
-source .venv/bin/activate && pytest api/tests/ --cov=api --cov-report=term-missing
+source .venv/bin/activate && pytest tests/api/ --cov=api --cov-report=term-missing
 cd web && npm test -- --coverage
 ```

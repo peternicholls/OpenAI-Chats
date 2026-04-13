@@ -530,7 +530,7 @@ chatgpt-archive search "query" --hybrid
 3. Run the focused validation suites:
    ```bash
    cd /Users/peternicholls/Dev/OpenAI-Chats
-   PYTHONPATH=/Users/peternicholls/Dev/OpenAI-Chats uv run --with pytest --with pytest-asyncio --with httpx --with fastapi --with pydantic --with python-multipart --with cryptography python -m pytest api/tests/test_conversations.py api/tests/test_formatting_service.py
+   PYTHONPATH=/Users/peternicholls/Dev/OpenAI-Chats uv run --with pytest --with pytest-asyncio --with httpx --with fastapi --with pydantic --with python-multipart --with cryptography python -m pytest tests/api/test_conversations.py tests/api/test_formatting_service.py
 
    cd /Users/peternicholls/Dev/OpenAI-Chats/web
    npm run test -- __tests__/services/api.test.ts __tests__/components/MessageBubble.test.tsx __tests__/components/MarkdownRenderer.test.tsx __tests__/components/FallbackBlock.test.tsx
@@ -702,7 +702,7 @@ chatgpt-archive search "query" --hybrid
 source .venv/bin/activate
 
 # Run with verbose output to see the actual error
-pytest api/tests/ -v --tb=long
+pytest tests/api/ -v --tb=long
 ```
 
 ### Frontend tests fail with "Cannot find module"
