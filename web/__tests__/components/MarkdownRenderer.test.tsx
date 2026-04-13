@@ -51,9 +51,11 @@ describe('MarkdownRenderer', () => {
         const codeBlock = screen.getByTestId('code-block')
         // No overflow-x-auto anywhere inside the code block
         expect(codeBlock.querySelector('.overflow-x-auto')).toBeNull()
-        // white-space: pre-wrap must be applied to the inner code element (inline style wins over RSH defaults)
-        const codeElem = codeBlock.querySelector('.code-block-code') as HTMLElement
-        expect(codeElem?.style.whiteSpace).toBe('pre-wrap')
+        // With the grid renderer, white-space: pre-wrap is on each code-cell div (not
+        // the outer .code-block-code wrapper). Find the first non-gutter div in the grid.
+        const gutterGrid = codeBlock.querySelector('[data-testid="line-number-gutter"]') as HTMLElement
+        const firstCodeCell = gutterGrid?.querySelector('div:not([aria-hidden])') as HTMLElement
+        expect(firstCodeCell?.style.whiteSpace).toBe('pre-wrap')
     })
 
     it('renders raw html as inert text without creating DOM nodes from it', () => {
@@ -119,19 +121,19 @@ describe('MarkdownRenderer', () => {
 })
 
 describe('MarkdownRenderer — line numbers (T006)', () => {
-    it('renders line number spans that are excluded from drag selection via user-select: none', () => {
+    it('renders gutter cells that are excluded from selection and the accessibility tree', () => {
         const code = ['```python', 'x = 1', 'y = 2', 'z = 3', '```'].join('\n')
         render(<MarkdownRenderer text={code} />)
 
         const codeBlock = screen.getByTestId('code-block')
-        // Line number spans are identified by their userSelect: none inline style
-        const lineNumSpans = Array.from(codeBlock.querySelectorAll('span')).filter(
-            (s) => (s as HTMLElement).style.userSelect === 'none'
-        )
-        expect(lineNumSpans.length).toBeGreaterThan(0)
-        lineNumSpans.forEach((span) => {
-            expect((span as HTMLElement).style.userSelect).toBe('none')
+        // Scope to the gutter grid to exclude Lucide icon SVGs (also aria-hidden)
+        const gutterGrid = screen.getByTestId('line-number-gutter')
+        const gutterCells = Array.from(gutterGrid.querySelectorAll('[aria-hidden="true"]'))
+        expect(gutterCells.length).toBe(3)
+        gutterCells.forEach((cell) => {
+            expect((cell as HTMLElement).style.userSelect).toBe('none')
         })
+        expect(codeBlock).toBeInTheDocument()
     })
 
     it('copy button is present and code content renders without line number prefixes', () => {

@@ -4,7 +4,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useState, useCallback, type ReactNode } from "react";
+import { useState, useCallback, Fragment, type ReactNode, type CSSProperties } from "react";
 import { Check, Copy } from "lucide-react";
 
 /**
@@ -61,6 +61,37 @@ function extractTextContent(children: ReactNode): string {
     return String(children ?? "");
 }
 
+// Token node shape emitted by react-syntax-highlighter's internal renderer API.
+// All token elements in Prism output are <span> tags, so tagName is always "span".
+// value is string | number to match RSH's rendererNode type exactly.
+interface SyntaxToken {
+    type: "element" | "text";
+    value?: string | number;
+    tagName?: string;
+    properties?: { className?: string[]; [key: string]: unknown };
+    children?: SyntaxToken[];
+}
+
+// Recursively render an RSH token tree to React elements, resolving inline
+// styles from the theme stylesheet keyed by CSS class name.
+function renderTokens(
+    nodes: SyntaxToken[],
+    stylesheet: Record<string, CSSProperties>
+): ReactNode {
+    return nodes.map((node, i) => {
+        if (node.type === "text") return node.value ?? null;
+        const style = (node.properties?.className ?? []).reduce<CSSProperties>(
+            (acc, cls) => ({ ...acc, ...(stylesheet[cls] ?? {}) }),
+            {}
+        );
+        return (
+            <span key={i} style={Object.keys(style).length ? style : undefined}>
+                {node.children ? renderTokens(node.children, stylesheet) : null}
+            </span>
+        );
+    });
+}
+
 export function MarkdownRenderer({ text }: { text: string }) {
     const processed = preprocess(text);
 
@@ -110,6 +141,12 @@ export function MarkdownRenderer({ text }: { text: string }) {
                             }
                         }
 
+                        // Strip the trailing newline that fenced code blocks produce so RSH
+                        // does not emit a spurious empty final row in the renderer.
+                        const codeForHighlighter = codeText.endsWith("\n")
+                            ? codeText.slice(0, -1)
+                            : codeText;
+
                         return (
                             <div className="group relative mt-4 overflow-hidden rounded-lg bg-slate-950" data-testid="code-block">
                                 <div className="flex items-center justify-between bg-slate-800 px-3.5 pb-1 pt-2">
@@ -122,33 +159,82 @@ export function MarkdownRenderer({ text }: { text: string }) {
                                     language={language || "text"}
                                     style={oneDark}
                                     PreTag="div"
-                                    showLineNumbers={true}
-                                    // lineNumberStyle must stay inline: RSH injects inline styles on number
-                                    // spans; only another inline style can override them.
-                                    lineNumberStyle={{
-                                        userSelect: "none",
-                                        color: "#64748b",
-                                        fontSize: "11px",
-                                        paddingRight: "10px",
-                                        paddingLeft: "6px",
-                                        minWidth: "2.5em",
-                                        textAlign: "right",
-                                        display: "inline-block",
-                                        borderRight: "1px solid #334155",
-                                        marginRight: "14px",
-                                        backgroundColor: "rgba(0, 0, 0, 0.15)",
+                                    showLineNumbers={false}
+                                    className=""
+                                    // customStyle must stay inline: RSH injects inline styles on the PreTag.
+                                    // padding: 0 — the renderer's grid cells own all spacing.
+                                    customStyle={{ margin: 0, padding: 0, borderRadius: 0, background: "transparent" }}
+                                    // code-block-code sets font-family, font-size: 13px, line-height: 1.75.
+                                    // display: block makes the <code> element a block-level grid container.
+                                    codeTagProps={{ className: "code-block-code", style: { display: "block" } }}
+                                    // Custom renderer: one CSS grid row per logical code line.
+                                    // Grid row height expands automatically for wrapped lines; the gutter
+                                    // cell stretches (align-self: stretch is CSS grid's default) so the
+                                    // #1a2332 background always fills the full height of the row — no gaps.
+                                    // The line number is positioned at the top of each cell via flex-start.
+                                    renderer={(props) => {
+                                        const rows = props.rows as SyntaxToken[];
+                                        const stylesheet = props.stylesheet as Record<string, CSSProperties>;
+                                        const total = rows.length;
+                                        // Widen the gutter column once line numbers reach 3 digits
+                                        const gutterW = total >= 100 ? "3.5em" : "2.5em";
+                                        return (
+                                            <div
+                                                data-testid="line-number-gutter"
+                                                style={{
+                                                    display: "grid",
+                                                    gridTemplateColumns: `${gutterW} 1fr`,
+                                                }}
+                                            >
+                                                {rows.map((row, i) => (
+                                                    <Fragment key={i}>
+                                                        {/* Gutter cell: stretches to full row height via CSS grid default */}
+                                                        <div
+                                                            aria-hidden="true"
+                                                            style={{
+                                                                backgroundColor: "#1a2332",
+                                                                color: "#4b5a6e",
+                                                                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                                                                fontSize: "11px",
+                                                                // Fixed-px line-height = 13px × 1.75 so numbers
+                                                                // align with the first visual row of each code line.
+                                                                lineHeight: "22.75px",
+                                                                // Top/bottom padding only on the first/last rows so
+                                                                // the gutter background fills flush to the block edges.
+                                                                paddingTop: i === 0 ? "10px" : undefined,
+                                                                paddingBottom: i === total - 1 ? "10px" : undefined,
+                                                                paddingLeft: "8px",
+                                                                paddingRight: "10px",
+                                                                display: "flex",
+                                                                alignItems: "flex-start",
+                                                                justifyContent: "flex-end",
+                                                                userSelect: "none",
+                                                            }}
+                                                        >
+                                                            {i + 1}
+                                                        </div>
+                                                        {/* Code cell: inherits font/size/leading from .code-block-code */}
+                                                        <div
+                                                            style={{
+                                                                paddingTop: i === 0 ? "10px" : undefined,
+                                                                paddingBottom: i === total - 1 ? "10px" : undefined,
+                                                                paddingLeft: "14px",
+                                                                paddingRight: "14px",
+                                                                whiteSpace: "pre-wrap",
+                                                                overflowWrap: "break-word",
+                                                            }}
+                                                        >
+                                                            {row.children
+                                                                ? renderTokens(row.children, stylesheet)
+                                                                : null}
+                                                        </div>
+                                                    </Fragment>
+                                                ))}
+                                            </div>
+                                        );
                                     }}
-                                    className="px-3.5 py-2.5"
-                                    // customStyle must stay inline: RSH injects inline styles on the PreTag
-                                    // element; CSS classes cannot override inline styles.
-                                    // whiteSpace/overflowWrap replace overflow-x-auto — horizontal scrollbars
-                                    // are a UX failure per design notes; wrapping is the correct solution.
-                                    customStyle={{ margin: 0, borderRadius: 0, background: "transparent", fontSize: "13px", lineHeight: "1.75", whiteSpace: "pre-wrap", overflowWrap: "break-word" }}
-                                    // codeTagProps.style must be inline: RSH may apply white-space: pre to
-                                    // the inner <code> element; only an inline style override wins.
-                                    codeTagProps={{ className: "code-block-code", style: { whiteSpace: "pre-wrap", overflowWrap: "break-word" } }}
                                 >
-                                    {codeText}
+                                    {codeForHighlighter}
                                 </SyntaxHighlighter>
                             </div>
                         );
