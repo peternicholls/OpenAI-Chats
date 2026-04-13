@@ -120,10 +120,12 @@ git checkout -b fix/issue-123
 Follow existing code patterns and conventions. Key principles:
 
 - **Keep it simple**: Prefer clarity over cleverness
+- **Use TDD by default**: Start with the smallest failing automated test for behavior changes, then implement, then refactor
 - **Type hints**: Use type hints for function parameters and returns
 - **Docstrings**: Add Google-style docstrings for public functions
 - **Error handling**: Use descriptive error messages
-- **Testing**: Write tests for new features
+- **Testing**: Add or update regression coverage for new features and bug fixes
+- **Respect layer boundaries**: Keep shared logic in `chatgpt_archive/`, keep `api/` thin, and use the shared frontend client in `web/`
 
 ### 3. Test Your Changes
 
@@ -140,6 +142,9 @@ pytest --cov=chatgpt_archive
 # Run tests in verbose mode
 pytest -v
 ```
+
+When changing behavior, write the smallest relevant test first and confirm it fails for the
+intended reason before implementing the fix.
 
 ### 4. Format and Lint
 
