@@ -45,10 +45,10 @@
 
 **Purpose**: Improve structured markdown readability and remove visual noise.
 
-- [ ] T008 Render markdown tables as HTML tables with a copy action, readable header and row treatments, increased spacing, and horizontal separation only in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/app/globals.css`
-- [ ] T009 Reduce the gap between list item heading and content, and increase spacing after each list item, in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/app/globals.css`
-- [ ] T010 Render horizontal rules only when they are explicitly present in markdown source, and remove any automatic rule-line insertion between turns, in `web/src/components/conversations/MarkdownRenderer.tsx`, `web/src/components/conversations/MessageBubble.tsx`, and `web/src/app/globals.css`
-- [ ] T011 Add or update automated coverage for tables, list spacing, and explicit rule-line rendering in `web/__tests__/components/MarkdownRenderer.test.tsx`, `web/__tests__/components/MessageBubble.test.tsx`, and `web/__tests__/e2e/conversation.spec.ts`
+- [X] T008 Render markdown tables as HTML tables with a copy action, readable header and row treatments, increased spacing, and horizontal separation only in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/app/globals.css`
+- [X] T009 Reduce the gap between list item heading and content, and increase spacing after each list item, in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/app/globals.css`
+- [X] T010 Render horizontal rules only when they are explicitly present in markdown source, and remove any automatic rule-line insertion between turns, in `web/src/components/conversations/MarkdownRenderer.tsx`, `web/src/components/conversations/MessageBubble.tsx`, and `web/src/app/globals.css`
+- [X] T011 Add or update automated coverage for tables, list spacing, and explicit rule-line rendering in `web/__tests__/components/MarkdownRenderer.test.tsx`, `web/__tests__/components/MessageBubble.test.tsx`, and `web/__tests__/e2e/conversation.spec.ts`
 
 ## Phase 4: Turn Actions and Long User Prompts
 

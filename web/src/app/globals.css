@@ -141,3 +141,18 @@
   font-size: 13px;
   line-height: 1.75;
 }
+
+/* List items: tighten paragraph spacing within items so bold headings
+   sit closer to their body content while items stay well-separated. */
+.markdown-list-item > p {
+  margin-bottom: 0.125rem;
+}
+.markdown-list-item > p:last-child {
+  margin-bottom: 0;
+}
+
+/* Tables: remove bottom border from the last row so the table
+   doesn't double-border against its container edge. */
+[data-testid="table-block"] tbody tr:last-child td {
+  border-bottom-width: 0;
+}
