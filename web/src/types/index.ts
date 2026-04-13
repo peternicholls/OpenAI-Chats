@@ -137,6 +137,7 @@ export interface UserSettings {
     default_export_format: ExportFormatCode;
     theme: "light" | "dark" | "system";
     sidebar_open: boolean;
+    sidebar_collapsed: boolean;
     embedding_model: string;
     items_per_page: number;
     archive_media_dir?: string | null;
