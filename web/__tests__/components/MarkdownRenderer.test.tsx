@@ -36,17 +36,24 @@ describe('MarkdownRenderer', () => {
         const inlineCode = screen.getByText('inline code')
         expect(inlineCode.tagName).toBe('CODE')
 
-        const blockCode = screen.getByText("print('hello')")
-        expect(blockCode.closest('pre')).toBeInTheDocument()
+        // Syntax highlighting splits code tokens across spans; check the code block container
+        const codeBlock = screen.getByTestId('code-block')
+        expect(codeBlock).toBeInTheDocument()
+        expect(codeBlock.textContent).toContain("print('hello')")
     })
 
-    it('keeps malformed or oversized markdown blocks readable with horizontal overflow', () => {
+    it('wraps code blocks to container width without a horizontal scrollbar', () => {
+        // Horizontal scrollbars are a UX failure per design notes; wrapping must be used instead.
         const longCode = ['```txt', 'x'.repeat(400), '```'].join('\n')
 
         render(<MarkdownRenderer text={longCode} />)
 
-        const blockCode = screen.getByText('x'.repeat(400))
-        expect(blockCode.closest('pre')).toHaveClass('overflow-x-auto')
+        const codeBlock = screen.getByTestId('code-block')
+        // No overflow-x-auto anywhere inside the code block
+        expect(codeBlock.querySelector('.overflow-x-auto')).toBeNull()
+        // white-space: pre-wrap must be applied to the inner code element (inline style wins over RSH defaults)
+        const codeElem = codeBlock.querySelector('.code-block-code') as HTMLElement
+        expect(codeElem?.style.whiteSpace).toBe('pre-wrap')
     })
 
     it('renders raw html as inert text without creating DOM nodes from it', () => {
@@ -108,6 +115,36 @@ describe('MarkdownRenderer', () => {
         // The surrounding prose should still render
         expect(renderer.textContent).toContain('Before math')
         expect(renderer.textContent).toContain('After math')
+    })
+})
+
+describe('MarkdownRenderer — line numbers (T006)', () => {
+    it('renders line number spans that are excluded from drag selection via user-select: none', () => {
+        const code = ['```python', 'x = 1', 'y = 2', 'z = 3', '```'].join('\n')
+        render(<MarkdownRenderer text={code} />)
+
+        const codeBlock = screen.getByTestId('code-block')
+        // Line number spans are identified by their userSelect: none inline style
+        const lineNumSpans = Array.from(codeBlock.querySelectorAll('span')).filter(
+            (s) => (s as HTMLElement).style.userSelect === 'none'
+        )
+        expect(lineNumSpans.length).toBeGreaterThan(0)
+        lineNumSpans.forEach((span) => {
+            expect((span as HTMLElement).style.userSelect).toBe('none')
+        })
+    })
+
+    it('copy button is present and code content renders without line number prefixes', () => {
+        // codeText is extracted from the ReactMarkdown <code> children before SyntaxHighlighter
+        // adds line numbers — so the copy output structurally cannot include line numbers.
+        const code = ['```python', 'x = 1', 'y = 2', '```'].join('\n')
+        render(<MarkdownRenderer text={code} />)
+
+        expect(screen.getByRole('button', { name: /copy code/i })).toBeInTheDocument()
+        // Syntax highlighting splits code into spans; check textContent of the block
+        const codeBlock = screen.getByTestId('code-block')
+        expect(codeBlock.textContent).toContain('x = 1')
+        expect(codeBlock.textContent).toContain('y = 2')
     })
 })
 

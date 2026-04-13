@@ -122,9 +122,31 @@ export function MarkdownRenderer({ text }: { text: string }) {
                                     language={language || "text"}
                                     style={oneDark}
                                     PreTag="div"
-                                    className="overflow-x-auto px-3.5 py-2.5"
-                                    customStyle={{ margin: 0, borderRadius: 0, background: "transparent", fontSize: "13px", lineHeight: "1.75" }}
-                                    codeTagProps={{ className: "code-block-code" }}
+                                    showLineNumbers={true}
+                                    // lineNumberStyle must stay inline: RSH injects inline styles on number
+                                    // spans; only another inline style can override them.
+                                    lineNumberStyle={{
+                                        userSelect: "none",
+                                        color: "#64748b",
+                                        fontSize: "11px",
+                                        paddingRight: "10px",
+                                        paddingLeft: "6px",
+                                        minWidth: "2.5em",
+                                        textAlign: "right",
+                                        display: "inline-block",
+                                        borderRight: "1px solid #334155",
+                                        marginRight: "14px",
+                                        backgroundColor: "rgba(0, 0, 0, 0.15)",
+                                    }}
+                                    className="px-3.5 py-2.5"
+                                    // customStyle must stay inline: RSH injects inline styles on the PreTag
+                                    // element; CSS classes cannot override inline styles.
+                                    // whiteSpace/overflowWrap replace overflow-x-auto — horizontal scrollbars
+                                    // are a UX failure per design notes; wrapping is the correct solution.
+                                    customStyle={{ margin: 0, borderRadius: 0, background: "transparent", fontSize: "13px", lineHeight: "1.75", whiteSpace: "pre-wrap", overflowWrap: "break-word" }}
+                                    // codeTagProps.style must be inline: RSH may apply white-space: pre to
+                                    // the inner <code> element; only an inline style override wins.
+                                    codeTagProps={{ className: "code-block-code", style: { whiteSpace: "pre-wrap", overflowWrap: "break-word" } }}
                                 >
                                     {codeText}
                                 </SyntaxHighlighter>
