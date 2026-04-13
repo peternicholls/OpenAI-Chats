@@ -122,11 +122,11 @@ export function MarkdownRenderer({ text }: { text: string }) {
                                     language={language || "text"}
                                     style={oneDark}
                                     PreTag="div"
-                                    className="overflow-x-auto px-3.5 py-2.5 text-[12px] leading-[1.6]"
-                                    // customStyle must stay inline: these three values counteract inline styles
+                                    className="overflow-x-auto px-3.5 py-2.5 text-[13px] leading-[1.75]"
+                                    // customStyle must stay inline: these values counteract inline styles
                                     // injected by react-syntax-highlighter itself. CSS classes cannot override
                                     // inline styles; only another inline style wins.
-                                    customStyle={{ margin: 0, borderRadius: 0, background: "transparent" }}
+                                    customStyle={{ margin: 0, borderRadius: 0, background: "transparent", fontSize: "13px", lineHeight: "1.75" }}
                                     codeTagProps={{ className: "code-block-code" }}
                                 >
                                     {codeText}

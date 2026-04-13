@@ -36,7 +36,7 @@
 **Purpose**: Improve code readability while preserving raw-copy and raw-selection fidelity.
 
 - [X] T003 Render code blocks with language-aware syntax highlighting and a copy button in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/app/globals.css`
-- [ ] T004 Increase font size and line height to improve readability in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/app/globals.css`
+- [X] T004 Increase font size and line height to improve readability in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/app/globals.css`
 - [ ] T005 Wrap code blocks to the container width without introducing horizontal scrolling, while preserving indentation and raw-copy fidelity, in `web/src/components/conversations/MarkdownRenderer.tsx` and `web/src/app/globals.css`
 - [ ] T006 Add line numbers with clear visual separation, exclude them from drag selection, exclude them from copy output, and document how the note's optional toggle requirement is implemented in `web/src/components/conversations/MarkdownRenderer.tsx`, `web/src/app/globals.css`, and any necessary existing transcript settings or state files
 - [ ] T007 Add or update automated coverage for code highlighting, code-block copy behavior, wrapped presentation, and line-number behavior in `web/__tests__/components/MarkdownRenderer.test.tsx` and `web/__tests__/e2e/conversation.spec.ts`
