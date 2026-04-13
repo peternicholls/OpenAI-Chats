@@ -137,11 +137,10 @@ cd web && npx playwright test __tests__/e2e/conversation.spec.ts
 docker compose up -d
 ```
 
-## Current Feature Context
+## Feature Context
 
 Use the following context when it applies:
 
-- Treat `003-inline-media` and `004-frontend-formatting` as recent feature areas.
 - When you work on inline media, account for filesystem-backed archive media exposed by the API and rendered through the frontend transcript pipeline.
 - When you work on frontend formatting, account for the backend `segments` pipeline and the possible use of `react-markdown` and `remark-breaks` for safe markdown rendering.
 
