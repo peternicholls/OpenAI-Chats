@@ -14,7 +14,14 @@ import type {
 } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-export const API_BASE_URL = API_URL;
+// In the browser, always use a relative base so API calls go to the same
+// origin the page was loaded from (e.g. 127.0.0.1, LAN IP, or localhost).
+// NEXT_PUBLIC_API_URL is baked at build time and hardcodes a hostname, so
+// using it directly from the browser breaks access from any other host.
+// On the server side (SSR) we keep the absolute URL so Next.js can reach
+// the API container by name rather than going through nginx.
+const BROWSER_API_BASE = typeof window !== "undefined" ? "" : API_URL;
+export const API_BASE_URL = BROWSER_API_BASE;
 
 class APIClient {
     private baseUrl: string;
@@ -325,4 +332,4 @@ class APIClient {
     }
 }
 
-export const api = new APIClient(API_URL);
+export const api = new APIClient(BROWSER_API_BASE);
