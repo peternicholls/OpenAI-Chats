@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { ReactNode } from "react";
 import type { Message, RenderSegment } from "@/types";
 
@@ -9,6 +12,12 @@ import { AttachmentImage } from "@/components/conversations/AttachmentImage";
 import { FallbackBlock } from "@/components/conversations/FallbackBlock";
 import { MarkdownRenderer } from "@/components/conversations/MarkdownRenderer";
 import { ThinkingBlock } from "@/components/conversations/ThinkingBlock";
+import { TurnActions } from "@/components/conversations/TurnActions";
+import {
+    getCollapsedUserPromptText,
+    getMessageRawText,
+    shouldCollapseLongUserPrompt,
+} from "@/components/conversations/turnContent";
 
 const ATTACHMENT_TOKEN_RE = /\[\[ATTACHMENT:(\d+)\]\]/g;
 
@@ -63,12 +72,12 @@ function renderAttachment(message: Message, index: number): ReactNode {
     return <AttachmentFile attachment={attachment} />;
 }
 
-function renderLegacyContent(message: Message): ReactNode {
+function renderLegacyContent(message: Message, textOverride?: string | null): ReactNode {
     if (!message.content && message.attachments.length === 0) {
         return <span className="text-sm italic text-muted-foreground">[No content]</span>;
     }
 
-    const content = message.content ?? "";
+    const content = textOverride ?? message.content ?? "";
     const parts = content.split(ATTACHMENT_TOKEN_RE);
     const rendered: ReactNode[] = [];
     const renderedAttachmentIndexes = new Set<number>();
@@ -153,20 +162,43 @@ function renderSegment(message: Message, segment: RenderSegment, index: number):
     );
 }
 
-function renderContent(message: Message): ReactNode {
+function renderContent(message: Message, textOverride?: string | null): ReactNode {
     if (message.segments && message.segments.length > 0) {
         return message.segments.map((segment, index) => renderSegment(message, segment, index));
     }
 
-    return renderLegacyContent(message);
+    return renderLegacyContent(message, textOverride);
 }
 
-export function MessageBubble({ message }: { message: Message }) {
+export function MessageBubble({
+    message,
+    enableLongPromptTruncation = true,
+}: {
+    message: Message;
+    enableLongPromptTruncation?: boolean;
+}) {
     const Icon = roleIcons[message.role] || Terminal;
     const iconColor = roleIconColors[message.role] || roleIconColors.system;
     const label = roleLabels[message.role] || message.role;
-
     const bubbleColor = roleBubbleColors[message.role] || roleBubbleColors.assistant;
+    const rawTurnText = getMessageRawText(message);
+    // Allow truncation for user messages with no attachments, whether they have
+    // segments or not — real messages always carry a single markdown segment.
+    const isTextOnlyUserMessage =
+        message.role === "user" &&
+        message.attachments.length === 0 &&
+        (!message.segments || message.segments.every((s) => s.kind === "markdown"));
+    const collapsibleLongPrompt =
+        isTextOnlyUserMessage &&
+        shouldCollapseLongUserPrompt(message, enableLongPromptTruncation);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const displayText = getCollapsedUserPromptText(rawTurnText);
+    const renderedBody =
+        collapsibleLongPrompt && !isExpanded ? (
+            <div className="whitespace-pre-wrap wrap-break-word">{displayText}</div>
+        ) : (
+            renderContent(message)
+        );
 
     return (
         <div className={`flex gap-3 rounded-lg p-3 ${bubbleColor}`} data-testid="message">
@@ -188,7 +220,21 @@ export function MessageBubble({ message }: { message: Message }) {
                     )}
                 </div>
                 <div className="space-y-3">
-                    {renderContent(message)}
+                    {renderedBody}
+                </div>
+                {collapsibleLongPrompt && (
+                    <div className="mt-3">
+                        <button
+                            type="button"
+                            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                            onClick={() => setIsExpanded((current) => !current)}
+                        >
+                            {isExpanded ? "Show less" : "Read more"}
+                        </button>
+                    </div>
+                )}
+                <div className="mt-3 flex justify-end">
+                    <TurnActions text={rawTurnText} />
                 </div>
             </div>
         </div>

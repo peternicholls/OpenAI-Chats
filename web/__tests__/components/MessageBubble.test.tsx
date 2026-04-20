@@ -1,7 +1,32 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MessageBubble } from '@/components/conversations/MessageBubble'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import type { Message } from '@/types'
+
+function renderWithTooltip(ui: React.ReactElement) {
+    return render(<TooltipProvider>{ui}</TooltipProvider>)
+}
+
+const { copyToClipboard, speakText } = vi.hoisted(() => ({
+    copyToClipboard: vi.fn().mockResolvedValue(undefined),
+    speakText: vi.fn(),
+}))
+
+vi.mock('@/lib/utils', async () => {
+    const actual = await vi.importActual<typeof import('@/lib/utils')>('@/lib/utils')
+    return {
+        ...actual,
+        copyToClipboard,
+        speakText,
+    }
+})
+
+beforeEach(() => {
+    copyToClipboard.mockClear()
+    speakText.mockClear()
+})
 
 const mockUserMessage: Message = {
     id: 'msg-001',
@@ -49,40 +74,75 @@ const mockAssistantMessage: Message = {
 describe('MessageBubble', () => {
     describe('user message', () => {
         it('renders user message content', () => {
-            render(<MessageBubble message={mockUserMessage} />)
+            renderWithTooltip(<MessageBubble message={mockUserMessage} />)
 
             expect(screen.getByText('Hello, how are you?')).toBeInTheDocument()
         })
 
         it('shows "You" label for user messages', () => {
-            render(<MessageBubble message={mockUserMessage} />)
+            renderWithTooltip(<MessageBubble message={mockUserMessage} />)
 
             expect(screen.getByText('You')).toBeInTheDocument()
         })
 
         it('has the message test ID', () => {
-            const { container } = render(<MessageBubble message={mockUserMessage} />)
+            const { container } = renderWithTooltip(<MessageBubble message={mockUserMessage} />)
 
             const bubble = container.firstChild
             expect(bubble).toHaveAttribute('data-testid', 'message')
+        })
+
+        it('copies raw turn content from the turn action', async () => {
+            const user = userEvent.setup()
+            renderWithTooltip(<MessageBubble message={mockUserMessage} />)
+
+            await user.click(screen.getByRole('button', { name: 'Copy turn' }))
+
+            expect(copyToClipboard).toHaveBeenCalledWith('Hello, how are you?')
+        })
+
+        it('shows the check icon as visual feedback after copying', async () => {
+            const user = userEvent.setup()
+            const { container } = renderWithTooltip(<MessageBubble message={mockUserMessage} />)
+
+            const copyButton = container.querySelector('[data-testid="turn-copy-button"]')!
+            // Before click: no green check icon
+            expect(copyButton.querySelector('svg')).not.toHaveClass('text-green-600')
+
+            await user.click(copyButton as HTMLElement)
+
+            // After click: Check icon rendered with green colour class
+            await waitFor(() => {
+                const icon = copyButton.querySelector('svg')
+                expect(icon).toHaveClass('text-green-600')
+            })
+        })
+
+        it('speaks raw turn content from the turn action', async () => {
+            const user = userEvent.setup()
+            renderWithTooltip(<MessageBubble message={mockUserMessage} />)
+
+            await user.click(screen.getByRole('button', { name: 'Speak turn' }))
+
+            expect(speakText).toHaveBeenCalledWith('Hello, how are you?')
         })
     })
 
     describe('assistant message', () => {
         it('renders assistant message content', () => {
-            render(<MessageBubble message={mockAssistantMessage} />)
+            renderWithTooltip(<MessageBubble message={mockAssistantMessage} />)
 
             expect(screen.getByText('I am doing well, thank you!')).toBeInTheDocument()
         })
 
         it('shows "Assistant" label for assistant messages', () => {
-            render(<MessageBubble message={mockAssistantMessage} />)
+            renderWithTooltip(<MessageBubble message={mockAssistantMessage} />)
 
             expect(screen.getByText('Assistant')).toBeInTheDocument()
         })
 
         it('has the message test ID', () => {
-            const { container } = render(<MessageBubble message={mockAssistantMessage} />)
+            const { container } = renderWithTooltip(<MessageBubble message={mockAssistantMessage} />)
 
             const bubble = container.firstChild
             expect(bubble).toHaveAttribute('data-testid', 'message')
@@ -102,7 +162,7 @@ describe('MessageBubble', () => {
                 ],
             }
 
-            render(<MessageBubble message={segmentedMessage} />)
+            renderWithTooltip(<MessageBubble message={segmentedMessage} />)
 
             expect(screen.getByRole('heading', { name: 'Release Notes' })).toBeInTheDocument()
             expect(
@@ -120,7 +180,7 @@ describe('MessageBubble', () => {
                 ...mockUserMessage,
                 role: 'system',
             }
-            render(<MessageBubble message={systemMessage} />)
+            renderWithTooltip(<MessageBubble message={systemMessage} />)
 
             expect(screen.getByText('System')).toBeInTheDocument()
         })
@@ -132,7 +192,7 @@ describe('MessageBubble', () => {
                 ...mockUserMessage,
                 content: '',
             }
-            render(<MessageBubble message={emptyMessage} />)
+            renderWithTooltip(<MessageBubble message={emptyMessage} />)
 
             expect(screen.getByText('[No content]')).toBeInTheDocument()
         })
@@ -142,7 +202,7 @@ describe('MessageBubble', () => {
                 ...mockUserMessage,
                 content: null as unknown as string,
             }
-            render(<MessageBubble message={nullMessage} />)
+            renderWithTooltip(<MessageBubble message={nullMessage} />)
 
             expect(screen.getByText('[No content]')).toBeInTheDocument()
         })
@@ -150,7 +210,7 @@ describe('MessageBubble', () => {
 
     describe('timestamp', () => {
         it('renders formatted time when create_time is present', () => {
-            render(<MessageBubble message={mockUserMessage} />)
+            renderWithTooltip(<MessageBubble message={mockUserMessage} />)
 
             // Timestamp 1700000000 = Nov 14, 2023 at some time
             // The exact time will depend on timezone, so just check it exists
@@ -163,7 +223,7 @@ describe('MessageBubble', () => {
                 ...mockUserMessage,
                 create_time: null,
             }
-            render(<MessageBubble message={noTimeMessage} />)
+            renderWithTooltip(<MessageBubble message={noTimeMessage} />)
 
             // Should not have the time element
             const timeElement = document.querySelector('time')
@@ -190,7 +250,7 @@ describe('MessageBubble', () => {
                 ],
             }
 
-            render(<MessageBubble message={message} />)
+            renderWithTooltip(<MessageBubble message={message} />)
 
             expect(screen.getByText('Before')).toBeInTheDocument()
             expect(screen.getByText('After')).toBeInTheDocument()
@@ -215,7 +275,7 @@ describe('MessageBubble', () => {
                 ],
             }
 
-            render(<MessageBubble message={message} />)
+            renderWithTooltip(<MessageBubble message={message} />)
 
             expect(screen.getByTestId('attachment-file-missing')).toBeInTheDocument()
             expect(screen.getByText(/document.pdf/)).toBeInTheDocument()
@@ -239,7 +299,7 @@ describe('MessageBubble', () => {
                 ],
             }
 
-            render(<MessageBubble message={message} />)
+            renderWithTooltip(<MessageBubble message={message} />)
 
             expect(screen.getByTestId('attachment-audio')).toBeInTheDocument()
             expect(screen.queryByText('[No content]')).not.toBeInTheDocument()
@@ -283,7 +343,7 @@ describe('MessageBubble', () => {
                 ],
             }
 
-            render(<MessageBubble message={message} />)
+            renderWithTooltip(<MessageBubble message={message} />)
 
             expect(screen.getByText('Intro')).toBeInTheDocument()
             expect(screen.getByText('Between')).toBeInTheDocument()
@@ -341,7 +401,7 @@ describe('MessageBubble', () => {
                 ],
             }
 
-            render(<MessageBubble message={message} />)
+            renderWithTooltip(<MessageBubble message={message} />)
 
             expect(screen.getByTestId('attachment-image-thumbnail-button')).toBeInTheDocument()
             expect(screen.getByTestId('fallback-block')).toBeInTheDocument()
@@ -364,7 +424,7 @@ describe('MessageBubble', () => {
                 ],
             }
 
-            render(<MessageBubble message={message} />)
+            renderWithTooltip(<MessageBubble message={message} />)
 
             expect(screen.getByText('Missing attachment')).toBeInTheDocument()
             expect(screen.getByText(/Attachment index 9 is not available/)).toBeInTheDocument()
@@ -372,32 +432,47 @@ describe('MessageBubble', () => {
     })
 
     describe('long user prompt', () => {
-        it('renders a long user prompt (>1600 chars) without error', () => {
-            render(<MessageBubble message={mockLongUserMessage} />)
+        it('collapses a long user prompt until expanded', async () => {
+            const user = userEvent.setup()
+            renderWithTooltip(<MessageBubble message={mockLongUserMessage} />)
 
             expect(screen.getByText('You')).toBeInTheDocument()
-            // The full content should be present in the DOM
             const bubble = document.querySelector('[data-testid="message"]')
-            expect(bubble?.textContent?.length).toBeGreaterThan(1600)
+            expect(bubble?.textContent?.length).toBeLessThan(longUserPromptContent.length)
+            expect(screen.getByRole('button', { name: 'Read more' })).toBeInTheDocument()
+
+            await user.click(screen.getByRole('button', { name: 'Read more' }))
+
+            expect(screen.getByRole('button', { name: 'Show less' })).toBeInTheDocument()
+            expect(bubble?.textContent).toContain('Could you walk me through the trade-offs')
         })
 
-        it('shows the "You" label for a long user prompt', () => {
-            render(<MessageBubble message={mockLongUserMessage} />)
+        it('shows the truncation affordance by default for long user prompts', () => {
+            renderWithTooltip(<MessageBubble message={mockLongUserMessage} />)
 
             expect(screen.getByText('You')).toBeInTheDocument()
+            expect(screen.getByRole('button', { name: 'Read more' })).toBeInTheDocument()
+        })
+
+        it('does not collapse when long prompt truncation is disabled', () => {
+            renderWithTooltip(<MessageBubble message={mockLongUserMessage} enableLongPromptTruncation={false} />)
+
+            const bubble = document.querySelector('[data-testid="message"]')
+            expect(bubble?.textContent).toContain('Could you walk me through the trade-offs')
+            expect(screen.queryByRole('button', { name: 'Read more' })).not.toBeInTheDocument()
         })
     })
 
     describe('rule lines (T010)', () => {
         it('does not insert an hr element between message content sections', () => {
-            render(<MessageBubble message={mockAssistantMessage} />)
+            renderWithTooltip(<MessageBubble message={mockAssistantMessage} />)
 
             const bubble = document.querySelector('[data-testid="message"]')
             expect(bubble?.querySelector('hr')).not.toBeInTheDocument()
         })
 
         it('does not insert an hr element in user messages', () => {
-            render(<MessageBubble message={mockUserMessage} />)
+            renderWithTooltip(<MessageBubble message={mockUserMessage} />)
 
             const bubble = document.querySelector('[data-testid="message"]')
             expect(bubble?.querySelector('hr')).not.toBeInTheDocument()
