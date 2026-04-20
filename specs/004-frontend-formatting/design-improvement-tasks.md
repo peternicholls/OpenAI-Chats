@@ -55,6 +55,7 @@
 **Purpose**: Improve utility and readability at the message-turn level.
 
 - [ ] T012 Add a turn-level copy action that copies raw turn content and a turn-level text-to-speech action that reads the turn content in `web/src/components/conversations/MessageBubble.tsx`, related conversation components, and any shared turn-action component introduced for this feature
+- [ ] T012a Reduce transcript noise from tool-heavy conversations by collapsing, condensing, suppressing, or otherwise restructuring repeated tool-role output in the active conversation route so users do not see long vertical stacks of low-value `Tool call` pills; implement the chosen behaviour in `web/src/components/conversations/AssistantTurn.tsx`, `web/src/components/conversations/ToolBlock.tsx`, `web/src/components/conversations/MessageBubble.tsx`, and `web/src/app/conversation/[id]/page.tsx`, and document any interpretation in `specs/004-frontend-formatting/remediation-report.md`
 - [ ] T013 Add a long-user-prompt treatment for user turns only, using truncation plus a "Read more" affordance, and document any interpretation needed because the note presents this as a consideration rather than a locked requirement in `web/src/components/conversations/MessageBubble.tsx` and `web/src/app/globals.css`
 - [ ] T014 Add or update automated coverage for turn-level copy, speech, and long-user-prompt expansion behavior in `web/__tests__/components/MessageBubble.test.tsx`, related component tests, and `web/__tests__/e2e/conversation.spec.ts`
 
@@ -93,6 +94,7 @@
 - Design note 2 Tables: T008, T011
 - Design note 3 Lists and 3.4 Rule lines: T009 to T011
 - Design note 4 Turn Blocks: T012, T014
+- Transcript tool-noise reduction from remediation review: T012a
 - Design note 5 Accessibility: T015, T018
 - Design note 6 Dark Mode: T016
 - Design note 7 Very long user prompts: T013, T014
