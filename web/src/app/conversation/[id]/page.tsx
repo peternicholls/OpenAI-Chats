@@ -9,23 +9,12 @@ import { DateSeparator } from "@/components/conversations/DateSeparator";
 import type { Message } from "@/types";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ExportDialog } from "@/components/export/ExportDialog";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { api } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queryKeys";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 
 type MessageTurn =
     | { type: "user-or-system"; message: Message }
@@ -62,8 +51,6 @@ export default function ConversationDetailPage() {
 
     const { data: conversation, isLoading, error, refetch } = useConversation(id);
     const [showExport, setShowExport] = useState(false);
-    const [showDelete, setShowDelete] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleToggleFavorite = async () => {
         try {
@@ -77,19 +64,6 @@ export default function ConversationDetailPage() {
             toast.success(result.is_favorite ? "Added to favorites" : "Removed from favorites");
         } catch {
             toast.error("Failed to update favorite");
-        }
-    };
-
-    const handleDelete = async () => {
-        setIsDeleting(true);
-        try {
-            await api.deleteConversation(id);
-            queryClient.invalidateQueries({ queryKey: queryKeys.conversations.all });
-            toast.success("Conversation deleted");
-            router.push("/");
-        } catch {
-            toast.error("Failed to delete conversation");
-            setIsDeleting(false);
         }
     };
 
@@ -126,7 +100,6 @@ export default function ConversationDetailPage() {
             <ConversationHeader
                 conversation={conversation}
                 onExport={() => setShowExport(true)}
-                onDelete={() => setShowDelete(true)}
                 onToggleFavorite={handleToggleFavorite}
                 isFavorite={conversation.is_favorite}
             />
@@ -191,35 +164,6 @@ export default function ConversationDetailPage() {
                 open={showExport}
                 onOpenChange={setShowExport}
             />
-
-            <AlertDialog open={showDelete} onOpenChange={(open) => !isDeleting && setShowDelete(open)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will permanently delete &quot;{conversation.title || "Untitled"}&quot; and all
-                            its messages. This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                            {isDeleting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Deleting...
-                                </>
-                            ) : (
-                                "Delete"
-                            )}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </article>
     );
 }

@@ -1,6 +1,9 @@
 import { http, HttpResponse } from 'msw'
 
-const API_URL = 'http://localhost:8000'
+// In the test environment (jsdom), the API client uses relative paths (no origin).
+// MSW needs an absolute URL pattern; use http://localhost as the origin since
+// jsdom defaults to http://localhost for relative fetch calls.
+const API_URL = 'http://localhost'
 
 export const markdownMessageText = [
     '# Release Notes',

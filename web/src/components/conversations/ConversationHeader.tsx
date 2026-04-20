@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Trash2, Star } from "lucide-react";
+import { ArrowLeft, Download, Star } from "lucide-react";
 import { TagEditor } from "@/components/tags/TagEditor";
 import type { ConversationDetail } from "@/types";
 
@@ -27,7 +27,6 @@ function isSameDay(t1: number | null, t2: number | null): boolean {
 interface ConversationHeaderProps {
     conversation: ConversationDetail;
     onExport?: () => void;
-    onDelete?: () => void;
     onToggleFavorite?: () => void;
     isFavorite?: boolean;
 }
@@ -35,7 +34,6 @@ interface ConversationHeaderProps {
 export function ConversationHeader({
     conversation,
     onExport,
-    onDelete,
     onToggleFavorite,
     isFavorite,
 }: ConversationHeaderProps) {
@@ -70,11 +68,7 @@ export function ConversationHeader({
                             <Download className="h-4 w-4" />
                         </Button>
                     )}
-                    {onDelete && (
-                        <Button variant="ghost" size="icon" onClick={onDelete} className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    )}
+
                 </div>
             </div>
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] text-muted-foreground">

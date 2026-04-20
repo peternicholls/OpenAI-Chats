@@ -1,6 +1,27 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Conversation View', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.route('**/api/settings', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    theme: 'system',
+                    default_export_format: 'md',
+                    sidebar_open: true,
+                    sidebar_collapsed: false,
+                    embedding_model: 'text-embedding-3-small',
+                    items_per_page: 50,
+                    openai_api_key: '',
+                    archive_media_dir: '/tmp/archive',
+                    code_line_numbers: false,
+                    long_prompt_truncation: true,
+                }),
+            })
+        })
+    })
+
     test('should render markdown segments as formatted transcript content', async ({ page }) => {
         await page.route('**/api/conversations/conv-formatted-markdown', async (route) => {
             await route.fulfill({
@@ -333,7 +354,7 @@ test.describe('Conversation View', () => {
         'degrade under network partitions without corrupting shared state or requiring a full cluster restart. ' +
         'Could you walk me through the trade-offs so I can make an informed decision before our next architecture review?'
 
-    test('should render a long user prompt (>1600 chars) in full', async ({ page }) => {
+    test('should collapse a long user prompt until the reader expands it', async ({ page }) => {
         await page.route('**/api/conversations/conv-long-user-prompt', async (route) => {
             await route.fulfill({
                 status: 200,
@@ -354,6 +375,14 @@ test.describe('Conversation View', () => {
                             content: longUserPromptText,
                             create_time: 1700000000,
                             attachments: [],
+                            segments: [
+                                {
+                                    kind: 'markdown',
+                                    text: longUserPromptText,
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                            ],
                         },
                         {
                             id: 'msg-long-assistant-001',
@@ -378,10 +407,101 @@ test.describe('Conversation View', () => {
         await page.goto('/conversation/conv-long-user-prompt')
         await page.waitForLoadState('networkidle')
 
-        // The long user prompt should be present in the DOM
         await expect(page.getByText(/I have been thinking about this problem/)).toBeVisible()
-        await expect(page.getByText(/CRDTs as potential solutions/)).toBeVisible()
-        // The assistant reply should also be visible
+        await expect(page.getByRole('button', { name: 'Read more' })).toBeVisible()
+        await expect(page.getByText(/Could you walk me through the trade-offs/)).toHaveCount(0)
+
+        await page.getByRole('button', { name: 'Read more' }).click()
+
+        await expect(page.getByRole('button', { name: 'Show less' })).toBeVisible()
+        await expect(page.getByText(/Could you walk me through the trade-offs/)).toBeVisible()
         await expect(page.getByText('Great question. Let me walk through both approaches.')).toBeVisible()
+    })
+
+    test('should condense tool-heavy assistant turns and show turn actions', async ({ page }) => {
+        await page.route('**/api/conversations/conv-tool-heavy', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    id: 'conv-tool-heavy',
+                    title: 'Tool Heavy Conversation',
+                    create_time: 1700000000,
+                    update_time: 1700000100,
+                    model: 'gpt-4',
+                    message_count: 4,
+                    tags: [],
+                    is_favorite: false,
+                    messages: [
+                        {
+                            id: 'msg-user-001',
+                            role: 'user',
+                            content: 'Can you debug the latest SQL issue?',
+                            create_time: 1700000000,
+                            attachments: [],
+                        },
+                        {
+                            id: 'msg-assistant-001',
+                            role: 'assistant',
+                            content: 'I am checking the query builder and logs now.',
+                            create_time: 1700000010,
+                            attachments: [],
+                            segments: [
+                                {
+                                    kind: 'markdown',
+                                    text: 'I am checking the query builder and logs now.',
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                            ],
+                        },
+                        {
+                            id: 'msg-tool-001',
+                            role: 'tool',
+                            content: '',
+                            create_time: 1700000011,
+                            attachments: [],
+                        },
+                        {
+                            id: 'msg-tool-002',
+                            role: 'tool',
+                            content: '',
+                            create_time: 1700000012,
+                            attachments: [],
+                        },
+                        {
+                            id: 'msg-tool-003',
+                            role: 'tool',
+                            content: '',
+                            create_time: 1700000013,
+                            attachments: [],
+                        },
+                        {
+                            id: 'msg-assistant-002',
+                            role: 'assistant',
+                            content: 'The issue is a duplicated join in the generated SQL.',
+                            create_time: 1700000020,
+                            attachments: [],
+                            segments: [
+                                {
+                                    kind: 'markdown',
+                                    text: 'The issue is a duplicated join in the generated SQL.',
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            })
+        })
+
+        await page.goto('/conversation/conv-tool-heavy')
+        await page.waitForLoadState('networkidle')
+
+        await expect(page.getByText('3 tool calls')).toBeVisible()
+        await expect(page.getByTestId('tool-block')).toHaveCount(1)
+        await expect(page.getByRole('button', { name: 'Copy turn' }).first()).toBeVisible()
+        await expect(page.getByRole('button', { name: 'Speak turn' }).first()).toBeVisible()
     })
 })

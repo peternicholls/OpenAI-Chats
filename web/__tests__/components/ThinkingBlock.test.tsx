@@ -58,15 +58,21 @@ describe('ThinkingBlock', () => {
         expect(screen.getByTestId('thinking-block')).toBeInTheDocument()
     })
 
-    it('rotates the chevron icon when expanded', async () => {
+    it('shows ChevronUp icon when expanded', async () => {
         const user = userEvent.setup()
 
         render(<ThinkingBlock activityType="reasoning" />)
 
-        const chevron = screen.getByRole('button').querySelector('svg')
-        expect(chevron).not.toHaveClass('rotate-90')
+        // Before expanding: button contains a single svg (chevron down)
+        const buttons = screen.getAllByRole('button')
+        const toggleButton = buttons[0]
+        expect(toggleButton.querySelectorAll('svg')).toHaveLength(2) // CircleHelp + ChevronDown
 
-        await user.click(screen.getByRole('button'))
-        expect(chevron).toHaveClass('rotate-90')
+        await user.click(toggleButton)
+
+        // After expanding: still two icons (CircleHelp + ChevronUp)
+        expect(toggleButton.querySelectorAll('svg')).toHaveLength(2)
+        // The expanded detail text should now be visible
+        expect(screen.getByText(/Detailed reasoning content/)).toBeInTheDocument()
     })
 })

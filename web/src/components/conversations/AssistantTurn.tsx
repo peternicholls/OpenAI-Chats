@@ -9,7 +9,9 @@ import { AttachmentImage } from "@/components/conversations/AttachmentImage";
 import { FallbackBlock } from "@/components/conversations/FallbackBlock";
 import { MarkdownRenderer } from "@/components/conversations/MarkdownRenderer";
 import { ThinkingBlock } from "@/components/conversations/ThinkingBlock";
+import { TurnActions } from "@/components/conversations/TurnActions";
 import { ToolBlock } from "@/components/conversations/ToolBlock";
+import { getTurnRawText } from "@/components/conversations/turnContent";
 
 function formatTime(timestamp: number | null): string {
     if (!timestamp) return "";
@@ -60,11 +62,6 @@ function renderSegment(message: Message, segment: RenderSegment, index: number):
 }
 
 function renderMessageContribution(message: Message): ReactNode {
-    // Tool-role messages become a violet ToolBlock pill
-    if (message.role === "tool") {
-        return <ToolBlock />;
-    }
-
     // Assistant with segments — render them (ThinkingBlocks + markdown + attachments)
     if (message.segments && message.segments.length > 0) {
         return (
@@ -83,10 +80,43 @@ function renderMessageContribution(message: Message): ReactNode {
     return <ThinkingBlock activityType="reasoning" />;
 }
 
+function buildTurnPieces(messages: Message[]): Array<{ id: string; node: ReactNode }> {
+    const pieces: Array<{ id: string; node: ReactNode }> = [];
+    let toolClusterCount = 0;
+    let toolClusterStartId: string | null = null;
+
+    const flushToolCluster = () => {
+        if (toolClusterCount === 0 || !toolClusterStartId) {
+            return;
+        }
+
+        pieces.push({
+            id: `tool-cluster-${toolClusterStartId}`,
+            node: <ToolBlock count={toolClusterCount} />,
+        });
+        toolClusterCount = 0;
+        toolClusterStartId = null;
+    };
+
+    for (const message of messages) {
+        if (message.role === "tool") {
+            toolClusterCount += 1;
+            toolClusterStartId ??= message.id;
+            continue;
+        }
+
+        flushToolCluster();
+        pieces.push({ id: message.id, node: renderMessageContribution(message) });
+    }
+
+    flushToolCluster();
+    return pieces;
+}
+
 export function AssistantTurn({ messages }: { messages: Message[] }) {
     const timestamp = messages.find((m) => m.create_time)?.create_time ?? null;
-
-    const pieces = messages.map((m) => ({ id: m.id, node: renderMessageContribution(m) }));
+    const rawTurnText = getTurnRawText(messages);
+    const pieces = buildTurnPieces(messages);
 
     if (pieces.length === 0) return null;
 
@@ -116,6 +146,9 @@ export function AssistantTurn({ messages }: { messages: Message[] }) {
                     {pieces.map((p) => (
                         <div key={p.id}>{p.node}</div>
                     ))}
+                </div>
+                <div className="mt-3 flex justify-end">
+                    <TurnActions text={rawTurnText} />
                 </div>
             </div>
         </div>

@@ -3,6 +3,15 @@ import { cleanup } from '@testing-library/react'
 import { afterEach, beforeAll, afterAll } from 'vitest'
 import { server } from './__tests__/mocks/server'
 
+// Polyfill ResizeObserver for Radix UI components (e.g. Tooltip) in jsdom
+if (typeof ResizeObserver === 'undefined') {
+    global.ResizeObserver = class ResizeObserver {
+        observe() { }
+        unobserve() { }
+        disconnect() { }
+    }
+}
+
 // Cleanup after each test
 afterEach(() => {
     cleanup()

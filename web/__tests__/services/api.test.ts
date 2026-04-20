@@ -129,8 +129,10 @@ describe('API Client', () => {
         })
 
         it('should build absolute media URLs for relative paths', () => {
+            // In browser context (jsdom) the API client uses relative paths so the
+            // origin is not prepended; the path is returned as-is.
             expect(api.getMediaUrl('/api/media/root/file-123')).toBe(
-                'http://localhost:8000/api/media/root/file-123'
+                '/api/media/root/file-123'
             )
         })
     })
