@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useConversation } from "@/hooks/useConversations";
+import { useSettings } from "@/hooks/useSettings";
 import { ConversationHeader } from "@/components/conversations/ConversationHeader";
 import { AssistantTurn } from "@/components/conversations/AssistantTurn";
 import { MessageBubble } from "@/components/conversations/MessageBubble";
@@ -50,7 +51,9 @@ export default function ConversationDetailPage() {
     const id = params.id as string;
 
     const { data: conversation, isLoading, error, refetch } = useConversation(id);
+    const { data: settings } = useSettings();
     const [showExport, setShowExport] = useState(false);
+    const enableLongPromptTruncation = settings?.long_prompt_truncation ?? true;
 
     const handleToggleFavorite = async () => {
         try {
@@ -144,7 +147,11 @@ export default function ConversationDetailPage() {
 
                     if (turn.type === "user-or-system") {
                         elements.push(
-                            <MessageBubble key={turn.message.id} message={turn.message} />
+                            <MessageBubble
+                                key={turn.message.id}
+                                message={turn.message}
+                                enableLongPromptTruncation={enableLongPromptTruncation}
+                            />
                         );
                     } else {
                         elements.push(

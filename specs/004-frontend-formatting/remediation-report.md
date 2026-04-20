@@ -37,7 +37,7 @@ The review was grounded in the current active route implementation, not older re
 - T002: The codebase has now been reviewed against the design notes and the gaps are documented here.
 - T012: Turn-level copy and speech actions are live in the active conversation route and visible in the localhost browser.
 - T012a: Tool-heavy assistant turns are condensed in the active conversation route instead of rendering long stacks of repeated tool pills.
-- T013: Long-user-prompt truncation is live and browser-validated with real archive data. The `Read more` / `Show less` toggle is visible for user turns over 300 characters.
+- T013: Long-user-prompt truncation is live and browser-validated with real archive data. The `Read more` / `Show less` toggle is visible for user turns over 500 characters, and the live route now respects the saved `long_prompt_truncation` setting.
 - T014: Coverage is complete across `MessageBubble.test.tsx` (26 tests), `AssistantTurn.test.tsx` (3 tests), `ThinkingBlock.test.tsx` (8 tests), and `MarkdownRenderer.test.tsx` (21 tests). The long-prompt expansion behavior is covered by an E2E test in `conversation.spec.ts`. All 152 frontend tests pass.
 - T026: TypeScript clean (`npx tsc --noEmit`), production build (`npm run build`), and full Vitest suite (152/152 passing) all confirmed.
 - T028: This report.
@@ -105,7 +105,7 @@ Implication:
 - T003 is correctly marked in progress, not complete.
 - T004, T005, T006, and T007 should remain open.
 
-### 3. Turn-level actions are live, but long user prompt treatment is still incomplete
+### 3. Turn-level actions are live, and long user prompt treatment is wired through the active route
 
 Both active turn-rendering paths now mount end-of-turn actions:
 
@@ -123,9 +123,11 @@ Root cause of the original failure: the `isPlainTextMessage` guard used `!messag
 
 Fix applied: the guard was rewritten to `isTextOnlyUserMessage` — a user turn with no attachments whose segments are exclusively `kind: "markdown"`. This matches the real API data shape and allows truncation for plain text user messages.
 
+Route integration: the active conversation page now reads the saved `long_prompt_truncation` setting and passes it into `MessageBubble`, so the browser behavior matches the user's saved preference instead of always defaulting to truncation.
+
 Browser validation: Verified with the "Pub Manager Conflict" conversation from the real archive database. The user message at 1282 characters shows the truncated form with a `Read more` button on first view; clicking expands to full text with a `Show less` button.
 
-E2E test update: the long-prompt mock in `conversation.spec.ts` was updated to include a `segments` array matching the real API shape, so the E2E test now exercises the real code path.
+E2E test update: the long-prompt mock in `conversation.spec.ts` was updated to include a `segments` array matching the real API shape, and a second browser test now verifies that the route leaves long user prompts expanded when the saved setting disables truncation.
 
 Implication:
 
