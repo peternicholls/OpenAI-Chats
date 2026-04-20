@@ -54,10 +54,10 @@
 
 **Purpose**: Improve utility and readability at the message-turn level.
 
-- [ ] T012 Add a turn-level copy action that copies raw turn content and a turn-level text-to-speech action that reads the turn content in `web/src/components/conversations/MessageBubble.tsx`, related conversation components, and any shared turn-action component introduced for this feature
-- [ ] T012a Reduce transcript noise from tool-heavy conversations by collapsing, condensing, suppressing, or otherwise restructuring repeated tool-role output in the active conversation route so users do not see long vertical stacks of low-value `Tool call` pills; implement the chosen behaviour in `web/src/components/conversations/AssistantTurn.tsx`, `web/src/components/conversations/ToolBlock.tsx`, `web/src/components/conversations/MessageBubble.tsx`, and `web/src/app/conversation/[id]/page.tsx`, and document any interpretation in `specs/004-frontend-formatting/remediation-report.md`
-- [ ] T013 Add a long-user-prompt treatment for user turns only, using truncation plus a "Read more" affordance, and document any interpretation needed because the note presents this as a consideration rather than a locked requirement in `web/src/components/conversations/MessageBubble.tsx` and `web/src/app/globals.css`
-- [ ] T014 Add or update automated coverage for turn-level copy, speech, and long-user-prompt expansion behavior in `web/__tests__/components/MessageBubble.test.tsx`, related component tests, and `web/__tests__/e2e/conversation.spec.ts`
+- [X] T012 Add a turn-level copy action that copies raw turn content and a turn-level text-to-speech action that reads the turn content in `web/src/components/conversations/MessageBubble.tsx`, related conversation components, and any shared turn-action component introduced for this feature
+- [X] T012a Reduce transcript noise from tool-heavy conversations by collapsing, condensing, suppressing, or otherwise restructuring repeated tool-role output in the active conversation route so users do not see long vertical stacks of low-value `Tool call` pills; implement the chosen behaviour in `web/src/components/conversations/AssistantTurn.tsx`, `web/src/components/conversations/ToolBlock.tsx`, `web/src/components/conversations/MessageBubble.tsx`, and `web/src/app/conversation/[id]/page.tsx`, and document any interpretation in `specs/004-frontend-formatting/remediation-report.md`
+- [X] T013 Add a long-user-prompt treatment for user turns only, using truncation plus a "Read more" affordance, and document any interpretation needed because the note presents this as a consideration rather than a locked requirement in `web/src/components/conversations/MessageBubble.tsx` and `web/src/app/globals.css`
+- [X] T014 Add or update automated coverage for turn-level copy, speech, and long-user-prompt expansion behavior in `web/__tests__/components/MessageBubble.test.tsx`, related component tests, and `web/__tests__/e2e/conversation.spec.ts`
 
 ## Phase 5: Accessibility, Dark Mode, and Responsive Layout
 
@@ -84,9 +84,9 @@
 
 **Purpose**: Confirm that the implemented work matches the notes and capture any remaining ambiguity or deferral.
 
-- [ ] T026 Run the targeted frontend validation sequence for this feature: `cd web && npx tsc --noEmit`, `cd web && npm run build`, and the relevant Vitest and Playwright coverage for transcript and sidebar behavior
+- [X] T026 Run the targeted frontend validation sequence for this feature: `cd web && npx tsc --noEmit`, `cd web && npm run build`, and the relevant Vitest and Playwright coverage for transcript and sidebar behavior
 - [ ] T027 Verify transcript formatting, turn actions, long user prompts, dark mode, responsive layout, sidebar behavior, and conversation-list interactions in the built-in browser against the local app
-- [ ] T028 Update `specs/004-frontend-formatting/remediation-report.md` with task completion status, exact design-note sections satisfied, documented interpretations, deferred items, and unresolved design questions
+- [X] T028 Update `specs/004-frontend-formatting/remediation-report.md` with task completion status, exact design-note sections satisfied, documented interpretations, deferred items, and unresolved design questions
 
 ## Traceability Matrix
 

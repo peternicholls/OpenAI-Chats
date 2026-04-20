@@ -2,7 +2,7 @@
 
 ## Reconciliation Basis
 
-This report reflects the current state of branch `004-frontend-formatting` as reviewed on 13 April 2026 against:
+This report reflects the current state of branch `004-frontend-formatting` as reviewed on 20 April 2026 against:
 
 - the current task tracker in `specs/004-frontend-formatting/design-improvement-tasks.md`
 - the actual code paths used by the live conversation route
@@ -35,6 +35,12 @@ The review was grounded in the current active route implementation, not older re
 
 - T001: Fixture and test coverage groundwork exists for markdown-oriented transcript rendering.
 - T002: The codebase has now been reviewed against the design notes and the gaps are documented here.
+- T012: Turn-level copy and speech actions are live in the active conversation route and visible in the localhost browser.
+- T012a: Tool-heavy assistant turns are condensed in the active conversation route instead of rendering long stacks of repeated tool pills.
+- T013: Long-user-prompt truncation is live and browser-validated with real archive data. The `Read more` / `Show less` toggle is visible for user turns over 300 characters.
+- T014: Coverage is complete across `MessageBubble.test.tsx` (26 tests), `AssistantTurn.test.tsx` (3 tests), `ThinkingBlock.test.tsx` (8 tests), and `MarkdownRenderer.test.tsx` (21 tests). The long-prompt expansion behavior is covered by an E2E test in `conversation.spec.ts`. All 152 frontend tests pass.
+- T026: TypeScript clean (`npx tsc --noEmit`), production build (`npm run build`), and full Vitest suite (152/152 passing) all confirmed.
+- T028: This report.
 
 ### Confirmed in progress
 
@@ -64,19 +70,19 @@ The review was grounded in the current active route implementation, not older re
 
 ## Current Gaps Against The Design Tasks
 
-### 1. Tool activity is still too noisy in real conversations
+### 1. Tool-heavy conversations are now materially calmer
 
-The `Laravel SQL Conversion` localhost screenshot shows a long vertical stack of repeated `Tool call` pills.
+The active route no longer renders a long vertical stack of repeated tool pills for the synthetic tool-heavy browser fixture used during validation.
 
-This matches the current route implementation:
+Current route behavior:
 
-- `AssistantTurn` renders every `tool` role message as a standalone `ToolBlock`.
-- The route therefore still exposes internal processing noise in tool-heavy conversations instead of producing a calmer condensed reading flow.
+- `AssistantTurn` now groups consecutive `tool` role messages into a single summarized `ToolBlock`.
+- The localhost browser shows a single `3 tool calls` disclosure instead of three stacked `Tool call` pills.
 
-Implication:
+Interpretation:
 
-- Transcript readability is still materially off in important real-world conversations.
-- The current browser behavior does not yet satisfy the design intent for low-noise conversational reading.
+- This satisfies the intent of T012a by reducing low-value transcript noise while still allowing users to see that tool activity occurred.
+- The chosen behavior is condensation rather than full suppression.
 
 ### 2. Code block work is only partial
 
@@ -99,17 +105,33 @@ Implication:
 - T003 is correctly marked in progress, not complete.
 - T004, T005, T006, and T007 should remain open.
 
-### 3. Turn-level actions are not live in the active conversation path
+### 3. Turn-level actions are live, but long user prompt treatment is still incomplete
 
-Neither active turn-rendering path mounts end-of-turn copy or text-to-speech actions:
+Both active turn-rendering paths now mount end-of-turn actions:
 
-- `MessageBubble` renders content only
-- `AssistantTurn` renders segment output only
+- `MessageBubble` renders turn-level copy and text-to-speech controls
+- `AssistantTurn` renders the same controls for grouped assistant turns
+
+Browser-visible evidence:
+
+- The localhost conversation route shows icon-only copy and speech buttons with accessible names and hover labels.
+- Raw-turn copy and speech actions are visible for both user and assistant turns.
+
+Resolution (T013 and T014):
+
+Root cause of the original failure: the `isPlainTextMessage` guard used `!message.segments` as the truncation condition. Real API data always carries `segments: [{kind: "markdown", text: ...}]` on every user message, so the guard was always false and truncation never activated.
+
+Fix applied: the guard was rewritten to `isTextOnlyUserMessage` — a user turn with no attachments whose segments are exclusively `kind: "markdown"`. This matches the real API data shape and allows truncation for plain text user messages.
+
+Browser validation: Verified with the "Pub Manager Conflict" conversation from the real archive database. The user message at 1282 characters shows the truncated form with a `Read more` button on first view; clicking expands to full text with a `Show less` button.
+
+E2E test update: the long-prompt mock in `conversation.spec.ts` was updated to include a `segments` array matching the real API shape, so the E2E test now exercises the real code path.
 
 Implication:
 
-- T012 is not started in shipped behavior.
-- T013 and T014 also remain open.
+- T012 is complete.
+- T013 is complete.
+- T014 is complete.
 
 ### 4. Sidebar and conversation-list redesign is not live
 
@@ -158,9 +180,10 @@ Implication:
 
 ### Phase 4
 
-- T012: not done
-- T013: not done
-- T014: not done
+- T012: done
+- T012a: done
+- T013: done
+- T014: done
 
 ### Phase 5
 
@@ -181,9 +204,9 @@ Implication:
 
 ### Phase 7
 
-- T026: not done
+- T026: done
 - T027: not done
-- T028: not done
+- T028: done
 
 ## Notes On Active Rendering Paths
 
@@ -194,13 +217,35 @@ The branch currently contains more than one transcript rendering path, and that 
 
 This means status should always be judged against the route-level browser output, not from reading a single component in isolation.
 
+## Test Infrastructure Notes
+
+During T014 completion, three pre-existing test environment issues were resolved:
+
+### MSW base URL mismatch
+
+The API client uses a relative base URL (`""`) in browser context (commit `0e6ecd1`, "fix(api-client): use relative URL in browser"). The MSW handlers in `__tests__/mocks/handlers.ts` were still pointing to `http://localhost:8000`. Two changes fixed this:
+
+1. `handlers.ts`: changed `API_URL` from `http://localhost:8000` to `http://localhost`.
+2. `vitest.config.ts`: added `environmentOptions.jsdom.url: 'http://localhost'` so jsdom resolves relative fetch URLs against `http://localhost` (matching the MSW handler origin).
+
+One `api.test.ts` assertion (`should build absolute media URLs for relative paths`) was also updated to expect the relative path returned by the browser-mode API client instead of the old absolute `http://localhost:8000/…` form.
+
+### ResizeObserver polyfill
+
+Radix UI Tooltip (used by `TurnActions`) calls `ResizeObserver` which does not exist in jsdom. A no-op polyfill was added to `vitest.setup.ts` to prevent uncaught exceptions during full-suite runs.
+
+### AssistantTurn TooltipProvider
+
+`AssistantTurn.test.tsx` was failing with "Tooltip must be used within TooltipProvider" after `TurnActions` adopted a Radix tooltip. A `renderWithTooltip` helper wrapping renders in `<TooltipProvider>` was added, matching the existing pattern in `MessageBubble.test.tsx`.
+
+These changes brought the total passing count from 122 to 152 (30 previously failing tests in `api.test.ts` and the hooks test files now pass).
+
 ## Recommended Next Work Order
 
-1. Collapse or otherwise reduce repeated tool-role output so the active route no longer renders long stacks of `Tool call` pills.
+1. Finish long-user-prompt truncation so the active route shows the `Read more` affordance correctly on localhost.
 2. Finish code-block rendering properly: syntax highlighting, lighter surface treatment, wrapping, and line-number behavior.
-3. Add turn-level actions and long-user-prompt handling to the active conversation route.
-4. Move sidebar search and implement the conversation-list redesign in the live shell.
-5. Re-run browser review and then update task statuses only after those behaviors are visible on localhost.
+3. Move sidebar search and implement the conversation-list redesign in the live shell.
+4. Re-run browser review and then update remaining task statuses only after those behaviors are visible on localhost.
 
 ## Progress Tracking Rule Going Forward
 
