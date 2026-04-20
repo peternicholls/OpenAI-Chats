@@ -418,6 +418,84 @@ test.describe('Conversation View', () => {
         await expect(page.getByText('Great question. Let me walk through both approaches.')).toBeVisible()
     })
 
+    test('should respect the saved setting when long prompt truncation is disabled', async ({ page }) => {
+        await page.unroute('**/api/settings')
+        await page.route('**/api/settings', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    theme: 'system',
+                    default_export_format: 'md',
+                    sidebar_open: true,
+                    sidebar_collapsed: false,
+                    embedding_model: 'text-embedding-3-small',
+                    items_per_page: 50,
+                    openai_api_key: '',
+                    archive_media_dir: '/tmp/archive',
+                    code_line_numbers: false,
+                    long_prompt_truncation: false,
+                }),
+            })
+        })
+
+        await page.route('**/api/conversations/conv-long-user-setting-disabled', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    id: 'conv-long-user-setting-disabled',
+                    title: 'Long User Prompt Setting Disabled',
+                    create_time: 1700000000,
+                    update_time: 1700000100,
+                    model: 'gpt-4',
+                    message_count: 2,
+                    tags: [],
+                    is_favorite: false,
+                    messages: [
+                        {
+                            id: 'msg-long-user-disabled-001',
+                            role: 'user',
+                            content: longUserPromptText,
+                            create_time: 1700000000,
+                            attachments: [],
+                            segments: [
+                                {
+                                    kind: 'markdown',
+                                    text: longUserPromptText,
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                            ],
+                        },
+                        {
+                            id: 'msg-long-assistant-disabled-001',
+                            role: 'assistant',
+                            content: 'Understood. Here is the full comparison.',
+                            create_time: 1700000100,
+                            attachments: [],
+                            segments: [
+                                {
+                                    kind: 'markdown',
+                                    text: 'Understood. Here is the full comparison.',
+                                    attachment_index: null,
+                                    fallback_label: null,
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            })
+        })
+
+        await page.goto('/conversation/conv-long-user-setting-disabled')
+        await page.waitForLoadState('networkidle')
+
+        await expect(page.getByRole('button', { name: 'Read more' })).toHaveCount(0)
+        await expect(page.getByText(/Could you walk me through the trade-offs/)).toBeVisible()
+        await expect(page.getByText('Understood. Here is the full comparison.')).toBeVisible()
+    })
+
     test('should condense tool-heavy assistant turns and show turn actions', async ({ page }) => {
         await page.route('**/api/conversations/conv-tool-heavy', async (route) => {
             await route.fulfill({
