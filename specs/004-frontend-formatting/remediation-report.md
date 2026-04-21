@@ -262,6 +262,27 @@ These changes brought the total passing count from 122 to 152 (30 previously fai
 1. Keep documentation and screenshots aligned if Sprint 004 follow-up polish changes the shell or transcript presentation.
 2. Treat future sidebar or transcript changes as cross-layer work touching API segments, frontend rendering, tests, and browser validation together.
 
+## Sprint A Completion (T029-T034)
+
+Sprint A visual-review fixes are now complete on branch `004-frontend-formatting`.
+
+### Implemented fixes
+
+- T029: `MarkdownRenderer` now strips bracket-style citation sentinels such as `` before markdown rendering, with fixture coverage proving surrounding prose is preserved.
+- T030: `MarkdownRenderer` now replaces `{{file:...}}` placeholders with `[Referenced file (unavailable)]`, with fixture coverage confirming the raw token no longer reaches the DOM.
+- T031: pending processing clusters are only converted into `ThinkingSegment`s for assistant turns in `api/services/archive_service.py`, and `MessageBubble` defensively ignores thinking segments on non-assistant turns. API and frontend tests cover both sides.
+- T032: attachment thumbnails now render at a fixed `h-40` with `object-contain`, so the full image remains visible without cropping. User image turns keep the standard full-width bubble layout, and consecutive image attachments are coalesced into a single inline row so multiple images display next to each other.
+- T033: the sidebar sort toggle `aria-label` now describes current state (`Sorted newest first` / `Sorted oldest first`) rather than the next action.
+
+### Validation evidence
+
+- TypeScript: `cd web && ./node_modules/.bin/tsc --noEmit` passed.
+- Frontend tests: `cd web && npm run test` passed with `171/171` tests green.
+- Frontend build: `cd web && npm run build` passed.
+- API targeted validation: `source .venv/bin/activate && pytest tests/api/test_conversations.py -q` passed.
+- Localhost browser validation: after rebuilding the Dockerized web target, `http://localhost/conversation/68e06336-bce4-8330-b350-f7a33ffac85e` showed no bracket citation tokens, no raw `{{file:...}}` placeholders, no reasoning pill on user turns, and the target image turn rendered inside the standard full-width user bubble with a fixed 160 px visual height and uncropped `object-contain` scaling.
+- Localhost sidebar validation: the sort toggle exposed `aria-label="Sorted newest first"`, matching the current state.
+
 ## Progress Tracking Rule Going Forward
 
 Do not mark a task complete based on component existence alone.

@@ -232,11 +232,11 @@ describe('MessageBubble', () => {
     })
 
     describe('attachments', () => {
-        it('shrinks attachment-only user bubbles to fit the larger image thumbnail', () => {
+        it('keeps the standard full-width user bubble while rendering the larger image thumbnail', () => {
             const message: Message = {
                 id: 'user-image-only',
                 role: 'user',
-                content: '',
+                content: '[[ATTACHMENT:0]]',
                 create_time: 1700000000,
                 attachments: [
                     {
@@ -266,9 +266,10 @@ describe('MessageBubble', () => {
             const contentColumn = bubble?.children.item(1)
             const thumbnail = screen.getByTestId('attachment-image-thumbnail')
 
-            expect(bubble).toHaveClass('inline-flex', 'max-w-prose', 'flex-wrap', 'gap-2', 'self-start')
-            expect(contentColumn).not.toHaveClass('flex-1')
-            expect(thumbnail).toHaveClass('h-40', 'w-64', 'object-cover')
+            expect(bubble).toHaveClass('flex', 'gap-3')
+            expect(bubble).not.toHaveClass('w-fit', 'max-w-prose', 'self-start')
+            expect(contentColumn).toHaveClass('flex-1')
+            expect(thumbnail).toHaveClass('h-40', 'w-auto', 'max-w-64', 'object-contain')
         })
 
         it('renders inline images from attachment tokens', () => {
@@ -294,6 +295,43 @@ describe('MessageBubble', () => {
             expect(screen.getByText('Before')).toBeInTheDocument()
             expect(screen.getByText('After')).toBeInTheDocument()
             expect(screen.getByTestId('attachment-image-thumbnail-button')).toBeInTheDocument()
+        })
+
+        it('renders consecutive image attachments inline within a single row', () => {
+            const message: Message = {
+                ...mockAssistantMessage,
+                content: '[[ATTACHMENT:0]][[ATTACHMENT:1]]',
+                attachments: [
+                    {
+                        type: 'image',
+                        url: '/api/media/conv/image_1',
+                        filename: 'first.png',
+                        mime_type: 'image/png',
+                        width: 400,
+                        height: 300,
+                        size_bytes: 1000,
+                        found: true,
+                    },
+                    {
+                        type: 'image',
+                        url: '/api/media/conv/image_2',
+                        filename: 'second.png',
+                        mime_type: 'image/png',
+                        width: 400,
+                        height: 300,
+                        size_bytes: 1200,
+                        found: true,
+                    },
+                ],
+            }
+
+            renderWithTooltip(<MessageBubble message={message} />)
+
+            const inlineGroup = screen.getByTestId('attachment-inline-group')
+            const buttons = inlineGroup.querySelectorAll('[data-testid="attachment-image-thumbnail-button"]')
+
+            expect(inlineGroup).toHaveClass('flex', 'flex-wrap', 'gap-3')
+            expect(buttons).toHaveLength(2)
         })
 
         it('renders file fallback cards for missing attachments', () => {
