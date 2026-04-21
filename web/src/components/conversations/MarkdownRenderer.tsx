@@ -8,6 +8,8 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useState, useCallback, useRef, Fragment, type ReactNode, type CSSProperties } from "react";
 import { Check, Copy } from "lucide-react";
 
+type SyntaxStylesheet = Record<string, CSSProperties>;
+
 /**
  * Strip PUA citation tokens injected by ChatGPT's retrieval system.
  * Pattern: \uE200(file)?cite(\uE202turnNsearchM|\uE202turnNviewM|\uE202turnNfileM)+\uE201
@@ -28,6 +30,25 @@ function preprocess(text: string): string {
     result = result.replace(/\\\(([\s\S]*?)\\\)/g, (_match, inner) => `$${inner}$`);
 
     return result;
+}
+
+function getCodeLanguage(children: ReactNode): string | null {
+    if (!children || typeof children !== "object" || !("props" in children)) {
+        return null;
+    }
+
+    const codeClass = (children as { props: { className?: string } }).props.className;
+    return codeClass?.match(/language-(\w+)/)?.[1] ?? null;
+}
+
+function stripTrailingCodeFenceNewline(text: string): string {
+    return text.endsWith("\n") ? text.slice(0, -1) : text;
+}
+
+function getInlineCodeClassName(className?: string): string {
+    return className
+        ? `${className} font-mono text-[13px]`
+        : "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.88em] text-foreground";
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -109,7 +130,7 @@ interface SyntaxToken {
 // styles from the theme stylesheet keyed by CSS class name.
 function renderTokens(
     nodes: SyntaxToken[],
-    stylesheet: Record<string, CSSProperties>
+    stylesheet: SyntaxStylesheet
 ): ReactNode {
     return nodes.map((node, i) => {
         if (node.type === "text") return node.value ?? null;
@@ -178,52 +199,29 @@ export function MarkdownRenderer({ text }: { text: string }) {
                     ),
                     pre: ({ children }) => {
                         const codeText = extractTextContent(children);
-                        // Extract language from the child <code> element's className
-                        let language: string | null = null;
-                        if (children && typeof children === "object" && "props" in children) {
-                            const codeClass = (children as { props: { className?: string } }).props.className;
-                            if (codeClass) {
-                                const match = codeClass.match(/language-(\w+)/);
-                                if (match) language = match[1];
-                            }
-                        }
-
-                        // Strip the trailing newline that fenced code blocks produce so RSH
-                        // does not emit a spurious empty final row in the renderer.
-                        const codeForHighlighter = codeText.endsWith("\n")
-                            ? codeText.slice(0, -1)
-                            : codeText;
+                        const language = getCodeLanguage(children) ?? "text";
+                        const codeForHighlighter = stripTrailingCodeFenceNewline(codeText);
 
                         return (
                             <div className="group relative mt-4 overflow-hidden rounded-lg bg-slate-950" data-testid="code-block">
                                 <div className="flex items-center justify-between bg-slate-800 px-3.5 pb-1 pt-2">
                                     <span className="font-mono text-[11px] text-slate-400">
-                                        {language || "text"}
+                                        {language}
                                     </span>
                                     <CopyButton text={codeText} />
                                 </div>
                                 <SyntaxHighlighter
-                                    language={language || "text"}
+                                    language={language}
                                     style={oneDark}
                                     PreTag="div"
                                     showLineNumbers={false}
                                     className=""
-                                    // customStyle must stay inline: RSH injects inline styles on the PreTag.
-                                    // padding: 0 — the renderer's grid cells own all spacing.
                                     customStyle={{ margin: 0, padding: 0, borderRadius: 0, background: "transparent" }}
-                                    // code-block-code sets font-family, font-size: 13px, line-height: 1.75.
-                                    // display: block makes the <code> element a block-level grid container.
                                     codeTagProps={{ className: "code-block-code", style: { display: "block" } }}
-                                    // Custom renderer: one CSS grid row per logical code line.
-                                    // Grid row height expands automatically for wrapped lines; the gutter
-                                    // cell stretches (align-self: stretch is CSS grid's default) so the
-                                    // #1a2332 background always fills the full height of the row — no gaps.
-                                    // The line number is positioned at the top of each cell via flex-start.
                                     renderer={(props) => {
                                         const rows = props.rows as SyntaxToken[];
-                                        const stylesheet = props.stylesheet as Record<string, CSSProperties>;
+                                        const stylesheet = props.stylesheet as SyntaxStylesheet;
                                         const total = rows.length;
-                                        // Widen the gutter column once line numbers reach 3 digits
                                         const gutterW = total >= 100 ? "3.5em" : "2.5em";
                                         return (
                                             <div
@@ -235,7 +233,6 @@ export function MarkdownRenderer({ text }: { text: string }) {
                                             >
                                                 {rows.map((row, i) => (
                                                     <Fragment key={i}>
-                                                        {/* Gutter cell: stretches to full row height via CSS grid default */}
                                                         <div
                                                             aria-hidden="true"
                                                             style={{
@@ -243,11 +240,7 @@ export function MarkdownRenderer({ text }: { text: string }) {
                                                                 color: "#4b5a6e",
                                                                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
                                                                 fontSize: "11px",
-                                                                // Fixed-px line-height = 13px × 1.75 so numbers
-                                                                // align with the first visual row of each code line.
                                                                 lineHeight: "22.75px",
-                                                                // Top/bottom padding only on the first/last rows so
-                                                                // the gutter background fills flush to the block edges.
                                                                 paddingTop: i === 0 ? "10px" : undefined,
                                                                 paddingBottom: i === total - 1 ? "10px" : undefined,
                                                                 paddingLeft: "8px",
@@ -260,7 +253,6 @@ export function MarkdownRenderer({ text }: { text: string }) {
                                                         >
                                                             {i + 1}
                                                         </div>
-                                                        {/* Code cell: inherits font/size/leading from .code-block-code */}
                                                         <div
                                                             style={{
                                                                 paddingTop: i === 0 ? "10px" : undefined,
@@ -287,13 +279,7 @@ export function MarkdownRenderer({ text }: { text: string }) {
                         );
                     },
                     code: ({ children, className }) => (
-                        <code
-                            className={
-                                className
-                                    ? `${className} font-mono text-[13px]`
-                                    : "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.88em] text-foreground"
-                            }
-                        >
+                        <code className={getInlineCodeClassName(className)}>
                             {children}
                         </code>
                     ),

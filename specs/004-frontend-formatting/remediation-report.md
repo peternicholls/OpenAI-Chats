@@ -2,7 +2,7 @@
 
 ## Reconciliation Basis
 
-This report reflects the current state of branch `004-frontend-formatting` as reviewed on 20 April 2026 against:
+This report reflects the current state of branch `004-frontend-formatting` as reviewed on 21 April 2026 against:
 
 - the current task tracker in `specs/004-frontend-formatting/design-improvement-tasks.md`
 - the actual code paths used by the live conversation route
@@ -38,18 +38,33 @@ The review was grounded in the current active route implementation, not older re
 - T012: Turn-level copy and speech actions are live in the active conversation route and visible in the localhost browser.
 - T012a: Tool-heavy assistant turns are condensed in the active conversation route instead of rendering long stacks of repeated tool pills.
 - T013: Long-user-prompt truncation is live and browser-validated with real archive data. The `Read more` / `Show less` toggle is visible for user turns over 500 characters, and the live route now respects the saved `long_prompt_truncation` setting.
-- T014: Coverage is complete across `MessageBubble.test.tsx` (26 tests), `AssistantTurn.test.tsx` (3 tests), `ThinkingBlock.test.tsx` (8 tests), and `MarkdownRenderer.test.tsx` (21 tests). The long-prompt expansion behavior is covered by an E2E test in `conversation.spec.ts`. All 152 frontend tests pass.
-- T026: TypeScript clean (`npx tsc --noEmit`), production build (`npm run build`), and full Vitest suite (152/152 passing) all confirmed.
+- T014: Coverage is complete across `MessageBubble.test.tsx` (26 tests), `AssistantTurn.test.tsx` (3 tests), `ThinkingBlock.test.tsx` (8 tests), and `MarkdownRenderer.test.tsx` (21 tests). The long-prompt expansion behavior is covered by an E2E test in `conversation.spec.ts`. Tooltip, sidebar, and infinite-loading coverage were expanded in this branch, and all 158 frontend tests pass.
+- T008: Markdown tables render as readable HTML tables with copy support.
+- T009: List spacing and within-item spacing have been tightened for better readability.
+- T010: Horizontal rules now render only when explicitly present in message content rather than being inserted automatically between turns.
+- T011: Automated coverage exists for table rendering, list spacing, and explicit rule-line handling.
+- T015: Accessibility improvements for the changed transcript and sidebar UI are in place, including ARIA labeling, disclosure semantics, and keyboard-reachable controls.
+- T016: Dark-mode styling has been reconciled with the updated transcript and sidebar presentation.
+- T017: Responsive layout behavior has been validated across the updated transcript and sidebar shell.
+- T018: Automated coverage for the accessibility-critical and responsive changes introduced in Sprint 004 is in place.
+- T019: Sidebar search is live directly beneath the site title in the active shell.
+- T020: Sidebar collapse is live, persisted, and browser-validated.
+- T021: Tags are rendered as a collapsible sidebar section when present.
+- T022: Favorites are rendered as a collapsible sidebar section when present.
+- T023: Sidebar controls remain pinned while the conversation list scrolls independently.
+- T024: The conversation list now emphasizes titles, exposes metadata on hover, supports ascending and descending ordering, and automatically loads additional conversation pages at the bottom of the list.
+- T025: Automated coverage exists for sidebar search placement, collapse behavior, section rendering, ordering controls, and infinite conversation loading.
+- T026: TypeScript clean (`npx tsc --noEmit`), production build (`npm run build`), and full Vitest suite (158/158 passing) all confirmed.
+- T027: Browser validation now includes transcript formatting, long-user-prompt handling, sidebar behavior, and dynamic sidebar loading after rebuilding the local Docker web service.
 - T028: This report.
 
 ### Confirmed in progress
 
-- T003: Code blocks currently have a copy affordance and a header row, but syntax highlighting is not yet actually implemented in the live renderer.
+- None.
 
 ### Confirmed not yet complete
 
-- T004 to T028 remain incomplete or only partially represented in code or browser behavior.
-- Some supporting implementation exists outside the task statuses, but the browser still shows major design-note gaps.
+- None within the scope of Sprint 004.
 
 ## What Is Actually Shipping
 
@@ -68,7 +83,7 @@ The review was grounded in the current active route implementation, not older re
 - The conversation header shows start date and updated date behavior.
 - Assistant content renders headings and lists with clear formatting.
 
-## Current Gaps Against The Design Tasks
+## Design Task Reconciliation Notes
 
 ### 1. Tool-heavy conversations are now materially calmer
 
@@ -84,26 +99,25 @@ Interpretation:
 - This satisfies the intent of T012a by reducing low-value transcript noise while still allowing users to see that tool activity occurred.
 - The chosen behavior is condensation rather than full suppression.
 
-### 2. Code block work is only partial
+### 2. Code block work is now complete
 
 `MarkdownRenderer` currently provides:
 
 - a code-block header
 - a language label
 - a copy button
-
-But it still renders plain code text and still uses horizontal overflow.
+- syntax highlighting via `react-syntax-highlighter`
+- wrapped code lines with a line-number gutter that avoids horizontal scrolling
 
 Current code state:
 
-- no actual syntax-highlighting renderer is used in the component
-- code blocks still rely on `overflow-x-auto`
-- the current block surface remains a hard-coded dark slate treatment rather than the intended lighter, note-driven treatment
+- a syntax-highlighting renderer is active in the live component
+- code cells wrap instead of forcing horizontal overflow
+- code blocks expose a stable copy affordance and readable language header
 
 Implication:
 
-- T003 is correctly marked in progress, not complete.
-- T004, T005, T006, and T007 should remain open.
+- T003 through T007 are complete.
 
 ### 3. Turn-level actions are live, and long user prompt treatment is wired through the active route
 
@@ -135,19 +149,20 @@ Implication:
 - T013 is complete.
 - T014 is complete.
 
-### 4. Sidebar and conversation-list redesign is not live
+### 4. Sidebar and conversation-list redesign is live
 
-The home screenshot shows:
+The active shell now shows:
 
-- the search box remains in the top banner instead of in the sidebar
-- the sidebar still includes a static `Search` navigation link
-- tags are still rendered in the sidebar footer region
-- conversation cards still show metadata by default instead of title-first presentation
+- the search input directly beneath the site title in the sidebar
+- collapsible favorites and tags sections when those sections have content
+- a conversation list whose controls stay pinned while the list itself scrolls independently
+- title-first conversation rows with metadata revealed on hover
+- automatic fetching of additional conversation pages when the bottom sentinel is reached
 
 Implication:
 
-- T019 through T025 remain open in real browser behavior.
-- The current shell still reads like the pre-redesign app structure rather than the design-note direction.
+- T019 through T025 are complete in real browser behavior.
+- The current shell now matches the sidebar information architecture described in the design notes closely enough for completion.
 
 ### 5. The previous remediation report was stale
 
@@ -167,18 +182,18 @@ Implication:
 
 ### Phase 2
 
-- T003: partial and still in progress
-- T004: not done
-- T005: not done
-- T006: not done
-- T007: not done
+- T003: done
+- T004: done
+- T005: done
+- T006: done
+- T007: done
 
 ### Phase 3
 
-- T008: not done
-- T009: not done
-- T010: not done
-- T011: not done
+- T008: done
+- T009: done
+- T010: done
+- T011: done
 
 ### Phase 4
 
@@ -189,25 +204,25 @@ Implication:
 
 ### Phase 5
 
-- T015: not done
-- T016: not done
-- T017: not done
-- T018: not done
+- T015: done
+- T016: done
+- T017: done
+- T018: done
 
 ### Phase 6
 
-- T019: not done
-- T020: not done
-- T021: not done
-- T022: not done
-- T023: not done
-- T024: not done
-- T025: not done
+- T019: done
+- T020: done
+- T021: done
+- T022: done
+- T023: done
+- T024: done
+- T025: done
 
 ### Phase 7
 
 - T026: done
-- T027: not done
+- T027: done
 - T028: done
 
 ## Notes On Active Rendering Paths
@@ -244,10 +259,8 @@ These changes brought the total passing count from 122 to 152 (30 previously fai
 
 ## Recommended Next Work Order
 
-1. Finish long-user-prompt truncation so the active route shows the `Read more` affordance correctly on localhost.
-2. Finish code-block rendering properly: syntax highlighting, lighter surface treatment, wrapping, and line-number behavior.
-3. Move sidebar search and implement the conversation-list redesign in the live shell.
-4. Re-run browser review and then update remaining task statuses only after those behaviors are visible on localhost.
+1. Keep documentation and screenshots aligned if Sprint 004 follow-up polish changes the shell or transcript presentation.
+2. Treat future sidebar or transcript changes as cross-layer work touching API segments, frontend rendering, tests, and browser validation together.
 
 ## Progress Tracking Rule Going Forward
 

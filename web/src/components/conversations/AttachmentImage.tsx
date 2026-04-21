@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { Attachment } from "@/types";
 import { api } from "@/services/api";
 import { ImageModal } from "@/components/conversations/ImageModal";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function AttachmentImage({ attachment }: { attachment: Attachment }) {
     const [open, setOpen] = useState(false);
@@ -22,21 +23,26 @@ export function AttachmentImage({ attachment }: { attachment: Attachment }) {
 
     return (
         <>
-            <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="cursor-pointer overflow-hidden rounded-lg border bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label={`Open image: ${attachment.filename}`}
-                data-testid="attachment-image-thumbnail-button"
-            >
-                <img
-                    src={src}
-                    alt=""
-                    loading="lazy"
-                    className="h-32 w-48 object-cover"
-                    data-testid="attachment-image-thumbnail"
-                />
-            </button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        onClick={() => setOpen(true)}
+                        className="cursor-pointer overflow-hidden rounded-lg border bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label={`Open image: ${attachment.filename}`}
+                        data-testid="attachment-image-thumbnail-button"
+                    >
+                        <img
+                            src={src}
+                            alt=""
+                            loading="lazy"
+                            className="h-32 w-48 object-cover"
+                            data-testid="attachment-image-thumbnail"
+                        />
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>Open image</TooltipContent>
+            </Tooltip>
             {open && (
                 <ImageModal
                     attachment={attachment}

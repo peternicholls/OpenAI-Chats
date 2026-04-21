@@ -13,8 +13,16 @@ The repository contains three main surfaces:
 - Import extracted ChatGPT exports into a local SQLite database with FTS5 search.
 - Search conversations by keyword, date range, or optional semantic embeddings.
 - View and export conversations as Markdown, JSON, YAML, HTML, XML, CSV, or Excel.
-- Serve a browser UI with tagging, favorites, import workflows, and transcript rendering.
+- Serve a browser UI with tagging, favorites, import workflows, dynamic sidebar loading, and rich transcript rendering.
 - Keep attachment files on disk and stream them directly when needed instead of storing blobs in the database.
+
+## Web UI Features
+
+- Rich transcript rendering for markdown conversations, code blocks, tables, inline math, display math, inline media, and readable fallbacks for unsupported content.
+- Compact assistant turn rendering with grouped tool activity and reasoning disclosures instead of long repetitive internal message stacks.
+- Sidebar conversation browsing with search, favorites, tag sections, ascending or descending ordering, and automatic loading of additional conversations when you reach the end of the current list.
+- Shared tooltip styling across navigation, conversation hover details, image actions, search controls, and tag or favorite management affordances.
+- Turn-level copy and speech actions for both user and assistant content.
 
 ## Quick Start
 

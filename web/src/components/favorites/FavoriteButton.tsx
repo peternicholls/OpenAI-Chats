@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToggleFavorite } from "@/hooks/useFavorites";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ export function FavoriteButton({
     const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(null);
     const { mutateAsync: toggleFavorite, isPending: isToggling } = useToggleFavorite();
     const effectiveFavorite = optimisticFavorite ?? isFavorite;
+    const tooltipLabel = effectiveFavorite ? "Remove from favorites" : "Add to favorites";
 
     const handleClick = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -43,22 +45,27 @@ export function FavoriteButton({
     };
 
     return (
-        <Button
-            variant="ghost"
-            size={size}
-            onClick={handleClick}
-            disabled={isToggling}
-            className={cn("shrink-0", className)}
-            aria-label={effectiveFavorite ? "Remove from favorites" : "Add to favorites"}
-        >
-            <Star
-                className={cn(
-                    "h-4 w-4 transition-colors",
-                    effectiveFavorite
-                        ? "text-yellow-500 fill-yellow-500"
-                        : "text-muted-foreground"
-                )}
-            />
-        </Button>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size={size}
+                    onClick={handleClick}
+                    disabled={isToggling}
+                    className={cn("shrink-0", className)}
+                    aria-label={tooltipLabel}
+                >
+                    <Star
+                        className={cn(
+                            "h-4 w-4 transition-colors",
+                            effectiveFavorite
+                                ? "text-yellow-500 fill-yellow-500"
+                                : "text-muted-foreground"
+                        )}
+                    />
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>{tooltipLabel}</TooltipContent>
+        </Tooltip>
     );
 }

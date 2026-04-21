@@ -97,4 +97,14 @@ describe("Sidebar", () => {
 
         expect(sidebarState.setMobileOpen).toHaveBeenCalledWith(false);
     });
+
+    it("renders tooltip copy for the banner and footer utility links", () => {
+        render(<Sidebar />);
+
+        expect(screen.getByLabelText("Primary")).toHaveTextContent("Return to the conversation browser");
+        expect(screen.getByLabelText("Utilities")).toHaveTextContent("Adjust archive preferences");
+        expect(screen.getByLabelText("Utilities")).toHaveTextContent("Import a ChatGPT archive ZIP");
+        expect(screen.getByLabelText("Utilities")).toHaveTextContent("Open export and management tools");
+        expect(screen.getByLabelText("Utilities")).toHaveTextContent("Open the project guide and docs");
+    });
 });
