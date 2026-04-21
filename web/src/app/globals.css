@@ -144,10 +144,11 @@
 
 /* List items: tighten paragraph spacing within items so bold headings
    sit closer to their body content while items stay well-separated. */
-.markdown-list-item > p {
+.markdown-list-item>p {
   margin-bottom: 0.125rem;
 }
-.markdown-list-item > p:last-child {
+
+.markdown-list-item>p:last-child {
   margin-bottom: 0;
 }
 
@@ -155,4 +156,30 @@
    doesn't double-border against its container edge. */
 [data-testid="table-block"] tbody tr:last-child td {
   border-bottom-width: 0;
+}
+
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 35%, transparent) transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--sidebar-foreground) 18%, transparent);
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--sidebar-foreground) 28%, transparent);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }

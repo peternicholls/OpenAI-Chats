@@ -2,6 +2,7 @@ export const queryKeys = {
     conversations: {
         all: ["conversations"] as const,
         list: (filters: Record<string, unknown>) => ["conversations", "list", filters] as const,
+        infiniteList: (filters: Record<string, unknown>) => ["conversations", "infinite-list", filters] as const,
         detail: (id: string) => ["conversations", "detail", id] as const,
     },
     search: {

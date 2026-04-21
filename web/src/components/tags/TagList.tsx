@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tags, X, Pencil, Check } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -134,24 +135,34 @@ export function TagList({ className }: TagListProps) {
                                     className="h-6 text-xs w-28 px-1"
                                     autoFocus
                                 />
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-5 w-5 p-0"
-                                    onClick={commitRename}
-                                    aria-label="Confirm rename"
-                                >
-                                    <Check className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-5 w-5 p-0"
-                                    onClick={cancelEditing}
-                                    aria-label="Cancel rename"
-                                >
-                                    <X className="h-3 w-3" />
-                                </Button>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-5 w-5 p-0"
+                                            onClick={commitRename}
+                                            aria-label="Confirm rename"
+                                        >
+                                            <Check className="h-3 w-3" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Confirm rename</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-5 w-5 p-0"
+                                            onClick={cancelEditing}
+                                            aria-label="Cancel rename"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Cancel rename</TooltipContent>
+                                </Tooltip>
                             </div>
                         ) : (
                             <>
@@ -166,15 +177,20 @@ export function TagList({ className }: TagListProps) {
                                     {tag.name}
                                     <span className="ml-1 opacity-60">({tag.count})</span>
                                 </Badge>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={(e) => startEditing(tag.name, e)}
-                                    aria-label={`Rename tag ${tag.name}`}
-                                >
-                                    <Pencil className="h-3 w-3" />
-                                </Button>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-5 w-5 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                                            onClick={(e) => startEditing(tag.name, e)}
+                                            aria-label={`Rename tag ${tag.name}`}
+                                        >
+                                            <Pencil className="h-3 w-3" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Rename {tag.name}</TooltipContent>
+                                </Tooltip>
                             </>
                         )}
                     </div>

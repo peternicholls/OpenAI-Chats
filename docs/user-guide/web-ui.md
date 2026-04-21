@@ -11,6 +11,14 @@ Run the browser UI locally with Docker, or run the API and frontend separately d
   - `/api/` -> FastAPI backend
 - Persistent host data: `~/.chatgpt-archive/`
 
+## Key Interface Behaviors
+
+- The sidebar keeps search, favorites, tags, and utility actions fixed while the conversation list scrolls independently.
+- The conversation list is loaded in pages and automatically fetches more conversations when you reach the bottom of the current list.
+- Conversation rows, site-brand links, utility actions, and archive controls use a consistent custom tooltip treatment instead of mixed native hover titles.
+- Conversation transcripts render formatted markdown, code blocks, tables, math, inline media, and readable fallback blocks rather than exposing raw export payloads.
+- Assistant turns condense reasoning and tool activity into compact disclosure blocks so technical export noise does not dominate the reading experience.
+
 ## Docker Quick Start
 
 ```bash
@@ -28,6 +36,12 @@ docker compose ps
 docker compose logs nginx
 docker compose logs api
 docker compose logs web
+```
+
+If the frontend container is recreated during a rebuild and `http://localhost` briefly returns `502 Bad Gateway`, restart nginx so it refreshes the web upstream target:
+
+```bash
+docker compose restart nginx
 ```
 
 Stop the stack:

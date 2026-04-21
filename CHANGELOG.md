@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - E2E tests (27 tests) with Playwright
   - MSW mocking for API requests
   - Test utilities and fixtures
+- **Rich conversation transcript rendering in the web UI**
+  - Markdown transcripts now render headings, lists, links, blockquotes, tables, code blocks, and KaTeX math instead of exposing raw message syntax
+  - ChatGPT internal citation tokens are stripped during transcript preprocessing so exported retrieval markers do not leak into the UI
+  - Assistant reasoning and grouped tool activity render as compact disclosure blocks to reduce transcript noise
+- **Dynamic sidebar conversation loading**
+  - The sidebar now loads additional conversation pages automatically when you reach the end of the current list
+  - Sidebar ordering, pinned controls, and independent list scrolling continue to work while additional pages are fetched
+- **Sidebar navigation polish and shared tooltip styling**
+  - Navigation, banner, footer utility links, and conversation rows now use the shared tooltip treatment for consistent hover and focus feedback
+  - Sidebar conversation rows reveal richer metadata on hover without relying on native browser `title` tooltips
+  - The sidebar conversation scroller now uses custom scrollbar styling to better match the rest of the shell
 
 ### Work in Progress
 - Documentation improvements and polish

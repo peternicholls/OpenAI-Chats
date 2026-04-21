@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { SearchBar } from '@/components/search/SearchBar'
+import { TooltipProvider } from '@/components/ui/tooltip'
+
+function renderWithTooltip(ui: React.ReactElement) {
+    return render(<TooltipProvider>{ui}</TooltipProvider>)
+}
 
 describe('SearchBar', () => {
     beforeEach(() => {
@@ -13,7 +18,7 @@ describe('SearchBar', () => {
 
     it('renders search input', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} />)
 
         expect(screen.getByRole('textbox')).toBeInTheDocument()
         expect(screen.getByPlaceholderText(/search conversations/i)).toBeInTheDocument()
@@ -21,14 +26,14 @@ describe('SearchBar', () => {
 
     it('has correct aria-label', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} />)
 
         expect(screen.getByLabelText('Search')).toBeInTheDocument()
     })
 
     it('debounces search calls', async () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} debounceMs={500} />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} debounceMs={500} />)
 
         const input = screen.getByRole('textbox')
 
@@ -59,7 +64,7 @@ describe('SearchBar', () => {
 
     it('trims whitespace from query', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} debounceMs={100} />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} debounceMs={100} />)
 
         const input = screen.getByRole('textbox')
         fireEvent.change(input, { target: { value: '  hello  ' } })
@@ -73,7 +78,7 @@ describe('SearchBar', () => {
 
     it('shows clear button when input has value', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} />)
 
         const input = screen.getByRole('textbox')
 
@@ -89,7 +94,7 @@ describe('SearchBar', () => {
 
     it('clears input when clear button clicked', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} />)
 
         const input = screen.getByRole('textbox')
         fireEvent.change(input, { target: { value: 'test' } })
@@ -102,7 +107,7 @@ describe('SearchBar', () => {
 
     it('clears input when Escape key pressed', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} />)
 
         const input = screen.getByRole('textbox')
         fireEvent.change(input, { target: { value: 'test' } })
@@ -115,7 +120,7 @@ describe('SearchBar', () => {
 
     it('shows loading spinner when isLoading is true', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} isLoading={true} />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} isLoading={true} />)
 
         // The loader has animate-spin class
         const loader = document.querySelector('.animate-spin')
@@ -124,7 +129,7 @@ describe('SearchBar', () => {
 
     it('hides clear button when loading', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} isLoading={true} />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} isLoading={true} />)
 
         const input = screen.getByRole('textbox')
         fireEvent.change(input, { target: { value: 'test' } })
@@ -135,25 +140,29 @@ describe('SearchBar', () => {
 
     it('uses custom placeholder', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} placeholder="Custom placeholder" />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} placeholder="Custom placeholder" />)
 
         expect(screen.getByPlaceholderText('Custom placeholder')).toBeInTheDocument()
     })
 
     it('uses initial value', () => {
         const onSearch = vi.fn()
-        render(<SearchBar onSearch={onSearch} initialValue="initial query" />)
+        renderWithTooltip(<SearchBar onSearch={onSearch} initialValue="initial query" />)
 
         expect(screen.getByRole('textbox')).toHaveValue('initial query')
     })
 
     it('updates when initialValue prop changes', () => {
         const onSearch = vi.fn()
-        const { rerender } = render(<SearchBar onSearch={onSearch} initialValue="first" />)
+        const { rerender } = renderWithTooltip(<SearchBar onSearch={onSearch} initialValue="first" />)
 
         expect(screen.getByRole('textbox')).toHaveValue('first')
 
-        rerender(<SearchBar onSearch={onSearch} initialValue="second" />)
+        rerender(
+            <TooltipProvider>
+                <SearchBar onSearch={onSearch} initialValue="second" />
+            </TooltipProvider>
+        )
 
         expect(screen.getByRole('textbox')).toHaveValue('second')
     })

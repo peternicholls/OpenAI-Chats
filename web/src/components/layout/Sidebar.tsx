@@ -12,17 +12,24 @@ import { SidebarTagsSection } from "@/components/layout/SidebarTagsSection";
 import { useSidebarUi } from "@/components/layout/SidebarUiContext";
 import { cn } from "@/lib/utils";
 
-const FOOTER_LINKS: Array<{ name: string; href: string; icon: typeof Settings; external?: boolean }> = [
-    { name: "Settings", href: "/settings", icon: Settings },
-    { name: "Import", href: "/import", icon: Upload },
-    { name: "Export", href: "/?manage=1", icon: Download },
-    {
-        name: "Help",
-        href: "https://github.com/peternicholls/OpenAI-Chats#readme",
-        icon: HelpCircle,
-        external: true,
-    },
-];
+const FOOTER_LINKS: Array<{
+    name: string;
+    href: string;
+    icon: typeof Settings;
+    tooltip: string;
+    external?: boolean;
+}> = [
+        { name: "Settings", href: "/settings", icon: Settings, tooltip: "Adjust archive preferences" },
+        { name: "Import", href: "/import", icon: Upload, tooltip: "Import a ChatGPT archive ZIP" },
+        { name: "Export", href: "/?manage=1", icon: Download, tooltip: "Open export and management tools" },
+        {
+            name: "Help",
+            href: "https://github.com/peternicholls/OpenAI-Chats#readme",
+            icon: HelpCircle,
+            tooltip: "Open the project guide and docs",
+            external: true,
+        },
+    ];
 
 function CollapsedRail() {
     const { toggleCollapsed } = useSidebarUi();
@@ -61,7 +68,7 @@ function CollapsedRail() {
                 </Tooltip>
             </div>
             <div className="mt-auto flex flex-col items-center gap-1 px-2 pb-3">
-                {FOOTER_LINKS.map(({ name, href, icon: Icon, external }) => (
+                {FOOTER_LINKS.map(({ name, href, icon: Icon, tooltip, external }) => (
                     <Tooltip key={name}>
                         <TooltipTrigger asChild>
                             {external ? (
@@ -84,7 +91,7 @@ function CollapsedRail() {
                                 </Link>
                             )}
                         </TooltipTrigger>
-                        <TooltipContent side="right">{name}</TooltipContent>
+                        <TooltipContent side="right">{tooltip}</TooltipContent>
                     </Tooltip>
                 ))}
             </div>
@@ -98,14 +105,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <div className="flex h-full min-h-0 flex-col">
             <div className="shrink-0 px-3 pt-4 pb-2">
                 <div className="mb-3 flex items-center gap-2">
-                    <Link
-                        href="/"
-                        onClick={() => onNavigate?.()}
-                        className="flex flex-1 items-center gap-2 rounded-md px-1 py-1 text-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                        <MessageSquare className="h-5 w-5 text-primary" aria-hidden="true" />
-                        <span className="text-base font-bold tracking-tight">ChatGPT Archive</span>
-                    </Link>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Link
+                                href="/"
+                                onClick={() => onNavigate?.()}
+                                className="flex flex-1 items-center gap-2 rounded-md px-1 py-1 text-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                                <MessageSquare className="h-5 w-5 text-primary" aria-hidden="true" />
+                                <span className="text-base font-bold tracking-tight">ChatGPT Archive</span>
+                            </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" align="start">
+                            Return to the conversation browser
+                        </TooltipContent>
+                    </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button
@@ -146,29 +160,34 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <hr className="border-border" role="presentation" />
             <nav aria-label="Utilities" className="shrink-0 px-2 py-2">
                 <ul className="grid grid-cols-2 gap-1">
-                    {FOOTER_LINKS.map(({ name, href, icon: Icon, external }) => (
+                    {FOOTER_LINKS.map(({ name, href, icon: Icon, tooltip, external }) => (
                         <li key={name}>
-                            {external ? (
-                                <a
-                                    href={href}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={() => onNavigate?.()}
-                                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[12.5px] text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                >
-                                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                                    <span className="truncate">{name}</span>
-                                </a>
-                            ) : (
-                                <Link
-                                    href={href}
-                                    onClick={() => onNavigate?.()}
-                                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[12.5px] text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                >
-                                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                                    <span className="truncate">{name}</span>
-                                </Link>
-                            )}
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    {external ? (
+                                        <a
+                                            href={href}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            onClick={() => onNavigate?.()}
+                                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[12.5px] text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        >
+                                            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                                            <span className="truncate">{name}</span>
+                                        </a>
+                                    ) : (
+                                        <Link
+                                            href={href}
+                                            onClick={() => onNavigate?.()}
+                                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[12.5px] text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        >
+                                            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                                            <span className="truncate">{name}</span>
+                                        </Link>
+                                    )}
+                                </TooltipTrigger>
+                                <TooltipContent side="top" align="start">{tooltip}</TooltipContent>
+                            </Tooltip>
                         </li>
                     ))}
                 </ul>

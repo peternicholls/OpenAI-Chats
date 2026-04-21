@@ -3,7 +3,12 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { ImageModal } from '@/components/conversations/ImageModal'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import type { Attachment } from '@/types'
+
+function renderWithTooltip(ui: React.ReactElement) {
+    return render(<TooltipProvider>{ui}</TooltipProvider>)
+}
 
 const baseAttachment: Attachment = {
     type: 'image',
@@ -28,7 +33,7 @@ describe('ImageModal', () => {
     })
 
     it('renders the image with correct src', () => {
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -41,7 +46,7 @@ describe('ImageModal', () => {
     })
 
     it('displays the filename in the header', () => {
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -55,7 +60,7 @@ describe('ImageModal', () => {
     it('calls onClose when the close button is clicked', async () => {
         const user = userEvent.setup()
 
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -70,7 +75,7 @@ describe('ImageModal', () => {
     it('calls onClose when the backdrop is clicked', async () => {
         const user = userEvent.setup()
 
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -85,7 +90,7 @@ describe('ImageModal', () => {
     it('does not close when the modal content itself is clicked', async () => {
         const user = userEvent.setup()
 
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -98,7 +103,7 @@ describe('ImageModal', () => {
     })
 
     it('calls onClose when Escape is pressed', () => {
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -111,7 +116,7 @@ describe('ImageModal', () => {
     })
 
     it('displays image dimensions when available', () => {
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -123,7 +128,7 @@ describe('ImageModal', () => {
     })
 
     it('displays file size when available', () => {
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -135,7 +140,7 @@ describe('ImageModal', () => {
     })
 
     it('displays mime type when available', () => {
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -149,7 +154,7 @@ describe('ImageModal', () => {
     it('hides dimensions when not provided', () => {
         const attachment: Attachment = { ...baseAttachment, width: null, height: null }
 
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={attachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -163,7 +168,7 @@ describe('ImageModal', () => {
     it('hides file size when not provided', () => {
         const attachment: Attachment = { ...baseAttachment, size_bytes: null }
 
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={attachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -175,7 +180,7 @@ describe('ImageModal', () => {
     })
 
     it('provides a download link with correct filename and href', () => {
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"
@@ -189,7 +194,7 @@ describe('ImageModal', () => {
     })
 
     it('renders as a dialog with proper ARIA attributes', () => {
-        render(
+        renderWithTooltip(
             <ImageModal
                 attachment={baseAttachment}
                 src="http://localhost:8000/api/media/conv-001/file_001"

@@ -11,6 +11,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAddTag, useRemoveTag, useTags } from "@/hooks/useTags";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -128,14 +129,19 @@ export function TagEditor({
             {tags.map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-xs gap-1 pr-1">
                     {tag}
-                    <button
-                        onClick={() => handleRemoveTag(tag)}
-                        disabled={isRemoving}
-                        className="ml-1 hover:bg-muted rounded-full p-0.5"
-                        aria-label={`Remove tag ${tag}`}
-                    >
-                        <X className="h-3 w-3" />
-                    </button>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={() => handleRemoveTag(tag)}
+                                disabled={isRemoving}
+                                className="ml-1 rounded-full p-0.5 hover:bg-muted"
+                                aria-label={`Remove tag ${tag}`}
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove {tag}</TooltipContent>
+                    </Tooltip>
                 </Badge>
             ))}
             <Popover open={open} onOpenChange={setOpen}>

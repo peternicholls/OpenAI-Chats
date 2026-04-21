@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownUp, MessageSquare, Star } from "lucide-react";
-import { useConversations } from "@/hooks/useConversations";
+import { useInfiniteConversations } from "@/hooks/useConversations";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -51,15 +51,22 @@ export function SidebarConversationList({
     const tagFilter = searchParams.get("tag") || undefined;
 
     const [order, setOrder] = useState<SortOrder>("desc");
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const loadMoreRef = useRef<HTMLDivElement>(null);
 
     // Only fetch when no explicit items have been supplied.
-    const query = useConversations(
+    const query = useInfiniteConversations(
         items
             ? {}
             : { sortBy: "date", order, limit: SIDEBAR_CONVERSATION_LIMIT, tag: tagFilter }
     );
-    const fetched = items ? null : query.data?.items ?? null;
+    const fetched = useMemo(
+        () => (items ? null : query.data?.pages.flatMap((page) => page.items) ?? null),
+        [items, query.data?.pages]
+    );
     const isLoading = items ? false : query.isLoading;
+    const isFetchingNextPage = items ? false : query.isFetchingNextPage;
+    const hasNextPage = items ? false : (query.hasNextPage ?? false);
 
     const conversations: Conversation[] | null = items
         ? [...items].sort((a, b) => {
@@ -68,6 +75,27 @@ export function SidebarConversationList({
             return order === "desc" ? bt - at : at - bt;
         })
         : fetched;
+
+    useEffect(() => {
+        if (items || !loadMoreRef.current || !scrollContainerRef.current || !hasNextPage) {
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting && !query.isFetchingNextPage) {
+                    void query.fetchNextPage();
+                }
+            },
+            {
+                root: scrollContainerRef.current,
+                rootMargin: "160px 0px",
+            }
+        );
+
+        observer.observe(loadMoreRef.current);
+        return () => observer.disconnect();
+    }, [hasNextPage, items, query]);
 
     return (
         <div className="flex h-full min-h-0 flex-col">
@@ -103,9 +131,10 @@ export function SidebarConversationList({
             )}
 
             <div
+                ref={scrollContainerRef}
                 role="list"
                 aria-label={ariaLabel}
-                className="flex-1 space-y-0.5 overflow-y-auto pr-1"
+                className="sidebar-scrollbar flex-1 space-y-0.5 overflow-y-auto pr-1"
             >
                 {isLoading ? (
                     <div className="space-y-1.5 px-2 py-2">
@@ -126,6 +155,16 @@ export function SidebarConversationList({
                 ) : (
                     <p className="px-3 py-4 text-xs text-muted-foreground">{emptyMessage}</p>
                 )}
+                {!items && conversations && conversations.length > 0 && (
+                    <div ref={loadMoreRef} aria-hidden="true" className="h-4 w-full" data-testid="sidebar-load-more-sentinel" />
+                )}
+                {!items && isFetchingNextPage && (
+                    <div className="space-y-1.5 px-2 py-2" data-testid="sidebar-loading-more">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                            <Skeleton key={i} className="h-7 w-full" />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -144,39 +183,55 @@ function SidebarConversationItem({
 }) {
     const title = conversation.title?.trim() || "[Untitled]";
     const dateLabel = formatDate(conversation.create_time);
+    const tooltipSummary = `${conversation.message_count} ${conversation.message_count === 1 ? "message" : "messages"}`;
 
     return (
-        <Link
-            href={`/conversation/${conversation.id}`}
-            onClick={() => onNavigate?.()}
-            aria-current={isActive ? "page" : undefined}
-            title={`${title} — ${dateLabel}`}
-            className={cn(
-                "group/item relative flex flex-col gap-0.5 rounded-md px-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                compact ? "py-1" : "py-1.5",
-                isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-foreground hover:bg-muted/60"
-            )}
-        >
-            <span className="flex items-center gap-1.5">
-                {conversation.is_favorite && (
-                    <Star className="h-3 w-3 shrink-0 fill-yellow-500 text-yellow-500" aria-label="Favourite" />
-                )}
-                <MessageSquare
-                    className="h-3 w-3 shrink-0 text-muted-foreground/60 group-hover/item:text-muted-foreground"
-                    aria-hidden="true"
-                />
-                <span className="flex-1 truncate text-[13px] font-medium leading-snug">
-                    {title}
-                </span>
-            </span>
-            <span
-                className="ml-4.5 truncate text-[10.5px] text-muted-foreground/80 opacity-0 transition-opacity group-hover/item:opacity-100 group-focus-visible/item:opacity-100"
-                aria-hidden="true"
-            >
-                {dateLabel} · {conversation.message_count} msgs
-            </span>
-        </Link>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Link
+                    href={`/conversation/${conversation.id}`}
+                    onClick={() => onNavigate?.()}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                        "group/item relative flex flex-col gap-0.5 rounded-md px-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        compact ? "py-1" : "py-1.5",
+                        isActive
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground hover:bg-muted/60"
+                    )}
+                >
+                    <span className="flex items-center gap-1.5">
+                        {conversation.is_favorite && (
+                            <Star className="h-3 w-3 shrink-0 fill-yellow-500 text-yellow-500" aria-label="Favourite" />
+                        )}
+                        <MessageSquare
+                            className="h-3 w-3 shrink-0 text-muted-foreground/60 group-hover/item:text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                        <span className="flex-1 truncate text-[13px] font-medium leading-snug">
+                            {title}
+                        </span>
+                    </span>
+                    <span
+                        className="ml-4.5 truncate text-[10.5px] text-muted-foreground/80 opacity-0 transition-opacity group-hover/item:opacity-100 group-focus-visible/item:opacity-100"
+                        aria-hidden="true"
+                    >
+                        {dateLabel} · {conversation.message_count} msgs
+                    </span>
+                </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right" align="start" className="max-w-64">
+                <div className="space-y-1">
+                    <div className="text-[12px] font-semibold leading-snug">{title}</div>
+                    <div className="text-[11px] text-background/80">{dateLabel} · {tooltipSummary}</div>
+                    {conversation.model && (
+                        <div className="text-[11px] text-background/70">Model: {conversation.model}</div>
+                    )}
+                    {conversation.is_favorite && (
+                        <div className="text-[11px] text-background/70">Favorited conversation</div>
+                    )}
+                </div>
+            </TooltipContent>
+        </Tooltip>
     );
 }

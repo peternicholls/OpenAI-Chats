@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 
 import type { Attachment } from "@/types";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 function formatBytes(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -51,15 +52,20 @@ export function ImageModal({ attachment, src, onClose }: ImageModalProps) {
                     >
                         {attachment.filename}
                     </span>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="ml-4 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        aria-label="Close"
-                        data-testid="image-modal-close"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="ml-4 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Close image preview"
+                                data-testid="image-modal-close"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Close image preview</TooltipContent>
+                    </Tooltip>
                 </div>
 
                 {/* Image */}
