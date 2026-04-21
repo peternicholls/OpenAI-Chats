@@ -134,3 +134,46 @@ def test_build_render_segments_keep_raw_html_as_inert_markdown() -> None:
     assert len(segments) == 1
     assert segments[0].kind == "markdown"
     assert "<script>alert('x')</script>" in segments[0].text
+
+
+def test_resolve_inline_citations_replaces_content_reference_tokens_with_markdown() -> None:
+    content = "Research summary \ue200cite\ue202turn1search0\ue201"
+    metadata = {
+        "content_references": [
+            {
+                "matched_text": "\ue200cite\ue202turn1search0\ue201",
+                "alt": "([Example Source](https://example.com/source))",
+            }
+        ]
+    }
+
+    resolved = formatting_service.resolve_inline_citations(content, metadata)
+
+    assert resolved == "Research summary ([Example Source](https://example.com/source))"
+
+
+def test_resolve_inline_citations_formats_file_citations_without_dropping_them() -> None:
+    token = "\ue200cite\ue202turn1file0\ue201"
+    content = f"Document summary {token}"
+    start = content.index(token)
+    metadata = {
+        "citations": [
+            {
+                "start_ix": start,
+                "end_ix": start + len(token),
+                "metadata": {"name": "spec.pdf"},
+            }
+        ]
+    }
+
+    resolved = formatting_service.resolve_inline_citations(content, metadata)
+
+    assert resolved == "Document summary (Source: spec.pdf)"
+
+
+def test_resolve_inline_citations_strips_unresolved_tokens() -> None:
+    content = "Unresolved \ue200cite\ue202turn9news2\ue201 token"
+
+    resolved = formatting_service.resolve_inline_citations(content, None)
+
+    assert resolved == "Unresolved  token"

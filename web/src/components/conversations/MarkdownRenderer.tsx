@@ -14,7 +14,7 @@ type SyntaxStylesheet = Record<string, CSSProperties>;
  * Strip PUA citation tokens injected by ChatGPT's retrieval system.
  * Pattern: \uE200(file)?cite(\uE202turnNsearchM|\uE202turnNviewM|\uE202turnNfileM)+\uE201
  */
-const CITATION_RE = /\uE200(?:file)?cite(?:\uE202turn\d+(?:search|view|file)\d+)+\uE201/g;
+const CITATION_RE = /\uE200(?:file)?cite(?:\uE202turn\d+(?:search|view|file|news)\d+)+\uE201/g;
 
 /**
  * Normalize ChatGPT's LaTeX delimiters to standard KaTeX-compatible ones.

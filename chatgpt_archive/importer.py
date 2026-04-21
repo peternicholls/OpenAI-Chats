@@ -126,6 +126,8 @@ def extract_messages_from_mapping(
         create_time = msg_data.get("create_time")
         weight = msg_data.get("weight", 1.0)
         metadata = msg_data.get("metadata", {})
+        if not isinstance(metadata, dict):
+            metadata = {}
         is_hidden = metadata.get("is_visually_hidden_from_conversation", False)
 
         # Create Message object
@@ -139,6 +141,7 @@ def extract_messages_from_mapping(
             create_time=create_time,
             weight=weight if isinstance(weight, (int, float)) else 1.0,
             is_hidden=bool(is_hidden),
+            metadata=metadata,
         )
 
         messages.append(message)
@@ -244,8 +247,8 @@ def insert_conversation(
                 """
                 INSERT INTO messages (
                     conversation_id, openai_id, parent_id, author_role,
-                    content, content_type, create_time, weight, is_hidden
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    content, content_type, metadata, create_time, weight, is_hidden
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     message.conversation_id,
@@ -254,6 +257,7 @@ def insert_conversation(
                     message.author_role,
                     message.content,
                     message.content_type,
+                    json.dumps(message.metadata, ensure_ascii=False),
                     message.create_time,
                     message.weight,
                     int(message.is_hidden),
@@ -293,8 +297,8 @@ def insert_conversation(
                 """
                 INSERT INTO messages (
                     conversation_id, openai_id, parent_id, author_role,
-                    content, content_type, create_time, weight, is_hidden
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    content, content_type, metadata, create_time, weight, is_hidden
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     message.conversation_id,
@@ -303,6 +307,7 @@ def insert_conversation(
                     message.author_role,
                     message.content,
                     message.content_type,
+                    json.dumps(message.metadata, ensure_ascii=False),
                     message.create_time,
                     message.weight,
                     int(message.is_hidden),

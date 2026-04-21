@@ -4,6 +4,7 @@ This adapter provides the API layer with access to all chatgpt_archive
 functionality without duplicating business logic (per FR-012).
 """
 
+import json
 import logging
 import os
 import sqlite3
@@ -292,6 +293,22 @@ def _is_empty_bootstrap(msg: dict) -> bool:
     )
 
 
+def _parse_message_metadata(raw_metadata: Any) -> dict[str, Any]:
+    """Decode a stored metadata blob into a dictionary."""
+    if isinstance(raw_metadata, dict):
+        return raw_metadata
+    if not isinstance(raw_metadata, str) or not raw_metadata.strip():
+        return {}
+
+    try:
+        parsed = json.loads(raw_metadata)
+    except json.JSONDecodeError:
+        logger.warning("Failed to parse message metadata blob")
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def _classify_activity_type(cluster: list[dict]) -> str:
     """Derive activity_type from a cluster of processing turns."""
     has_reasoning = any(
@@ -342,11 +359,13 @@ def get_conversation(conversation_id: str, include_attachments: bool = False) ->
 
             # Non-processing turn: resolve content and build segments
             content = msg["content"]
+            metadata = _parse_message_metadata(msg["metadata"])
             attachments = []
             if include_attachments:
                 content, attachments = media_service.resolve_message_content(
                     msg["content"], row["openai_id"]
                 )
+            content = formatting_service.resolve_inline_citations(content, metadata)
             segments = formatting_service.build_render_segments(content, attachments)
 
             # Prepend ThinkingSegment from any pending cluster

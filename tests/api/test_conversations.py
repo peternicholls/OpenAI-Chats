@@ -242,6 +242,24 @@ class TestGetConversation:
         ]
 
     @pytest.mark.asyncio
+    async def test_get_conversation_resolves_inline_citations_from_message_metadata(
+        self, formatted_client
+    ):
+        response = await formatted_client.get("/api/conversations/conv-formatted-001")
+
+        assert response.status_code == 200
+        message = response.json()["messages"][1]
+        assert message["content"] == "Research summary ([Example Source](https://example.com/source))"
+        assert message["segments"] == [
+            {
+                "kind": "markdown",
+                "text": "Research summary ([Example Source](https://example.com/source))",
+                "attachment_index": None,
+                "fallback_label": None,
+            }
+        ]
+
+    @pytest.mark.asyncio
     async def test_get_conversation_keeps_missing_attachment_as_attachment_segment(
         self, media_client
     ):
