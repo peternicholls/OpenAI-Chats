@@ -308,3 +308,78 @@ class TestListConversationsEmpty:
         data = response.json()
         assert data["total"] == 0
         assert data["items"] == []
+
+
+class TestThinkingSegmentScoping:
+    """T031: Processing clusters must only produce ThinkingSegments on assistant turns."""
+
+    def _make_db(self, tmp_path):
+        """Return an open connection to a fresh in-memory-style DB seeded with a
+        conversation that has a processing (thoughts) turn followed by a user message."""
+        from chatgpt_archive import db as cga_db
+
+        db_path = tmp_path / "thinking.db"
+        conn = cga_db.init_db(db_path)
+
+        conn.execute(
+            """
+            INSERT INTO conversations (openai_id, title, create_time, update_time)
+            VALUES ('think-test-conv', 'Thinking Test', 1700000000, 1700000000)
+            """
+        )
+        conv_id = conn.execute(
+            "SELECT id FROM conversations WHERE openai_id = 'think-test-conv'"
+        ).fetchone()["id"]
+
+        # A processing (thoughts) turn — author_role assistant, content_type thoughts
+        conn.execute(
+            """
+            INSERT INTO messages
+                (conversation_id, openai_id, author_role, content_type, content, create_time)
+            VALUES (?, 'msg-thoughts', 'assistant', 'thoughts', 'thinking...', 1700000001)
+            """,
+            (conv_id,),
+        )
+        # A user message that immediately follows the processing turn
+        conn.execute(
+            """
+            INSERT INTO messages
+                (conversation_id, openai_id, author_role, content_type, content, create_time)
+            VALUES (?, 'msg-user', 'user', 'text', 'Here is my image', 1700000002)
+            """,
+            (conv_id,),
+        )
+        # A normal assistant reply
+        conn.execute(
+            """
+            INSERT INTO messages
+                (conversation_id, openai_id, author_role, content_type, content, create_time)
+            VALUES (?, 'msg-assistant', 'assistant', 'text', 'Nice image!', 1700000003)
+            """,
+            (conv_id,),
+        )
+
+        conn.commit()
+        conn.close()
+        return db_path
+
+    def test_thinking_segment_not_attached_to_user_message(self, tmp_path, monkeypatch):
+        """A processing cluster followed by a user turn must not produce a ThinkingSegment
+        on that user message (T031 / H4 from visual review)."""
+        db_path = self._make_db(tmp_path)
+
+        monkeypatch.setenv("CHATGPT_ARCHIVE_DB", str(db_path))
+        monkeypatch.setenv("DB_PATH", str(db_path))
+
+        from api.services import archive_service
+
+        detail = archive_service.get_conversation("think-test-conv")
+
+        user_messages = [m for m in detail["messages"] if m["role"] == "user"]
+        assert user_messages, "expected at least one user message"
+        user_msg = user_messages[0]
+
+        thinking_segs = [s for s in (user_msg.get("segments") or []) if s.kind == "thinking"]
+        assert thinking_segs == [], (
+            "ThinkingSegment must not appear on a user-role message"
+        )

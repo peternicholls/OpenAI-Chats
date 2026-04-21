@@ -36,7 +36,7 @@ export function AttachmentImage({ attachment }: { attachment: Attachment }) {
                             src={src}
                             alt=""
                             loading="lazy"
-                            className="h-32 w-48 object-cover"
+                            className="h-40 w-64 object-cover"
                             data-testid="attachment-image-thumbnail"
                         />
                     </button>

@@ -130,6 +130,9 @@ function renderLegacyContent(message: Message, textOverride?: string | null): Re
 
 function renderSegment(message: Message, segment: RenderSegment, index: number): ReactNode {
     if (segment.kind === "thinking") {
+        // ThinkingBlocks are only meaningful on assistant turns; guard against
+        // backend-emitted thinking segments leaking onto user/system messages.
+        if (message.role !== "assistant") return null;
         return <ThinkingBlock key={`segment-thinking-${index}`} activityType={segment.activity_type} />;
     }
 
@@ -190,6 +193,17 @@ export function MessageBubble({
         message.role === "user" &&
         message.attachments.length === 0 &&
         (!message.segments || message.segments.every((s) => s.kind === "markdown"));
+    // User messages that contain only attachment(s) and no prose should shrink
+    // to fit their content rather than spanning the full column width.
+    const isAttachmentOnlyUserMessage =
+        message.role === "user" &&
+        message.attachments.length > 0 &&
+        (!message.content || message.content.trim() === "") &&
+        (!message.segments || message.segments.every((s) => s.kind === "attachment"));
+    const bubbleLayoutClass = isAttachmentOnlyUserMessage
+        ? "inline-flex max-w-prose flex-wrap gap-2 self-start"
+        : "flex gap-3";
+    const contentContainerClass = isAttachmentOnlyUserMessage ? "min-w-0" : "min-w-0 flex-1";
     const collapsibleLongPrompt =
         isTextOnlyUserMessage &&
         shouldCollapseLongUserPrompt(message, enableLongPromptTruncation);
@@ -203,13 +217,16 @@ export function MessageBubble({
         );
 
     return (
-        <div className={`flex gap-3 rounded-lg p-3 ${bubbleColor}`} data-testid="message">
+        <div
+            className={`${bubbleLayoutClass} rounded-lg p-3 ${bubbleColor}`}
+            data-testid="message"
+        >
             <div className="mt-0.5 shrink-0">
                 <div className={`flex h-7 w-7 items-center justify-center rounded-full ${iconColor}`}>
                     <Icon className="h-3.5 w-3.5" />
                 </div>
             </div>
-            <div className="min-w-0 flex-1">
+            <div className={contentContainerClass}>
                 <div className="mb-2 flex items-baseline gap-2">
                     <span className="text-sm font-semibold text-foreground">{label}</span>
                     {message.create_time && (

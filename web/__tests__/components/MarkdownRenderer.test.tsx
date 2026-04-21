@@ -287,3 +287,37 @@ describe('MarkdownRenderer — horizontal rules (T010)', () => {
         expect(hr).not.toBeInTheDocument()
     })
 })
+
+describe('MarkdownRenderer — citation token stripping (T029, T030)', () => {
+    it('strips PUA citation tokens and preserves surrounding prose', () => {
+        const token = '\uE200cite\uE202turn2view0\uE201'
+        const text = `Before${token}after`
+        render(<MarkdownRenderer text={text} />)
+
+        const container = screen.getByTestId('markdown-renderer')
+        expect(container.textContent).toContain('Beforeafter')
+        expect(container.textContent).not.toContain('\uE200')
+        expect(container.textContent).not.toContain('\uE201')
+    })
+
+    it('strips bracket-style source-citation tokens and preserves surrounding prose (T029)', () => {
+        const text = 'See the report\u3010167580331394512\u2020L104-L123\u3011for details.'
+        render(<MarkdownRenderer text={text} />)
+
+        const container = screen.getByTestId('markdown-renderer')
+        expect(container.textContent).toContain('See the report')
+        expect(container.textContent).toContain('for details.')
+        expect(container.textContent).not.toContain('\u3010167580331394512\u2020L104-L123\u3011')
+    })
+
+    it('replaces {{file:…}} placeholders with a readable fallback (T030)', () => {
+        const text = 'Please review {{file:file-6exRfSqW2y8xuCLXhkaYZj}} and let me know.'
+        render(<MarkdownRenderer text={text} />)
+
+        const container = screen.getByTestId('markdown-renderer')
+        expect(container.textContent).not.toContain('{{file:file-6exRfSqW2y8xuCLXhkaYZj}}')
+        expect(container.textContent).toContain('[Referenced file (unavailable)]')
+        expect(container.textContent).toContain('Please review')
+        expect(container.textContent).toContain('and let me know.')
+    })
+})

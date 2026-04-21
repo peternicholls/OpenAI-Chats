@@ -17,12 +17,26 @@ type SyntaxStylesheet = Record<string, CSSProperties>;
 const CITATION_RE = /\uE200(?:file)?cite(?:\uE202turn\d+(?:search|view|file|news)\d+)+\uE201/g;
 
 /**
+ * Strip bracket-style source-citation tokens injected by ChatGPT's retrieval system.
+ * Pattern: 【<digits>†L<digits>-L<digits>】
+ */
+const BRACKET_CITATION_RE = /【\d+†L\d+-L\d+】/g;
+
+/**
+ * Replace {{file:<id>}} placeholders (unresolved file references in user messages)
+ * with a readable fallback so the raw token never reaches the reader.
+ */
+const FILE_PLACEHOLDER_RE = /\{\{file:[A-Za-z0-9_-]+\}\}/g;
+
+/**
  * Normalize ChatGPT's LaTeX delimiters to standard KaTeX-compatible ones.
  * \[...\] → $$...$$ (display math)   \(...\) → $...$ (inline math)
  * Must run before remark-math sees the text.
  */
 function preprocess(text: string): string {
     let result = text.replace(CITATION_RE, "");
+    result = result.replace(BRACKET_CITATION_RE, "");
+    result = result.replace(FILE_PLACEHOLDER_RE, "[Referenced file (unavailable)]");
 
     // Display math: \[...\] → $$...$$
     result = result.replace(/\\\[([\s\S]*?)\\\]/g, (_match, inner) => `$$${inner}$$`);

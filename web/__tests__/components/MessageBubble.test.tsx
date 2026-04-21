@@ -232,6 +232,45 @@ describe('MessageBubble', () => {
     })
 
     describe('attachments', () => {
+        it('shrinks attachment-only user bubbles to fit the larger image thumbnail', () => {
+            const message: Message = {
+                id: 'user-image-only',
+                role: 'user',
+                content: '',
+                create_time: 1700000000,
+                attachments: [
+                    {
+                        type: 'image',
+                        url: '/api/media/conv/image_1',
+                        filename: 'gymnast.png',
+                        mime_type: 'image/png',
+                        width: 400,
+                        height: 300,
+                        size_bytes: 1000,
+                        found: true,
+                    },
+                ],
+                segments: [
+                    {
+                        kind: 'attachment',
+                        text: null,
+                        attachment_index: 0,
+                        fallback_label: null,
+                    },
+                ],
+            }
+
+            const { container } = renderWithTooltip(<MessageBubble message={message} />)
+
+            const bubble = container.querySelector('[data-testid="message"]')
+            const contentColumn = bubble?.children.item(1)
+            const thumbnail = screen.getByTestId('attachment-image-thumbnail')
+
+            expect(bubble).toHaveClass('inline-flex', 'max-w-prose', 'flex-wrap', 'gap-2', 'self-start')
+            expect(contentColumn).not.toHaveClass('flex-1')
+            expect(thumbnail).toHaveClass('h-40', 'w-64', 'object-cover')
+        })
+
         it('renders inline images from attachment tokens', () => {
             const message: Message = {
                 ...mockAssistantMessage,
@@ -485,5 +524,28 @@ describe('MessageBubble', () => {
             const bubble = document.querySelector('[data-testid="message"]')
             expect(bubble?.querySelector('hr')).not.toBeInTheDocument()
         })
+    })
+})
+
+describe('MessageBubble — ThinkingBlock scoping (T031)', () => {
+    it('does not render a ThinkingBlock for a user-role message even when segments include one', () => {
+        const userMessageWithThinkingSegment: Message = {
+            id: 'user-thinking-leak',
+            role: 'user',
+            content: 'Here is my image',
+            create_time: 1700000002,
+            attachments: [],
+            segments: [
+                { kind: 'thinking', activity_type: 'reasoning', text: null, attachment_index: null, fallback_label: null },
+                { kind: 'markdown', text: 'Here is my image', attachment_index: null, fallback_label: null, activity_type: null },
+            ],
+        }
+        renderWithTooltip(<MessageBubble message={userMessageWithThinkingSegment} />)
+
+        // ThinkingBlock renders a disclosure button with its label — it must not appear
+        expect(screen.queryByRole('button', { name: /reasoning/i })).not.toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: /searched the web/i })).not.toBeInTheDocument()
+        // The prose content should still render
+        expect(screen.getByText('Here is my image')).toBeInTheDocument()
     })
 })
