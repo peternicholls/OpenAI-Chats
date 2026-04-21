@@ -53,6 +53,10 @@ def build_formatted_message_content() -> str:
     return MARKDOWN_MESSAGE_TEXT
 
 
+def build_citation_message_content() -> str:
+    return "Research summary \ue200cite\ue202turn1search0\ue201"
+
+
 def build_mixed_content_message_content() -> str:
     return "\n".join(
         [
@@ -442,6 +446,33 @@ def formatted_db_path(tmp_path: Path) -> Path:
             message["message"]["author"]["role"],
             message["message"]["content"]["parts"][0],
             message["message"]["create_time"],
+        ),
+    )
+
+    citation_metadata = {
+        "content_references": [
+            {
+                "matched_text": "\ue200cite\ue202turn1search0\ue201",
+                "alt": "([Example Source](https://example.com/source))",
+                "safe_urls": ["https://example.com/source"],
+            }
+        ]
+    }
+    conn.execute(
+        """
+        INSERT INTO messages (
+            conversation_id, openai_id, parent_id, author_role, content, metadata, create_time
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            conv_db_id,
+            "msg-formatted-002",
+            message["id"],
+            "assistant",
+            build_citation_message_content(),
+            json.dumps(citation_metadata),
+            1702000200.0,
         ),
     )
 

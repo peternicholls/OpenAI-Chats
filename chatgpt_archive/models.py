@@ -1,7 +1,7 @@
 """Data models for ChatGPT archive entities."""
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import Any, List
 
 
 def truncate_title(text: str, max_length: int = 50) -> str:
@@ -57,6 +57,7 @@ class Message:
     create_time: float | None = None
     weight: float = 1.0
     is_hidden: bool = False
+    metadata: dict[str, Any] = field(default_factory=dict)
     id: int | None = None
     attachments: List[Attachment] = field(default_factory=list)
 

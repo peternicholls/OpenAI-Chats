@@ -57,6 +57,8 @@ const roleIconColors = {
     tool: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
 };
 
+const plainTextBodyClassName = "whitespace-pre-wrap wrap-break-word text-[14px] leading-[1.55] text-foreground";
+
 function renderAttachment(message: Message, index: number): ReactNode {
     const attachment = message.attachments[index];
     if (!attachment) {
@@ -100,7 +102,7 @@ function renderLegacyContent(message: Message, textOverride?: string | null): Re
         }
 
         rendered.push(
-            <div key={`text-${index}`} className="whitespace-pre-wrap wrap-break-word">
+            <div key={`text-${index}`} className={plainTextBodyClassName}>
                 {value}
             </div>
         );
@@ -195,7 +197,7 @@ export function MessageBubble({
     const displayText = getCollapsedUserPromptText(rawTurnText);
     const renderedBody =
         collapsibleLongPrompt && !isExpanded ? (
-            <div className="whitespace-pre-wrap wrap-break-word">{displayText}</div>
+            <div className={plainTextBodyClassName}>{displayText}</div>
         ) : (
             renderContent(message)
         );

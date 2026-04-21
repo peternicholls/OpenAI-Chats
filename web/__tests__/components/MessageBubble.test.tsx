@@ -454,6 +454,14 @@ describe('MessageBubble', () => {
             expect(screen.getByRole('button', { name: 'Read more' })).toBeInTheDocument()
         })
 
+        it('keeps collapsed long user prompts on the same body typography as markdown-rendered prompts', () => {
+            renderWithTooltip(<MessageBubble message={mockLongUserMessage} />)
+
+            const collapsedBody = screen.getByText(/I have been thinking about this problem/)
+
+            expect(collapsedBody).toHaveClass('text-[14px]', 'leading-[1.55]')
+        })
+
         it('does not collapse when long prompt truncation is disabled', () => {
             renderWithTooltip(<MessageBubble message={mockLongUserMessage} enableLongPromptTruncation={false} />)
 

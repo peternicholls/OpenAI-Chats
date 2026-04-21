@@ -84,6 +84,7 @@ class TestDatabaseSchema:
         assert "conversation_id" in columns
         assert "author_role" in columns
         assert "content" in columns
+        assert "metadata" in columns
         assert "create_time" in columns
         
         conn.close()

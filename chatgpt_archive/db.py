@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS messages (
     author_role     TEXT NOT NULL CHECK (author_role IN ('user', 'assistant', 'system', 'tool')),
     content         TEXT,
     content_type    TEXT DEFAULT 'text',
+    metadata        TEXT DEFAULT '{}',
     create_time     REAL,
     weight          REAL DEFAULT 1.0,
     is_hidden       INTEGER DEFAULT 0,
@@ -119,6 +120,11 @@ _MIGRATIONS = [
     (
         1,
         "ALTER TABLE conversations ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0",
+    ),
+    # Migration 2: persist raw message metadata for citations and future fidelity work
+    (
+        2,
+        "ALTER TABLE messages ADD COLUMN metadata TEXT DEFAULT '{}'",
     ),
 ]
 
@@ -407,7 +413,8 @@ def get_conversation_messages(
     if include_hidden:
         rows = conn.execute(
             """
-            SELECT id, openai_id, parent_id, author_role, content,
+                        SELECT id, openai_id, parent_id, author_role, content,
+                                     metadata,
                    content_type, create_time, weight, is_hidden
             FROM messages
             WHERE conversation_id = ?
@@ -418,7 +425,8 @@ def get_conversation_messages(
     else:
         rows = conn.execute(
             """
-            SELECT id, openai_id, parent_id, author_role, content,
+                        SELECT id, openai_id, parent_id, author_role, content,
+                                     metadata,
                    content_type, create_time, weight, is_hidden
             FROM messages
             WHERE conversation_id = ? AND is_hidden = 0
