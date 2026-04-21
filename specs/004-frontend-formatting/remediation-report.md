@@ -258,3 +258,48 @@ A task should only move to complete when:
 - the active localhost route shows the behavior
 - the relevant tests cover it where appropriate
 - the behavior matches the design-note intent closely enough to survive browser review
+
+## Sidebar / Navigation Redesign (T015–T025) — Implementation Notes
+
+The sidebar, header, and home page were rebuilt in this iteration. All 152 existing Vitest tests pass; `npx tsc --noEmit` and `npm run build` succeed.
+
+### What changed
+
+- New building blocks: `web/src/components/layout/CollapsibleSection.tsx`, `SidebarSearch.tsx`, `SidebarConversationList.tsx`, `SidebarTagsSection.tsx`, `SidebarFavoritesSection.tsx`, and `SidebarUiContext.tsx`.
+- `Sidebar.tsx` rebuilt: site title at top, collapse affordance, `SidebarSearch` directly under the title, then tag and favourite sections (rendered only when populated), then the scrolling conversation list, with Settings / Import / Export / Help pinned in a two-column footer. An icon-only collapsed rail is available on desktop.
+- `Header.tsx` reduced to a mobile-only bar containing just the drawer toggle and site title. The desktop header row is gone; the sidebar carries all navigation.
+- `app/layout.tsx` now wraps children in `SidebarUiProvider` and adds a `Skip to main content` link plus a focusable `<main id="main-content">` landmark.
+- `app/page.tsx` ( `/` ) renders a welcome hero by default — "Pick up where you left off" with Search, Favourites, Bulk export, and Import buttons. The previous conversation-management UI (bulk export, selection mode, pagination, virtualization) is preserved behind `?manage=1`, which is also the destination of the sidebar footer's **Export** link, and still renders automatically when a `?tag=...` filter is active so tag navigation keeps working.
+
+### Decisions captured (see "Open Decisions To Preserve")
+
+- **Sidebar collapse persistence**: uses the server-side `sidebar_collapsed` setting via `useUpdateSettings()` so preference follows the user across devices.
+- **Section open/closed persistence**: tags and favourites use `localStorage` (`sidebar-section:tags` / `sidebar-section:favorites`) because these are low-stakes per-client preferences.
+- **Help link**: no `/help` route exists; the footer Help icon opens the repository README on GitHub in a new tab.
+- **Sidebar order**: title → search → tags → favourites → conversations (scrolls, flex-1) → pinned footer (Settings, Import, Export, Help). Tags and favourites sections are hidden entirely when empty, per the design notes.
+- **Favourites list**: reuses `SidebarConversationList` with explicit `items`, a `compact` row variant, and a max-height scrollable container so it does not crowd the main list.
+- **Bulk management on `/`**: retained behind `?manage=1` (accessible from the footer Export link and the welcome CTA) rather than removed, preserving existing select/export/sort/virtualization functionality.
+
+### Accessibility and responsive work
+
+- Landmarks: `<aside aria-label="Primary">`, `<nav aria-label="Utilities">`, `<header role="banner">`, `<main id="main-content" tabIndex={-1}>`, `<form role="search">`.
+- Disclosures expose `aria-expanded` / `aria-controls`, conversation rows expose `aria-current="page"` when active.
+- Icon-only buttons have `aria-label`s and Radix tooltips; a visible skip link targets the main landmark.
+- Mobile: sidebar becomes a dialog-style drawer (`role="dialog" aria-modal="true"`) triggered by the mobile header's menu button; overlay click closes it. Desktop ≥ md keeps the fixed aside. A 56 px icon rail is shown when collapsed.
+- Dark mode reuses the existing `--sidebar-surface` token so the new shell inherits the established theme rather than re-declaring colours.
+
+### Test coverage
+
+Focused Vitest coverage was added for the redesigned sidebar after live validation exposed integration gaps:
+
+- `web/__tests__/components/layout/Sidebar.test.tsx` covers the collapsed-desktop/mobile-drawer interaction, verifies non-navigation controls do not dismiss the drawer, and verifies actual navigation links do dismiss it.
+- `web/__tests__/components/layout/SidebarConversationList.test.tsx` covers the API-safe sidebar fetch limit, ordering toggle, and navigation callback.
+
+Full frontend validation now passes at `158/158` tests.
+
+### Outstanding
+
+- Live browser validation against the Dockerized app confirmed the updated shell is serving real archive data, the desktop collapsed state persists across reload, and the sidebar conversation list now renders 100 live links without the previous 422 response.
+- The sidebar list originally failed because it requested `limit=200` while the backend enforces `limit <= 100`; the component now uses an API-safe limit.
+- The mobile drawer originally closed on any click inside it and disappeared entirely when the desktop collapsed state was persisted. Both behaviors were fixed in the sidebar shell and covered by the new layout tests.
+
