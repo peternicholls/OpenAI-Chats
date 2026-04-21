@@ -13,14 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Web UI Test Suite**: Comprehensive testing infrastructure for the web UI feature
   - API integration tests (62 tests) covering all endpoints
-  - Frontend unit tests (55 tests) with vitest and testing-library
+  - Frontend unit tests with Vitest and Testing Library, expanded to cover transcript rendering, attachment layout, and sidebar interactions
   - E2E tests (27 tests) with Playwright
   - MSW mocking for API requests
   - Test utilities and fixtures
 - **Rich conversation transcript rendering in the web UI**
   - Markdown transcripts now render headings, lists, links, blockquotes, tables, code blocks, and KaTeX math instead of exposing raw message syntax
-  - ChatGPT inline citation markers now resolve into readable inline citations when archive metadata is available, with unresolved tokens stripped as a fallback
+  - ChatGPT inline citation markers now resolve into readable inline citations when archive metadata is available, with unresolved tokens and bracket-style citation sentinels stripped as a fallback
+  - Raw `{{file:...}}` placeholders are replaced with a readable unavailable-file label before rendering
   - Assistant reasoning and grouped tool activity render as compact disclosure blocks to reduce transcript noise
+  - Image attachments render at a fixed visual height without cropping, and consecutive images display inline within the same message bubble
 - **Dynamic sidebar conversation loading**
   - The sidebar now loads additional conversation pages automatically when you reach the end of the current list
   - Sidebar ordering, pinned controls, and independent list scrolling continue to work while additional pages are fetched

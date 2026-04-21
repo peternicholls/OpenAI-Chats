@@ -19,6 +19,8 @@ The repository contains three main surfaces:
 ## Web UI Features
 
 - Rich transcript rendering for markdown conversations, code blocks, tables, inline math, display math, inline media, and readable fallbacks for unsupported content.
+- Transcript cleanup for stripped citation sentinels, readable unresolved file placeholders, and assistant-only reasoning disclosures.
+- Image attachments stay inside the standard message bubble, render uncropped at a fixed visual height, and display consecutive images inline within the same turn.
 - Compact assistant turn rendering with grouped tool activity and reasoning disclosures instead of long repetitive internal message stacks.
 - Sidebar conversation browsing with search, favorites, tag sections, ascending or descending ordering, and automatic loading of additional conversations when you reach the end of the current list.
 - Shared tooltip styling across navigation, conversation hover details, image actions, search controls, and tag or favorite management affordances.
