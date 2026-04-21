@@ -368,13 +368,16 @@ def get_conversation(conversation_id: str, include_attachments: bool = False) ->
             content = formatting_service.resolve_inline_citations(content, metadata)
             segments = formatting_service.build_render_segments(content, attachments)
 
-            # Prepend ThinkingSegment from any pending cluster
+            # Prepend ThinkingSegment from any pending cluster — only for assistant turns.
+            # If the next visible message is a user or system turn (e.g. an image upload),
+            # the cluster belongs to a prior assistant response and must be discarded.
             if pending_cluster:
-                activity_type = _classify_activity_type(pending_cluster)
-                thinking_seg = formatting_service.ThinkingSegment(
-                    kind="thinking", activity_type=activity_type
-                )
-                segments = [thinking_seg] + list(segments)
+                if msg["author_role"] == "assistant":
+                    activity_type = _classify_activity_type(pending_cluster)
+                    thinking_seg = formatting_service.ThinkingSegment(
+                        kind="thinking", activity_type=activity_type
+                    )
+                    segments = [thinking_seg] + list(segments)
                 pending_cluster = []
 
             messages.append(

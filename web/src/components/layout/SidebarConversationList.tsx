@@ -116,8 +116,8 @@ export function SidebarConversationList({
                                 onClick={() => setOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
                                 aria-label={
                                     order === "desc"
-                                        ? "Sort oldest first"
-                                        : "Sort newest first"
+                                        ? "Sorted newest first"
+                                        : "Sorted oldest first"
                                 }
                             >
                                 <ArrowDownUp className="h-3.5 w-3.5" aria-hidden="true" />

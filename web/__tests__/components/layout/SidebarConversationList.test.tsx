@@ -101,7 +101,7 @@ describe("SidebarConversationList", () => {
     it("toggles ordering for the sidebar list", () => {
         render(<SidebarConversationList />);
 
-        fireEvent.click(screen.getByRole("button", { name: "Sort oldest first" }));
+        fireEvent.click(screen.getByRole("button", { name: "Sorted newest first" }));
 
         expect(useInfiniteConversationsMock).toHaveBeenLastCalledWith({
             sortBy: "date",
