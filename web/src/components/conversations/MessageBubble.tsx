@@ -74,6 +74,62 @@ function renderAttachment(message: Message, index: number): ReactNode {
     return <AttachmentFile attachment={attachment} />;
 }
 
+type RenderedPart =
+    | { kind: "node"; node: ReactNode; key: string }
+    | { kind: "attachment"; attachmentIndex: number; key: string };
+
+function renderAttachmentGroup(message: Message, attachmentIndexes: number[], key: string): ReactNode {
+    return (
+        <div key={key} className="flex flex-wrap gap-3" data-testid="attachment-inline-group">
+            {attachmentIndexes.map((attachmentIndex) => (
+                <div key={`attachment-group-${attachmentIndex}`}>
+                    {renderAttachment(message, attachmentIndex)}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function coalesceRenderedParts(message: Message, parts: RenderedPart[]): ReactNode[] {
+    const coalesced: ReactNode[] = [];
+    let pendingImageIndexes: number[] = [];
+    let pendingGroupKey: string | null = null;
+
+    const flushPendingImages = () => {
+        if (pendingImageIndexes.length === 0 || pendingGroupKey === null) {
+            return;
+        }
+
+        coalesced.push(renderAttachmentGroup(message, pendingImageIndexes, pendingGroupKey));
+        pendingImageIndexes = [];
+        pendingGroupKey = null;
+    };
+
+    for (const part of parts) {
+        if (part.kind === "attachment" && message.attachments[part.attachmentIndex]?.type === "image") {
+            pendingImageIndexes.push(part.attachmentIndex);
+            pendingGroupKey ??= part.key;
+            continue;
+        }
+
+        flushPendingImages();
+
+        if (part.kind === "attachment") {
+            coalesced.push(
+                <div key={part.key}>
+                    {renderAttachment(message, part.attachmentIndex)}
+                </div>
+            );
+            continue;
+        }
+
+        coalesced.push(part.node);
+    }
+
+    flushPendingImages();
+    return coalesced;
+}
+
 function renderLegacyContent(message: Message, textOverride?: string | null): ReactNode {
     if (!message.content && message.attachments.length === 0) {
         return <span className="text-sm italic text-muted-foreground">[No content]</span>;
@@ -81,7 +137,7 @@ function renderLegacyContent(message: Message, textOverride?: string | null): Re
 
     const content = textOverride ?? message.content ?? "";
     const parts = content.split(ATTACHMENT_TOKEN_RE);
-    const rendered: ReactNode[] = [];
+    const renderedParts: RenderedPart[] = [];
     const renderedAttachmentIndexes = new Set<number>();
 
     for (let index = 0; index < parts.length; index += 1) {
@@ -93,83 +149,117 @@ function renderLegacyContent(message: Message, textOverride?: string | null): Re
         if (index % 2 === 1) {
             const attachmentIndex = Number.parseInt(value, 10);
             renderedAttachmentIndexes.add(attachmentIndex);
-            rendered.push(
-                <div key={`attachment-${attachmentIndex}`}>
-                    {renderAttachment(message, attachmentIndex)}
-                </div>
-            );
+            renderedParts.push({
+                kind: "attachment",
+                attachmentIndex,
+                key: `attachment-${attachmentIndex}`,
+            });
             continue;
         }
 
-        rendered.push(
-            <div key={`text-${index}`} className={plainTextBodyClassName}>
-                {value}
-            </div>
-        );
+        renderedParts.push({
+            kind: "node",
+            key: `text-${index}`,
+            node: (
+                <div key={`text-${index}`} className={plainTextBodyClassName}>
+                    {value}
+                </div>
+            ),
+        });
     }
 
-    if (message.attachments.length > 0 && rendered.length === 0) {
-        return message.attachments.map((_attachment, index) => (
-            <div key={`attachment-only-${index}`}>{renderAttachment(message, index)}</div>
-        ));
+    if (message.attachments.length > 0 && renderedParts.length === 0) {
+        return coalesceRenderedParts(
+            message,
+            message.attachments.map((_attachment, index) => ({
+                kind: "attachment" as const,
+                attachmentIndex: index,
+                key: `attachment-only-${index}`,
+            }))
+        );
     }
 
     const trailingAttachments = message.attachments
         .map((attachment, index) => ({ attachment, index }))
         .filter(({ index }) => !renderedAttachmentIndexes.has(index));
 
+    const rendered = coalesceRenderedParts(message, renderedParts);
+    const trailingAttachmentParts: RenderedPart[] = trailingAttachments.map(({ index }) => ({
+        kind: "attachment",
+        attachmentIndex: index,
+        key: `attachment-trailing-${index}`,
+    }));
+
     return (
         <>
             {rendered}
-            {trailingAttachments.map(({ index }) => (
-                <div key={`attachment-trailing-${index}`}>{renderAttachment(message, index)}</div>
-            ))}
+            {coalesceRenderedParts(message, trailingAttachmentParts)}
         </>
     );
 }
 
-function renderSegment(message: Message, segment: RenderSegment, index: number): ReactNode {
+function renderSegmentPart(message: Message, segment: RenderSegment, index: number): RenderedPart {
     if (segment.kind === "thinking") {
         // ThinkingBlocks are only meaningful on assistant turns; guard against
         // backend-emitted thinking segments leaking onto user/system messages.
-        if (message.role !== "assistant") return null;
-        return <ThinkingBlock key={`segment-thinking-${index}`} activityType={segment.activity_type} />;
+        return {
+            kind: "node",
+            key: `segment-thinking-${index}`,
+            node: message.role !== "assistant"
+                ? null
+                : <ThinkingBlock key={`segment-thinking-${index}`} activityType={segment.activity_type} />,
+        };
     }
 
     if (segment.kind === "markdown") {
-        return <MarkdownRenderer key={`segment-markdown-${index}`} text={segment.text} />;
+        return {
+            kind: "node",
+            key: `segment-markdown-${index}`,
+            node: <MarkdownRenderer key={`segment-markdown-${index}`} text={segment.text} />,
+        };
     }
 
     if (segment.kind === "attachment") {
         if (!message.attachments[segment.attachment_index]) {
-            return (
-                <FallbackBlock
-                    key={`segment-missing-attachment-${index}`}
-                    label="Missing attachment"
-                    text={`Attachment index ${segment.attachment_index} is not available in this message.`}
-                />
-            );
+            return {
+                kind: "node",
+                key: `segment-missing-attachment-${index}`,
+                node: (
+                    <FallbackBlock
+                        key={`segment-missing-attachment-${index}`}
+                        label="Missing attachment"
+                        text={`Attachment index ${segment.attachment_index} is not available in this message.`}
+                    />
+                ),
+            };
         }
 
-        return (
-            <div key={`segment-attachment-${index}`}>
-                {renderAttachment(message, segment.attachment_index)}
-            </div>
-        );
+        return {
+            kind: "attachment",
+            attachmentIndex: segment.attachment_index,
+            key: `segment-attachment-${index}`,
+        };
     }
 
-    return (
-        <FallbackBlock
-            key={`segment-fallback-${index}`}
-            label={segment.fallback_label}
-            text={segment.text}
-        />
-    );
+    return {
+        kind: "node",
+        key: `segment-fallback-${index}`,
+        node: (
+            <FallbackBlock
+                key={`segment-fallback-${index}`}
+                label={segment.fallback_label}
+                text={segment.text}
+            />
+        ),
+    };
 }
 
 function renderContent(message: Message, textOverride?: string | null): ReactNode {
     if (message.segments && message.segments.length > 0) {
-        return message.segments.map((segment, index) => renderSegment(message, segment, index));
+        return coalesceRenderedParts(
+            message,
+            message.segments.map((segment, index) => renderSegmentPart(message, segment, index))
+        );
     }
 
     return renderLegacyContent(message, textOverride);
@@ -193,17 +283,6 @@ export function MessageBubble({
         message.role === "user" &&
         message.attachments.length === 0 &&
         (!message.segments || message.segments.every((s) => s.kind === "markdown"));
-    // User messages that contain only attachment(s) and no prose should shrink
-    // to fit their content rather than spanning the full column width.
-    const isAttachmentOnlyUserMessage =
-        message.role === "user" &&
-        message.attachments.length > 0 &&
-        (!message.content || message.content.trim() === "") &&
-        (!message.segments || message.segments.every((s) => s.kind === "attachment"));
-    const bubbleLayoutClass = isAttachmentOnlyUserMessage
-        ? "inline-flex max-w-prose flex-wrap gap-2 self-start"
-        : "flex gap-3";
-    const contentContainerClass = isAttachmentOnlyUserMessage ? "min-w-0" : "min-w-0 flex-1";
     const collapsibleLongPrompt =
         isTextOnlyUserMessage &&
         shouldCollapseLongUserPrompt(message, enableLongPromptTruncation);
@@ -218,7 +297,7 @@ export function MessageBubble({
 
     return (
         <div
-            className={`${bubbleLayoutClass} rounded-lg p-3 ${bubbleColor}`}
+            className={`flex gap-3 rounded-lg p-3 ${bubbleColor}`}
             data-testid="message"
         >
             <div className="mt-0.5 shrink-0">
@@ -226,7 +305,7 @@ export function MessageBubble({
                     <Icon className="h-3.5 w-3.5" />
                 </div>
             </div>
-            <div className={contentContainerClass}>
+            <div className="min-w-0 flex-1">
                 <div className="mb-2 flex items-baseline gap-2">
                     <span className="text-sm font-semibold text-foreground">{label}</span>
                     {message.create_time && (
