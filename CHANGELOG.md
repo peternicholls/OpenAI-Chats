@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Test utilities and fixtures
 - **Rich conversation transcript rendering in the web UI**
   - Markdown transcripts now render headings, lists, links, blockquotes, tables, code blocks, and KaTeX math instead of exposing raw message syntax
-  - ChatGPT internal citation tokens are stripped during transcript preprocessing so exported retrieval markers do not leak into the UI
+  - ChatGPT inline citation markers now resolve into readable inline citations when archive metadata is available, with unresolved tokens stripped as a fallback
   - Assistant reasoning and grouped tool activity render as compact disclosure blocks to reduce transcript noise
 - **Dynamic sidebar conversation loading**
   - The sidebar now loads additional conversation pages automatically when you reach the end of the current list
