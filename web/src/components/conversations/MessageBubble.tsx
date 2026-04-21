@@ -29,18 +29,17 @@ function formatTime(timestamp: number | null): string {
     });
 }
 
-const roleLabels = {
-    user: "You",
-    assistant: "Assistant",
-    system: "System",
-    tool: "Tool",
-};
-
 const roleIcons = {
     user: User,
     assistant: Bot,
     system: Terminal,
     tool: Terminal,
+};
+const roleLabels = {
+    user: "You",
+    assistant: "Assistant",
+    system: "System",
+    tool: "Tool",
 };
 
 const roleBubbleColors = {

@@ -4,6 +4,23 @@ The authoritative repository-wide Copilot instructions live in `../copilot-instr
 
 Use that file for shared repository guidance, architecture, conventions, and commands.
 
+## Shared AI Guidance
+
+The canonical shared AI guidance for this repository lives in:
+
+- `.github/agents/shared-ai-guidance.md`
+- `.ai/README.md`
+- `.ai/standards/ai-collaboration.md`
+- `.ai/standards/css-guidelines.md`
+- `.ai/patterns/frontend-ui.md`
+- `.ai/skills/modern-css/SKILL.md`
+
+When working on CSS, UI, prompts, or agent-facing guidance:
+
+- Prefer shared standards in `.ai/...` over duplicating instructions here.
+- Canonical skill definitions live in `.ai/skills/...`; `.codex/skills/...` contains thin Codex-specific entry points.
+- Keep GitHub-specific framing in `.github/...`.
+
 Use this directory only for specialized agent instructions and workflow-specific handoffs.
 
 ## How To Use This Directory
