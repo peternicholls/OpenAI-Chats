@@ -522,7 +522,7 @@ chatgpt-archive search "query" --hybrid
 
 ### Raw markdown markers or dict-like payloads still appear in the transcript
 
-**Problem**: The conversation page shows raw markdown syntax, `asset_pointer` dictionaries, or unformatted mixed-content blocks.
+**Problem**: The conversation page shows raw markdown syntax, `asset_pointer` dictionaries, bracket citation tokens, literal `{{file:...}}` placeholders, or unformatted mixed-content blocks.
 
 **Solutions**:
 1. Inspect the conversation API response and confirm messages include `segments`.
@@ -536,6 +536,7 @@ chatgpt-archive search "query" --hybrid
    npm run test -- __tests__/services/api.test.ts __tests__/components/MessageBubble.test.tsx __tests__/components/MarkdownRenderer.test.tsx __tests__/components/FallbackBlock.test.tsx
    npm run test:e2e -- --project=chrome __tests__/e2e/conversation.spec.ts
    ```
+4. If the only visible regressions are bracket citation sentinels or `{{file:...}}` placeholders, inspect `MarkdownRenderer.preprocess()` first; that is where unresolved tokens are stripped or replaced before markdown rendering.
 
 ### Unsafe HTML appears to execute in the transcript
 

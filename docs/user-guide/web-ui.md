@@ -17,7 +17,9 @@ Run the browser UI locally with Docker, or run the API and frontend separately d
 - The conversation list is loaded in pages and automatically fetches more conversations when you reach the bottom of the current list.
 - Conversation rows, site-brand links, utility actions, and archive controls use a consistent custom tooltip treatment instead of mixed native hover titles.
 - Conversation transcripts render formatted markdown, code blocks, tables, math, inline media, and readable fallback blocks rather than exposing raw export payloads.
+- Bracket-style citation sentinels and unresolved `{{file:...}}` placeholders are stripped or replaced before the transcript reaches the browser.
 - Assistant turns condense reasoning and tool activity into compact disclosure blocks so technical export noise does not dominate the reading experience.
+- Image attachments keep the standard full-width user bubble, render uncropped at a fixed visual height, and display consecutive images inline within the same message.
 
 ## Docker Quick Start
 
