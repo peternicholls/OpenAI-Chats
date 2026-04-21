@@ -63,29 +63,29 @@
 
 **Purpose**: Apply accessibility, dark-mode, and responsive improvements across the updated transcript and navigation UI.
 
-- [ ] T015 Research and apply accessibility improvements for the changed UI, including contrast, font sizing, screen-reader clarity, keyboard navigation, ARIA labeling, alt text, semantics, and focus handling, in the affected transcript and navigation components under `web/src/components/` and `web/src/app/`
-- [ ] T016 Update dark-mode styling so it reads as a natural extension of the light-mode design, and replace conflicting legacy dark-mode styling, in `web/src/app/globals.css` and affected frontend components
-- [ ] T017 Validate and fix layout behavior across mobile and desktop widths so transcript content, action bars, and sidebar layout remain readable and usable in the affected frontend components under `web/src/components/` and `web/src/app/`
-- [ ] T018 Add or update automated coverage for accessibility-critical and responsive behavior introduced by this work in the relevant tests under `web/__tests__/`
+- [X] T015 Research and apply accessibility improvements for the changed UI, including contrast, font sizing, screen-reader clarity, keyboard navigation, ARIA labeling, alt text, semantics, and focus handling, in the affected transcript and navigation components under `web/src/components/` and `web/src/app/`
+- [X] T016 Update dark-mode styling so it reads as a natural extension of the light-mode design, and replace conflicting legacy dark-mode styling, in `web/src/app/globals.css` and affected frontend components
+- [X] T017 Validate and fix layout behavior across mobile and desktop widths so transcript content, action bars, and sidebar layout remain readable and usable in the affected frontend components under `web/src/components/` and `web/src/app/`
+- [X] T018 Add or update automated coverage for accessibility-critical and responsive behavior introduced by this work in the relevant tests under `web/__tests__/`
 
 ## Phase 6: Sidebar Navigation and Conversation List
 
 **Purpose**: Rework sidebar information architecture and conversation-list behavior to match the design notes.
 
-- [ ] T019 Move the search bar into the sidebar directly below the site title in `web/src/components/layout/Sidebar.tsx`, `web/src/components/search/SearchBar.tsx`, and any related page wiring that currently owns the search experience
-- [ ] T020 Make the sidebar collapsible in a way that is clear, accessible, and low-noise in `web/src/components/layout/Sidebar.tsx` and any existing persisted settings or layout state files needed to support the chosen behavior
-- [ ] T021 Move tags into the sidebar navigation as an expandable or collapsible section only when tags exist, while preserving current tag formatting, in `web/src/components/layout/Sidebar.tsx` and existing tags components used by the sidebar
-- [ ] T022 Add a favorites section to the sidebar when favorites exist, and make its expandable or collapsible behavior consistent with the sidebar notes, in `web/src/components/layout/Sidebar.tsx` and any existing favorites-related UI already used by the app
-- [ ] T023 Adjust sidebar layout so upper controls stay fixed, the conversation list scrolls independently, and lower actions remain pinned in place in `web/src/components/layout/Sidebar.tsx`, related list components, and `web/src/app/globals.css`
-- [ ] T024 Update the conversation list so it emphasizes titles, reveals metadata on hover, supports ascending and descending ordering, and shows an inviting empty state when no conversation is selected in the relevant conversation-list, card, and page components under `web/src/components/conversations/` and `web/src/app/`
-- [ ] T025 Add or update automated coverage for search placement, sidebar collapse, collapsible sections, independent list scrolling, ordering controls, hover metadata, and the no-selection empty state in the relevant tests under `web/__tests__/`
+- [X] T019 Move the search bar into the sidebar directly below the site title in `web/src/components/layout/Sidebar.tsx`, `web/src/components/search/SearchBar.tsx`, and any related page wiring that currently owns the search experience
+- [X] T020 Make the sidebar collapsible in a way that is clear, accessible, and low-noise in `web/src/components/layout/Sidebar.tsx` and any existing persisted settings or layout state files needed to support the chosen behavior
+- [X] T021 Move tags into the sidebar navigation as an expandable or collapsible section only when tags exist, while preserving current tag formatting, in `web/src/components/layout/Sidebar.tsx` and existing tags components used by the sidebar
+- [X] T022 Add a favorites section to the sidebar when favorites exist, and make its expandable or collapsible behavior consistent with the sidebar notes, in `web/src/components/layout/Sidebar.tsx` and any existing favorites-related UI already used by the app
+- [X] T023 Adjust sidebar layout so upper controls stay fixed, the conversation list scrolls independently, and lower actions remain pinned in place in `web/src/components/layout/Sidebar.tsx`, related list components, and `web/src/app/globals.css`
+- [X] T024 Update the conversation list so it emphasizes titles, reveals metadata on hover, supports ascending and descending ordering, and shows an inviting empty state when no conversation is selected in the relevant conversation-list, card, and page components under `web/src/components/conversations/` and `web/src/app/`
+- [X] T025 Add or update automated coverage for search placement, sidebar collapse, collapsible sections, independent list scrolling, ordering controls, hover metadata, and the no-selection empty state in the relevant tests under `web/__tests__/`
 
 ## Phase 7: Final Validation and Documentation
 
 **Purpose**: Confirm that the implemented work matches the notes and capture any remaining ambiguity or deferral.
 
 - [X] T026 Run the targeted frontend validation sequence for this feature: `cd web && npx tsc --noEmit`, `cd web && npm run build`, and the relevant Vitest and Playwright coverage for transcript and sidebar behavior
-- [ ] T027 Verify transcript formatting, turn actions, long user prompts, dark mode, responsive layout, sidebar behavior, and conversation-list interactions in the built-in browser against the local app
+- [X] T027 Verify transcript formatting, turn actions, long user prompts, dark mode, responsive layout, sidebar behavior, and conversation-list interactions in the built-in browser against the local app
 - [X] T028 Update `specs/004-frontend-formatting/remediation-report.md` with task completion status, exact design-note sections satisfied, documented interpretations, deferred items, and unresolved design questions
 
 ## Traceability Matrix
