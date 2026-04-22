@@ -9,7 +9,7 @@ SQL_INJECTION_PATTERN = re.compile(
 )
 XSS_PATTERN = re.compile(r"(<script|javascript:|on\w+=)", re.IGNORECASE)
 UUID_LIKE_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-SEDIMENT_FILE_ID_PATTERN = re.compile(r"^file_[0-9a-f]+$")
+MEDIA_FILE_ID_PATTERN = re.compile(r"^file_[0-9a-f]+$")
 ROOT_FILE_ID_PATTERN = re.compile(r"^file[-_][A-Za-z0-9]+$")
 
 
@@ -231,7 +231,7 @@ def validate_media_file_id(file_id: str, *, root_level: bool = False) -> str:
         raise ValueError("File ID is required")
 
     file_id = str(file_id).strip()
-    pattern = ROOT_FILE_ID_PATTERN if root_level else SEDIMENT_FILE_ID_PATTERN
+    pattern = ROOT_FILE_ID_PATTERN if root_level else MEDIA_FILE_ID_PATTERN
     if not pattern.match(file_id):
         raise ValueError("Invalid file ID format")
 
