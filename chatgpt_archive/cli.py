@@ -15,7 +15,6 @@ from pathlib import Path
 import click  # type: ignore[import-untyped]
 
 from chatgpt_archive import __version__
-from api.services import media_service
 from chatgpt_archive.db import (
     get_db_path,
     get_connection,
@@ -31,6 +30,7 @@ from chatgpt_archive.db import (
     list_conversations_by_tag as db_list_by_tag,
 )
 from chatgpt_archive import importer
+from chatgpt_archive.media import get_archive_media_dir, persist_archive_media
 from chatgpt_archive.search import (
     execute_search,
     format_results_human,
@@ -150,7 +150,7 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
         conversations_imported, messages_imported = importer.import_archive(
             archive_path, db_path, progress_callback
         )
-        media_dir = media_service.persist_archive_media(archive_path)
+        media_dir = persist_archive_media(archive_path)
 
         # Get database size
         db_size = get_db_size(db_path)
@@ -209,7 +209,7 @@ def verify_media(ctx: click.Context, archive_dir: str | None) -> None:
     resolved_dir = (
         Path(archive_dir).expanduser()
         if archive_dir
-        else media_service.get_archive_media_dir()
+        else get_archive_media_dir(db_path=ctx.obj["db_path"])
     )
 
     exists = resolved_dir.exists()

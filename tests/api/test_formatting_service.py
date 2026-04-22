@@ -115,6 +115,16 @@ def test_build_render_segments_marks_malformed_attachment_payloads() -> None:
     assert segments[0].fallback_label == "Malformed attachment payload"
 
 
+def test_build_render_segments_skips_oversized_literal_eval_payloads() -> None:
+    oversized = "{" + ("a" * 10_050) + "}"
+
+    segments = formatting_service.build_render_segments(oversized, [])
+
+    assert len(segments) == 1
+    assert segments[0].kind == "markdown"
+    assert segments[0].text == oversized
+
+
 def test_build_render_segments_match_for_equivalent_generated_and_imported_content() -> None:
     content = build_formatted_message_content()
 

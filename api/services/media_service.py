@@ -2,16 +2,14 @@
 
 import ast
 import mimetypes
-import os
 import re
-import shutil
 from pathlib import Path
 from typing import Any
 
-from chatgpt_archive import db as db_module
-
 from api.models.responses import Attachment
 from api.services.settings_service import load_settings
+from chatgpt_archive import db as db_module
+from chatgpt_archive import media as archive_media
 
 ATTACHMENT_TOKEN_RE = re.compile(r"\[\[ATTACHMENT:(\d+)\]\]")
 
@@ -23,40 +21,20 @@ def attachment_token(index: int) -> str:
 
 def get_archive_media_dir(settings: dict[str, Any] | None = None) -> Path:
     """Resolve the archive media directory from env, settings, or the DB path."""
-    env_path = os.environ.get("CHATGPT_ARCHIVE_DIR")
-    if env_path:
-        return Path(env_path).expanduser()
-
     settings = settings if settings is not None else load_settings()
     configured = settings.get("archive_media_dir") if settings else None
-    if configured:
-        return Path(str(configured)).expanduser()
-
-    return db_module.get_db_path().parent / "media"
+    return archive_media.get_archive_media_dir(
+        db_path=db_module.get_db_path(),
+        configured_dir=str(configured) if configured else None,
+    )
 
 
 def persist_archive_media(source_dir: Path, destination_dir: Path | None = None) -> Path:
     """Merge extracted archive files into the permanent media directory."""
-    source_dir = Path(source_dir).expanduser().resolve()
-    destination_dir = (destination_dir or get_archive_media_dir()).expanduser().resolve()
-
-    if source_dir == destination_dir:
-        return destination_dir
-
-    destination_dir.mkdir(parents=True, exist_ok=True)
-    for source_path in source_dir.rglob("*"):
-        relative_path = source_path.relative_to(source_dir)
-        target_path = destination_dir / relative_path
-
-        if source_path.is_dir():
-            target_path.mkdir(parents=True, exist_ok=True)
-            continue
-
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        if not target_path.exists():
-            shutil.copy2(source_path, target_path)
-
-    return destination_dir
+    return archive_media.persist_archive_media(
+        source_dir,
+        destination_dir=destination_dir or get_archive_media_dir(),
+    )
 
 
 def resolve_message_content(

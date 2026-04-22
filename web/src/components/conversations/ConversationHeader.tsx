@@ -38,9 +38,9 @@ export function ConversationHeader({
     onToggleFavorite,
     isFavorite,
 }: ConversationHeaderProps) {
-    const visibleMessageCount = conversation.messages
+    const visibleMessageCount = conversation.visible_message_count ?? (conversation.messages
         ? conversation.messages.filter((m) => m.role === "user" || m.role === "assistant").length
-        : conversation.message_count;
+        : conversation.message_count);
 
     return (
         <header className="mb-8 flex flex-col gap-3">

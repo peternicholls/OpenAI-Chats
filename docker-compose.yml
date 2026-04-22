@@ -29,11 +29,10 @@ services:
       # Mount host data directory for database persistence
       # Data in ~/.chatgpt-archive/ persists across container restarts
       - ${HOME}/.chatgpt-archive:/data
-      # Mount archive export directory as the media source (read-only)
-      # This makes exported images, audio, and files available to the API
-      # without duplicating files via persist_archive_media.
-      # Update the path below to match your extracted archive directory.
-      - ./6a46cf212e33de2339fe70a219a979b44d35de684e8b961a5e3b73077d3caef5-2026-01-26-08-54-37-28ec05edc89840ebbb963f264ef55875:/data/media:ro
+      # Mount archive export directory as the media source (read-only).
+      # Defaults to ./archive for a portable out-of-the-box setup.
+      # Override CHATGPT_ARCHIVE_HOST_DIR to point at an extracted archive.
+      - ${CHATGPT_ARCHIVE_HOST_DIR:-./archive}:/data/media:ro
     environment:
       # CHATGPT_ARCHIVE_DB: Path to SQLite database inside container
       # Default: /data/chats.db (maps to ~/.chatgpt-archive/chats.db on host)
