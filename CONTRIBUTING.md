@@ -1,4 +1,4 @@
-# Contributing to ChatGPT Archive
+# Contributing to OpenAI-Chats
 
 Thank you for your interest in contributing! This guide will help you get started with development.
 
@@ -19,7 +19,10 @@ Thank you for your interest in contributing! This guide will help you get starte
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.11+ for API and full-stack work
+- Python 3.10+ for CLI-only work
+- Node.js 20+ and npm for frontend development
+- Docker 24+ with Compose v2 for containerized validation
 - pip and virtualenv (or similar)
 - Git
 - SQLite 3.x (usually pre-installed on macOS/Linux)
@@ -27,36 +30,32 @@ Thank you for your interest in contributing! This guide will help you get starte
 ### Clone and Install
 
 ```bash
-# Clone the repository
 git clone https://github.com/peternicholls/OpenAI-Chats.git
 cd OpenAI-Chats
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate
 
-# Install in development mode
-pip install -e .
+pip install -e ".[dev,excel]"
+(cd api && pip install -e ".[dev]")
 
-# Install development dependencies
-pip install -e ".[dev,semantic]"
+cd web
+npm ci
+cd ..
 
-# Verify installation
-chatgpt-archive --version
+# Optional semantic search support
+pip install -e ".[semantic]"
 ```
 
 ### Development Dependencies
 
-The `[dev]` extra includes:
-- `pytest` - Testing framework
-- `black` - Code formatter
-- `mypy` - Type checker
-- `ruff` - Fast linter (replaces flake8, isort, etc.)
+The main tooling used in active development is:
 
-The `[semantic]` extra includes:
-- `openai` - OpenAI API client
-- `numpy` - Numerical operations
-- `sqlite-vec` - Vector similarity search
+- `pytest` for core and API testing
+- `ruff` and `black` for Python linting and formatting
+- `Vitest`, Testing Library, and Playwright for frontend testing
+- `Next.js`, `React Query`, and the shared frontend API client for browser flows
+- `sqlite-vec`, `openai`, and related extras only when semantic search work is in scope
 
 ---
 
@@ -64,111 +63,115 @@ The `[semantic]` extra includes:
 
 ```
 OpenAI-Chats/
-├── chatgpt_archive/           # Main package
-│   ├── __init__.py           # Package metadata
-│   ├── __main__.py           # Entry point
-│   ├── cli.py                # CLI commands
-│   ├── db.py                 # Database connection & schema
-│   ├── models.py             # Data models (dataclasses)
-│   ├── importer.py           # Import logic
-│   ├── search.py             # Search functionality
-│   ├── embeddings.py         # Semantic search (optional)
-│   └── exporters/            # Export formats
-│       ├── __init__.py       # Exporter registry
-│       ├── base.py           # Base exporter class
-│       ├── markdown.py       # Markdown exporter
-│       ├── json_export.py    # JSON exporter
-│       ├── yaml_export.py    # YAML exporter
-│       ├── html.py           # HTML exporter
-│       └── xml_export.py     # XML exporter
-├── tests/                    # Test suite
-│   ├── test_cli.py          # CLI tests
-│   ├── test_db.py           # Database tests
-│   ├── test_importer.py     # Import tests
-│   ├── test_models.py       # Model tests
-│   └── test_real_archive.py # Integration tests
-├── specs/                    # Design documents
-│   └── 001-archive-search-export/
-│       ├── spec.md          # Requirements
-│       ├── plan.md          # Technical design
-│       ├── data-model.md    # Database schema
-│       └── contracts/       # API contracts
-├── docs/                     # User documentation
-│   ├── USAGE.md             # Command reference
-│   ├── TROUBLESHOOTING.md   # Common issues
-│   └── API.md               # Programmatic usage
-├── pyproject.toml            # Package configuration
-├── README.md                 # Project overview
-└── CONTRIBUTING.md           # This file
+├── chatgpt_archive/        # Core library, CLI, DB layer, import/search/export logic
+├── api/                    # FastAPI app, routers, middleware, backend services, API tests
+├── web/                    # Next.js frontend, TypeScript source, web tests
+├── tests/                  # Core package tests, unit tests, integration tests
+├── docs/                   # User guide plus Python and REST API docs
+├── specs/                  # Feature specs, plans, contracts, and task artifacts
+├── docker/                 # Dockerfiles and nginx config
+├── docker-compose.yml      # Local multi-service stack
+├── .github/copilot-instructions.md
+├── .specify/memory/constitution.md
+└── CONTRIBUTING.md
 ```
 
 ---
 
 ## Development Workflow
 
-### 1. Create a Branch
+### 1. Read the Rules First
+
+Before changing code, read:
+
+- `.github/copilot-instructions.md` for repository workflow, architecture, and validation rules
+- `.specify/memory/constitution.md` for the non-negotiable governance rules
+- The current branch name and any matching `specs/NNN-*` directory for scope and terminology
+
+### 2. Create or Use the Right Branch
 
 ```bash
-# Create feature branch
-git checkout -b feature/my-new-feature
+# Example feature branch aligned with a spec
+git checkout -b 004-frontend-formatting
 
-# Or bug fix branch
+# Or a focused bug-fix branch
 git checkout -b fix/issue-123
 ```
 
-### 2. Make Changes
+If a numbered spec already exists, prefer a branch name that matches it.
+
+### 3. Make Changes
 
 Follow existing code patterns and conventions. Key principles:
 
 - **Keep it simple**: Prefer clarity over cleverness
+- **Use TDD by default**: Start with the smallest failing automated test for behavior changes, then implement, then refactor
 - **Type hints**: Use type hints for function parameters and returns
 - **Docstrings**: Add Google-style docstrings for public functions
 - **Error handling**: Use descriptive error messages
-- **Testing**: Write tests for new features
+- **Testing**: Add or update regression coverage for new features and bug fixes
+- **Respect layer boundaries**: Keep shared logic in `chatgpt_archive/`, keep `api/` thin, and use the shared frontend client in `web/`
 
-### 3. Test Your Changes
+Additional repository rules:
 
-```bash
-# Run all tests
-pytest
+- Extend `chatgpt_archive/` before creating duplicate business logic elsewhere
+- Keep internal SQLite IDs separate from public OpenAI IDs
+- Update the full transcript rendering pipeline together when rendering behavior changes: backend formatter, API response models, and frontend rendering
+- Use shared frontend API services and React Query hooks instead of ad hoc `fetch` calls
+- Prefer the smallest viable change over speculative abstractions or broad rewrites
 
-# Run specific test file
-pytest tests/test_importer.py
-
-# Run with coverage
-pytest --cov=chatgpt_archive
-
-# Run tests in verbose mode
-pytest -v
-```
-
-### 4. Format and Lint
+### 4. Validate the Smallest Affected Surface
 
 ```bash
-# Format code with black
-black chatgpt_archive/ tests/
+# Core library tests
+source .venv/bin/activate && pytest tests/ -v --tb=short --ignore=tests/unit --ignore=tests/api -q
 
-# Lint with ruff
-ruff check chatgpt_archive/ tests/
+# Core unit tests
+source .venv/bin/activate && pytest tests/unit/ -v --tb=short
 
-# Type check with mypy
-mypy chatgpt_archive/
+# API tests
+source .venv/bin/activate && pytest tests/api/ -v --tb=short
+
+# Frontend checks
+cd web && npm run lint
+cd web && npx tsc --noEmit
+cd web && npm run test
+cd web && npm run build
+
+# E2E example
+cd web && npx playwright test __tests__/e2e/conversation.spec.ts
 ```
 
-### 5. Commit Changes
+When changing behavior, write the smallest relevant test first and confirm it fails for the
+intended reason before implementing the fix.
+
+Validation rules from the constitution and repository instructions:
+
+- Run the smallest check that proves the change
+- Rebuild the smallest affected runtime surface when behavior changes
+- For `web/` changes, run `cd web && npx tsc --noEmit` before any rebuild
+- Test browser-facing changes in the built-in VS Code browser before considering the work complete
+- Use Docker Compose validation only when container behavior, deployment configuration, or cross-service integration changed
+
+### 5. Format and Lint
 
 ```bash
-# Stage changes
-git add .
-
-# Commit with descriptive message
-git commit -m "Add feature: export to CSV format"
-
-# Push to your fork
-git push origin feature/my-new-feature
+source .venv/bin/activate && ruff check chatgpt_archive/ api/
+source .venv/bin/activate && black --check chatgpt_archive/ api/
+cd web && npm run lint
+cd web && npx tsc --noEmit
 ```
 
-### 6. Submit Pull Request
+### 6. Commit Changes
+
+```bash
+git add <files>
+git commit -m "docs: align contributing guide with constitution"
+```
+
+Stage only the files relevant to your change. Do not include unrelated working tree changes.
+
+### 7. Submit Pull Request
 
 1. Push your branch to GitHub
 2. Open a Pull Request against `main` branch
@@ -184,75 +187,39 @@ git push origin feature/my-new-feature
 
 Tests are organized by layer:
 
-**Core Library** (`tests/`):
-- `test_cli.py` - CLI command tests
-- `test_db.py` - Database schema and queries
-- `test_importer.py` - Import functionality
-- `test_models.py` - Data model validation
-- `test_real_archive.py` - Integration tests with real archive
-
-**API Backend** (`api/tests/`):
-- `test_health.py` - Health check endpoint
-- `test_conversations.py` - Conversation CRUD endpoints
-- `test_search.py` - Search functionality
-- `test_export.py` - Export endpoints
-- `test_import.py` - Import endpoints
-- `test_tags.py` - Tag management
-- `test_favorites.py` - Favorites management
-
-**Frontend** (`web/__tests__/`):
-- `services/api.test.ts` - API client tests
-- `hooks/useDebounce.test.ts` - Hook tests
-- `hooks/useSearch.test.ts` - Search hook tests
-- `components/*.test.tsx` - React component tests
-- `e2e/*.spec.ts` - Playwright E2E tests
+- `tests/` as the single root Python test directory
+- `tests/unit/` for focused core-library unit tests
+- `tests/api/` for FastAPI behavior using temporary SQLite databases and shared fixtures
+- `web/__tests__/` for frontend unit tests, MSW-backed service tests, and Playwright specs under `web/__tests__/e2e`
 
 ### Running Tests
 
 ```bash
-# === Core Library Tests ===
-pytest tests/
+# === Core package ===
+source .venv/bin/activate && pytest tests/ -v --tb=short --ignore=tests/unit --ignore=tests/api -q
+source .venv/bin/activate && pytest tests/unit/ -v --tb=short
+source .venv/bin/activate && pytest tests/unit/test_search.py::test_sanitize_query_empty_raises -q
 
-# Specific file
-pytest tests/test_importer.py
+# === API ===
+source .venv/bin/activate && pytest tests/api/ -v --tb=short
+source .venv/bin/activate && pytest tests/api/test_formatting_service.py::test_build_render_segments_returns_markdown_for_plain_text -q
 
-# With coverage
-pytest --cov=chatgpt_archive --cov-report=html
-open htmlcov/index.html
+# === Python lint / format ===
+source .venv/bin/activate && ruff check chatgpt_archive/ api/
+source .venv/bin/activate && black --check chatgpt_archive/ api/
 
-# === API Backend Tests ===
-# Activate venv first
-source .venv/bin/activate
+# === Frontend ===
+cd web && npm run lint
+cd web && npx tsc --noEmit
+cd web && npm run test
+cd web && npm run test:coverage
+cd web && npm run build
 
-# Run all API tests
-pytest api/tests/ -v
+# === E2E ===
+cd web && npx playwright test __tests__/e2e/conversation.spec.ts
 
-# With coverage
-pytest api/tests/ --cov=api --cov-report=term-missing
-
-# === Frontend Tests ===
-cd web
-
-# Run unit/component tests
-npm test
-
-# Watch mode during development
-npm run test:watch
-
-# With coverage report
-npm test -- --coverage
-
-# === E2E Tests (Playwright) ===
-cd web
-
-# Run E2E tests (starts dev server on port 3030)
-npm run test:e2e
-
-# Run with UI
-npx playwright test --ui
-
-# Run specific test file
-npx playwright test __tests__/e2e/home.spec.ts
+# === Full stack ===
+docker compose up -d
 ```
 
 ### Writing Tests
@@ -261,6 +228,7 @@ Example test structure:
 
 ```python
 import pytest
+import sqlite3
 from pathlib import Path
 from chatgpt_archive import importer
 
@@ -320,41 +288,27 @@ def temp_db(tmp_path):
 
 ## Code Style
 
-### Python Style Guide
+### Repository Rules
 
-Follow PEP 8 with these conventions:
+- Follow existing file and naming conventions before introducing new patterns
+- Add type hints to public Python functions
+- Keep API code HTTP-focused; move shared logic into `chatgpt_archive/` or shared service layers
+- Use functional React components; default to server components and add `'use client'` only when interactivity requires it
+- Reuse the shared frontend API client and contract types instead of ad hoc requests
+- Prefer short, explicit functions and the smallest viable abstraction
 
-- **Line length**: 100 characters (not 79)
-- **Imports**: Group stdlib, third-party, local (separated by blank line)
-- **Quotes**: Double quotes for strings, single for dict keys
-- **Type hints**: Use for all function signatures
-
-### Formatting with Black
-
-Black is the code formatter - it handles most style automatically:
+### Python Formatting and Linting
 
 ```bash
-black chatgpt_archive/ tests/
+source .venv/bin/activate && ruff check chatgpt_archive/ api/
+source .venv/bin/activate && black --check chatgpt_archive/ api/
 ```
 
-### Linting with Ruff
-
-Ruff checks for issues and enforces style:
+### Frontend Validation
 
 ```bash
-# Check for issues
-ruff check chatgpt_archive/ tests/
-
-# Auto-fix where possible
-ruff check --fix chatgpt_archive/ tests/
-```
-
-### Type Checking with Mypy
-
-Add type hints and check with mypy:
-
-```bash
-mypy chatgpt_archive/
+cd web && npm run lint
+cd web && npx tsc --noEmit
 ```
 
 Example type hints:
@@ -417,12 +371,13 @@ def process_data(items: List[str], filter_empty: bool = True) -> Dict[str, int]:
 
 Before submitting:
 
-- [ ] Code is formatted with `black`
-- [ ] Code passes `ruff` linting
-- [ ] Type hints added and `mypy` passes
-- [ ] Tests added for new functionality
-- [ ] All tests pass (`pytest`)
-- [ ] Documentation updated (README, USAGE, etc.)
+- [ ] The change follows the constitution in `.specify/memory/constitution.md`
+- [ ] A failing automated test was added or updated first for each behavior change
+- [ ] Shared logic stays in the correct layer and does not duplicate existing behavior
+- [ ] The smallest relevant validation steps were run successfully
+- [ ] For `web/` changes, `cd web && npx tsc --noEmit` ran before any rebuild
+- [ ] Browser-facing changes were checked in the built-in VS Code browser
+- [ ] Documentation updated where behavior or workflow changed
 - [ ] Commit messages are clear and descriptive
 - [ ] Branch is up to date with `main`
 
@@ -483,19 +438,20 @@ Fixes #78
 
 1. **Check existing issues** - Someone may have requested it already
 2. **Open a discussion** - Describe the feature and get feedback
-3. **Review design docs** - Check `specs/` for architecture
-4. **Plan implementation** - Consider impact on existing code
+3. **Review design docs** - Check the active `specs/NNN-*` directory and repository instructions
+4. **Plan implementation** - Name the affected layers, tests, and validation steps before coding
 
 ### Implementation Checklist
 
 For a new feature:
 
-- [ ] Update data model if needed (`chatgpt_archive/models.py`)
-- [ ] Add database schema changes (`chatgpt_archive/db.py`)
-- [ ] Implement core logic (e.g., `chatgpt_archive/importer.py`)
-- [ ] Add CLI command or option (`chatgpt_archive/cli.py`)
-- [ ] Write comprehensive tests (`tests/`)
-- [ ] Add documentation (`docs/USAGE.md`)
+- [ ] Start with the smallest failing automated test that proves the feature or regression
+- [ ] Update data model or schema in `chatgpt_archive/` if shared behavior changes
+- [ ] Keep `api/` limited to HTTP orchestration and response shaping
+- [ ] Use `web/src/services/api.ts` and aligned frontend contract types for browser work
+- [ ] If transcript rendering changes, update the backend formatter, API response models, and frontend renderer together
+- [ ] Add or update the smallest relevant tests in `tests/`, `tests/api/`, or `web/__tests__/`
+- [ ] Add documentation in `docs/user-guide/usage.md`, `docs/user-guide/web-ui.md`, or other affected guides
 - [ ] Update README if user-facing
 - [ ] Add to CHANGELOG
 
@@ -544,7 +500,7 @@ EXPORTERS = {
               # ...
 ```
 
-4. **Write tests** in `tests/test_exporters.py`:
+4. **Write tests** in `tests/unit/test_exporters.py`:
 
 ```python
 def test_csv_export(sample_conversation, sample_messages):
@@ -557,7 +513,7 @@ def test_csv_export(sample_conversation, sample_messages):
 
 5. **Update documentation**:
    - `README.md` - Add CSV to export formats table
-   - `docs/USAGE.md` - Add CSV examples
+   - `docs/user-guide/usage.md` - Add CSV examples
    - Add docstrings to new code
 
 ---

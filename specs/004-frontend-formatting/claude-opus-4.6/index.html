@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Mood Board — 004 Frontend Formatting</title>
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     FOUNDATIONS
+     The existing app uses: Geist Sans/Mono, oklch neutrals,
+     shadcn/ui tokens, Tailwind v4, dark mode via .dark class.
+     This mood board mirrors those foundations so mockups
+     read authentically.
+     ═══════════════════════════════════════════════════════════ */
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #ffffff;
+    --bg-subtle: #fafafa;
+    --bg-muted: #f4f4f5;
+    --bg-card: #ffffff;
+    --fg: #18181b;
+    --fg-muted: #71717a;
+    --fg-faint: #a1a1aa;
+    --border: #e4e4e7;
+    --border-subtle: #f0f0f2;
+    --accent: #3b82f6;
+    --accent-soft: #dbeafe;
+    --accent-muted: #eff6ff;
+    --amber-bg: rgba(251,191,36,0.08);
+    --amber-border: #fcd34d;
+    --amber-fg: #92400e;
+    --green-pill: #dcfce7;
+    --green-fg: #166534;
+    --purple-pill: #f3e8ff;
+    --purple-fg: #6b21a8;
+    --code-bg: #0f172a;
+    --code-fg: #e2e8f0;
+    --radius: 10px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-subtle);
+    color: var(--fg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── LAYOUT ─── */
+  .page-header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 0 28px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .page-header-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-bottom: 4px;
+  }
+  .page-header .subtitle {
+    font-size: 14px;
+    color: var(--fg-muted);
+    max-width: 720px;
+  }
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .badge-green { background: var(--green-pill); color: var(--green-fg); }
+  .badge-purple { background: var(--purple-pill); color: var(--purple-fg); }
+  .badge-blue { background: var(--accent-soft); color: #1e40af; }
+
+  .content { max-width: 1280px; margin: 0 auto; padding: 32px; }
+
+  /* ─── SECTION ─── */
+  .decision-section {
+    margin-bottom: 48px;
+  }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .section-number {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-muted);
+    padding: 2px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+  .section-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .section-desc {
+    font-size: 14px;
+    color: var(--fg-muted);
+    margin-bottom: 20px;
+    max-width: 720px;
+  }
+  .task-refs {
+    font-size: 12px;
+    color: var(--fg-faint);
+    margin-bottom: 16px;
+    font-family: var(--font-mono);
+  }
+  .task-refs strong { color: var(--fg-muted); font-family: var(--font-sans); }
+
+  /* ─── DIRECTION GRID ─── */
+  .direction-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 900px) {
+    .direction-grid { grid-template-columns: 1fr; }
+  }
+  .direction-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .direction-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .direction-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .direction-a .direction-label { background: #dbeafe; color: #1e40af; }
+  .direction-b .direction-label { background: #fce7f3; color: #9d174d; }
+  .direction-c .direction-label { background: #d1fae5; color: #065f46; }
+  .direction-d .direction-label { background: #fef3c7; color: #92400e; }
+  .direction-card-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .direction-card-body {
+    padding: 20px;
+  }
+  .direction-card-body .annotation {
+    font-size: 13px;
+    color: var(--fg-muted);
+    line-height: 1.6;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border);
+  }
+  .direction-card-body .annotation strong {
+    color: var(--fg);
+  }
+  .pros-cons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 12px;
+  }
+  .pros-cons dt {
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .pros-cons .pro dt { color: #166534; }
+  .pros-cons .con dt { color: #991b1b; }
+  .pros-cons dd {
+    color: var(--fg-muted);
+    line-height: 1.5;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     MOCKUP COMPONENTS
+     Self-contained renderings of design proposals.
+     ═══════════════════════════════════════════════════════════ */
+
+  /* ─── Mock message bubble foundations ─── */
+  .mock-conversation {
+    background: var(--bg-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    max-height: 520px;
+    overflow-y: auto;
+  }
+  .mock-msg {
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+  .mock-msg-user { background: #eff6ff; }
+  .mock-msg-assistant { background: #f9fafb; }
+
+  .mock-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .mock-avatar-user { background: #bfdbfe; color: #1e40af; }
+  .mock-avatar-assistant { background: #e5e7eb; color: #374151; }
+
+  .mock-msg-body { flex: 1; min-width: 0; }
+  .mock-msg-meta {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mock-msg-meta .time {
+    font-weight: 400;
+    color: var(--fg-faint);
+    font-size: 11px;
+  }
+  .mock-msg-text {
+    line-height: 1.65;
+    color: var(--fg);
+  }
+  .mock-msg-text p { margin-bottom: 8px; }
+  .mock-msg-text p:last-child { margin-bottom: 0; }
+
+  /* ─── Markdown typography ─── */
+  .mock-prose h3 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    margin-top: 12px;
+  }
+  .mock-prose h3:first-child { margin-top: 0; }
+  .mock-prose ul, .mock-prose ol {
+    padding-left: 20px;
+    margin-bottom: 8px;
+  }
+  .mock-prose li {
+    margin-bottom: 3px;
+  }
+  .mock-prose strong { font-weight: 600; }
+  .mock-prose em { font-style: italic; color: var(--fg-muted); }
+  .mock-prose a {
+    color: #0369a1;
+    text-decoration: underline;
+    text-decoration-color: #7dd3fc;
+    text-underline-offset: 2px;
+  }
+  .mock-prose blockquote {
+    border-left: 2px solid var(--border);
+    padding-left: 12px;
+    color: var(--fg-muted);
+    font-style: italic;
+    margin: 8px 0;
+  }
+  .mock-prose code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--bg-muted);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .mock-prose pre {
+    margin: 8px 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .mock-prose pre code {
+    display: block;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border-radius: 0;
+    overflow-x: auto;
+  }
+
+  /* ─── Tight typography variant ─── */
+  .mock-prose-tight { font-size: 13.5px; line-height: 1.55; }
+  .mock-prose-tight h3 { font-size: 14px; }
+  .mock-prose-tight pre code { font-size: 12px; padding: 10px 14px; }
+  .mock-prose-tight ul, .mock-prose-tight ol { padding-left: 18px; }
+
+  /* ─── Spacious variant ─── */
+  .mock-prose-spacious { font-size: 15px; line-height: 1.75; }
+  .mock-prose-spacious h3 { font-size: 17px; margin-bottom: 8px; }
+  .mock-prose-spacious pre code { font-size: 13px; padding: 16px 20px; }
+  .mock-prose-spacious blockquote { padding-left: 16px; margin: 12px 0; }
+
+  /* ─── Code blocks (for direction variants) ─── */
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 14px;
+    background: #1e293b;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: #94a3b8;
+  }
+  .code-copy-btn {
+    font-size: 10px;
+    color: #64748b;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+
+  /* ─── Math block mock ─── */
+  .mock-math-display {
+    text-align: center;
+    padding: 16px;
+    font-family: 'Times New Roman', 'Georgia', serif;
+    font-size: 18px;
+    font-style: italic;
+    color: var(--fg);
+    background: var(--bg-subtle);
+    border-radius: 6px;
+    margin: 8px 0;
+    letter-spacing: 0.02em;
+  }
+  .mock-math-inline {
+    font-family: 'Times New Roman', 'Georgia', serif;
+    font-style: italic;
+    letter-spacing: 0.01em;
+  }
+
+  /* ─── ThinkingBlock ─── */
+  .thinking-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+    margin: 4px 0;
+  }
+  .thinking-pill svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  .thinking-pill-minimal {
+    background: var(--bg-muted);
+    color: var(--fg-muted);
+    border: none;
+  }
+  .thinking-pill-minimal:hover { background: #e4e4e7; }
+  .thinking-pill-bordered {
+    background: transparent;
+    color: var(--fg-muted);
+    border: 1px solid var(--border);
+  }
+  .thinking-pill-bordered:hover { background: var(--bg-muted); }
+  .thinking-pill-accent {
+    background: #f0f9ff;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+  }
+  .thinking-pill-accent:hover { background: #e0f2fe; }
+
+  .thinking-expanded {
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 6px 0;
+    font-size: 13px;
+  }
+  .thinking-expanded-minimal {
+    background: var(--bg-muted);
+    color: var(--fg-muted);
+  }
+  .thinking-expanded-bordered {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--fg-muted);
+  }
+  .thinking-expanded-accent {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    color: #0c4a6e;
+  }
+  .thinking-expanded-header {
+    font-weight: 600;
+    font-size: 12.5px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .thinking-expanded-body {
+    font-style: italic;
+    font-size: 12.5px;
+    line-height: 1.5;
+    opacity: 0.85;
+  }
+
+  /* ─── Date separator ─── */
+  .date-sep {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+    margin: 4px 0;
+  }
+  .date-sep-line {
+    flex: 1;
+    height: 1px;
+  }
+  .date-sep-label {
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .date-sep-whisper .date-sep-line {
+    background: var(--border);
+  }
+  .date-sep-whisper .date-sep-label {
+    color: var(--fg-faint);
+    letter-spacing: 0.01em;
+  }
+  .date-sep-medium .date-sep-line {
+    background: var(--border);
+  }
+  .date-sep-medium .date-sep-label {
+    color: var(--fg-muted);
+    font-weight: 600;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .date-sep-badge .date-sep-line {
+    background: transparent;
+  }
+  .date-sep-badge .date-sep-label {
+    background: var(--bg-muted);
+    color: var(--fg-muted);
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    margin: 0 auto;
+  }
+
+  /* ─── Conversation header ─── */
+  .mock-conv-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 8px 8px 0 0;
+  }
+  .mock-conv-header h2 {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+  .mock-conv-header .meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--fg-muted);
+    flex-wrap: wrap;
+  }
+  .mock-conv-header .meta .dot {
+    width: 3px;
+    height: 3px;
+    background: var(--fg-faint);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .mock-conv-header .updated {
+    color: var(--fg-faint);
+    font-style: italic;
+  }
+
+  /* ─── Fallback block ─── */
+  .mock-fallback {
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 6px 0;
+    font-size: 13px;
+  }
+  .mock-fallback-warm {
+    background: rgba(251,191,36,0.08);
+    border: 1px solid #fcd34d;
+    color: #92400e;
+  }
+  .mock-fallback-neutral {
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+  }
+  .mock-fallback-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+    opacity: 0.7;
+  }
+  .mock-fallback-text {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* ─── Attachment thumbnail ─── */
+  .mock-thumb {
+    display: inline-block;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+  }
+  .mock-thumb:hover { box-shadow: var(--shadow-md); }
+  .mock-thumb-img {
+    width: 192px;
+    height: 128px;
+    object-fit: cover;
+    display: block;
+    background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 50%, #ddd6fe 100%);
+  }
+  .mock-thumb-sm .mock-thumb-img {
+    width: 120px;
+    height: 80px;
+  }
+
+  /* ─── Image modal mock ─── */
+  .mock-modal-preview {
+    position: relative;
+    background: rgba(0,0,0,0.06);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .mock-modal-chrome {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    max-width: 420px;
+    margin: 12px auto;
+  }
+  .mock-modal-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .mock-modal-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg-muted);
+    font-size: 14px;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  .mock-modal-image {
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(135deg, #dbeafe 0%, #c7d2fe 40%, #e9d5ff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg-faint);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .mock-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    font-size: 11.5px;
+    color: var(--fg-muted);
+  }
+  .mock-modal-meta { display: flex; gap: 10px; }
+  .mock-modal-dl {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--fg);
+    color: var(--bg);
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  /* ─── Full width card variant ─── */
+  .direction-card-full {
+    grid-column: 1 / -1;
+  }
+  .direction-card-full .direction-card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 900px) {
+    .direction-card-full .direction-card-body {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ─── Comparison table ─── */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 16px;
+  }
+  .comparison-table th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-muted);
+    padding: 6px 10px;
+    border-bottom: 2px solid var(--border);
+  }
+  .comparison-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: top;
+  }
+  .comparison-table tr:last-child td { border-bottom: none; }
+  .rec-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: #dcfce7;
+    color: #166534;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* ─── Sticky note ─── */
+  .sticky-note {
+    background: #fefce8;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #854d0e;
+    margin: 20px 0;
+  }
+  .sticky-note strong { color: #78350f; }
+
+  /* ─── SVG icons (inline) ─── */
+  .icon-chevron { display: inline-block; vertical-align: -1px; }
+  .icon-brain { display: inline-block; vertical-align: -2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1>Design Mood Board — Frontend Formatting</h1>
+    <p class="subtitle">
+      Sprint <strong>004-frontend-formatting</strong> · Visual exploration of the major UI design choices
+      before implementation decisions are locked in. Each section presents 2–3 directions with annotated tradeoffs.
+    </p>
+    <div class="badge-row">
+      <span class="badge badge-blue">Claude Opus 4.6</span>
+      <span class="badge badge-green">Pre-implementation</span>
+      <span class="badge badge-purple">4 Decision Areas</span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════════════════════════════
+     DECISION 1: Transcript Typography & Markdown Readability
+     ═══════════════════════════════════════════════════════════ -->
+<div class="decision-section">
+  <div class="section-header">
+    <span class="section-number">Decision 1</span>
+    <h2>Transcript Typography & Markdown Readability</h2>
+  </div>
+  <p class="section-desc">
+    The single most impactful design choice in this sprint. Every conversation is a long-form reading experience.
+    Typography density, code block treatment, and heading scale set the tone for the entire product.
+    The spec says "comparably readable and polished" to ChatGPT — but the archive is a <em>reading</em> tool, not a <em>chat</em> tool,
+    which may argue for more generous line height and quieter visual structure.
+  </p>
+  <p class="task-refs">
+    <strong>Tasks:</strong> T005 T011 T013 T014 T014a T014b &nbsp;|&nbsp;
+    <strong>FRs:</strong> FR-001 FR-001a FR-004 FR-006 FR-008 FR-013
+  </p>
+
+  <div class="direction-grid">
+
+    <!-- Direction A: Tight / ChatGPT-native -->
+    <div class="direction-card direction-a">
+      <div class="direction-card-header">
+        <span class="direction-label">A</span>
+        <h3>Tight · ChatGPT-Native</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-assistant">
+            <div class="mock-avatar mock-avatar-assistant">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">Assistant <span class="time">2:14 PM</span></div>
+              <div class="mock-msg-text mock-prose mock-prose-tight">
+                <h3>Key Differences</h3>
+                <p>The <strong>Erdős–Graham conjecture</strong> was resolved in 2003 by <a href="#">Croot</a>. The proof uses a <em>probabilistic method</em> with the following identity:</p>
+                <div class="mock-math-display">∏<sub>i</sub> B<sub>m<sub>i</sub></sub> = ∏<sub>j</sub> B<sub>n<sub>j</sub></sub></div>
+                <p>Here's the helper function that tests primality:</p>
+                <pre><code>def is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True</code></pre>
+                <p>Note that this is <code>O(√n)</code> which suffices for small values. For a list of related conjectures, see:</p>
+                <ul>
+                  <li><strong>Goldbach's conjecture</strong> — still open</li>
+                  <li><strong>Twin prime conjecture</strong> — partial results via Zhang</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Rationale:</strong> Mirrors ChatGPT's own density. 13.5px body, tight leading (1.55), compact code blocks.
+          Familiar to anyone coming from ChatGPT. Maximises visible content per scroll — good for skimming.
+          <dl class="pros-cons">
+            <div class="pro"><dt>Pros</dt><dd>Familiar density; fast scanning of long conversations; less "page" feel</dd></div>
+            <div class="con"><dt>Cons</dt><dd>Can feel cramped for extended reading; headings don't breathe enough; code competes with prose</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direction B: Spacious / Reader -->
+    <div class="direction-card direction-b">
+      <div class="direction-card-header">
+        <span class="direction-label">B</span>
+        <h3>Spacious · Reader-Optimised</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-assistant">
+            <div class="mock-avatar mock-avatar-assistant">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">Assistant <span class="time">2:14 PM</span></div>
+              <div class="mock-msg-text mock-prose mock-prose-spacious">
+                <h3>Key Differences</h3>
+                <p>The <strong>Erdős–Graham conjecture</strong> was resolved in 2003 by <a href="#">Croot</a>. The proof uses a <em>probabilistic method</em> with the following identity:</p>
+                <div class="mock-math-display" style="font-size: 20px; padding: 20px;">∏<sub>i</sub> B<sub>m<sub>i</sub></sub> = ∏<sub>j</sub> B<sub>n<sub>j</sub></sub></div>
+                <p>Here's the helper function that tests primality:</p>
+                <pre style="margin: 12px 0;"><code style="font-size:13px; padding: 16px 20px;">def is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True</code></pre>
+                <p>Note that this is <code>O(√n)</code> which suffices for small values. For a list of related conjectures, see:</p>
+                <ul>
+                  <li><strong>Goldbach's conjecture</strong> — still open</li>
+                  <li><strong>Twin prime conjecture</strong> — partial results via Zhang</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Rationale:</strong> Optimised for an archival reading tool. 15px body, generous leading (1.75), more whitespace around code.
+          Acknowledges this is a <em>review</em> tool, not a live chat. Users are re-reading important past conversations.
+          <dl class="pros-cons">
+            <div class="pro"><dt>Pros</dt><dd>Higher readability for long sessions; code blocks breathe; better for deep review</dd></div>
+            <div class="con"><dt>Cons</dt><dd>Uses more vertical space; may feel slow for rapid skimming; slightly unfamiliar vs. ChatGPT</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Code block sub-decision -->
+  <div style="margin-top: 24px;">
+    <div class="direction-grid">
+      <div class="direction-card direction-a">
+        <div class="direction-card-header">
+          <span class="direction-label">A</span>
+          <h3>Code Blocks: Plain Dark</h3>
+        </div>
+        <div class="direction-card-body">
+          <div style="border-radius: 8px; overflow: hidden; font-size: 13px;">
+            <pre style="margin:0;"><code style="display:block; padding:14px 16px; background:#0f172a; color:#e2e8f0; font-family: var(--font-mono); font-size:12.5px; line-height:1.6; border-radius:8px;">def is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True</code></pre>
+          </div>
+          <div class="annotation">
+            <strong>Current approach.</strong> Clean, minimal, no language label.
+            Works well at both density levels. Matches spec FR-004 requirement for visual distinction.
+          </div>
+        </div>
+      </div>
+
+      <div class="direction-card direction-b">
+        <div class="direction-card-header">
+          <span class="direction-label">B</span>
+          <h3>Code Blocks: Labelled Header</h3>
+        </div>
+        <div class="direction-card-body">
+          <div style="border-radius: 8px; overflow: hidden; font-size: 13px;">
+            <div class="code-header">
+              <span>python</span>
+              <button class="code-copy-btn">Copy</button>
+            </div>
+            <pre style="margin:0;"><code style="display:block; padding:14px 16px; background:#0f172a; color:#e2e8f0; font-family: var(--font-mono); font-size:12.5px; line-height:1.6;">def is_prime(n: int) -> bool:
+    if n < 2:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True</code></pre>
+          </div>
+          <div class="annotation">
+            <strong>More polished.</strong> Language label + copy button like ChatGPT.
+            Helps users identify languages at a glance. Adds ~36px vertical per code block.
+            Copy button is genuinely useful for archive review. Could be Phase 6 polish.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sticky-note">
+    <strong>Recommendation:</strong> Start with Direction A typography (tight) since it matches the existing <code>prose-sm</code>
+    class already on <code>MessageBubble.tsx</code>. Add the code-block header (Direction B) as it's the single highest-value
+    polish element. Revisit spacing after seeing real conversation data in the browser — it's easier to loosen than tighten.
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     DECISION 2: ThinkingBlock & Processing Turn Presentation
+     ═══════════════════════════════════════════════════════════ -->
+<div class="decision-section">
+  <div class="section-header">
+    <span class="section-number">Decision 2</span>
+    <h2>ThinkingBlock & Processing Turn Presentation</h2>
+  </div>
+  <p class="section-desc">
+    This is a novel component with no prior art in the codebase. The spec requires a collapsed pill showing activity type
+    ("Reasoning", "Searched the web", "Reasoning and web search") that expands to show a disclosure note.
+    Key tension: how much visual weight should an element that fundamentally says "content unavailable" carry?
+  </p>
+  <p class="task-refs">
+    <strong>Tasks:</strong> T005a T006a T013 &nbsp;|&nbsp;
+    <strong>FRs:</strong> FR-015 FR-016 FR-017 &nbsp;|&nbsp;
+    <strong>SC:</strong> SC-010
+  </p>
+
+  <div class="direction-grid">
+
+    <!-- Direction A: Minimal / Ghost -->
+    <div class="direction-card direction-a">
+      <div class="direction-card-header">
+        <span class="direction-label">A</span>
+        <h3>Minimal · Muted Background</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-user">
+            <div class="mock-avatar mock-avatar-user">Y</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">You</div>
+              <div class="mock-msg-text">Explain the proof of the Erdős–Graham conjecture</div>
+            </div>
+          </div>
+          <div class="mock-msg mock-msg-assistant">
+            <div class="mock-avatar mock-avatar-assistant">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">Assistant</div>
+              <!-- Collapsed -->
+              <div class="thinking-pill thinking-pill-minimal">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 6.5C6 5.67 6.67 5 7.5 5h1c.83 0 1.5.67 1.5 1.5S9.33 8 8.5 8H8v1.5m0 1.5h.01"/></svg>
+                Reasoning
+                <svg class="icon-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5l2 2 2-2"/></svg>
+              </div>
+              <!-- Expanded -->
+              <div class="thinking-expanded thinking-expanded-minimal" style="margin-top: 8px;">
+                <div class="thinking-expanded-header">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 6.5C6 5.67 6.67 5 7.5 5h1c.83 0 1.5.67 1.5 1.5S9.33 8 8.5 8H8v1.5m0 1.5h.01"/></svg>
+                  Reasoning
+                  <svg class="icon-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7l2-2 2 2"/></svg>
+                </div>
+                <div class="thinking-expanded-body">
+                  Detailed reasoning content is not included in the ChatGPT export format.
+                </div>
+              </div>
+              <div class="mock-msg-text mock-prose" style="margin-top: 8px;">
+                <p>The Erdős–Graham conjecture, resolved by Croot in 2003, concerns Egyptian fraction representations…</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Rationale:</strong> Lowest visual weight. Reads as "metadata" rather than "content". The pill blends with the
+          message background. Good for conversations where thinking blocks appear every few messages — they won't dominate the
+          visual rhythm.
+          <dl class="pros-cons">
+            <div class="pro"><dt>Pros</dt><dd>Least disruptive to reading flow; clearly subordinate to actual content</dd></div>
+            <div class="con"><dt>Cons</dt><dd>Easy to miss entirely; expanded state may feel indistinguishable from surrounding prose</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direction B: Bordered / Structured -->
+    <div class="direction-card direction-b">
+      <div class="direction-card-header">
+        <span class="direction-label">B</span>
+        <h3>Bordered · Disclosure Pattern</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-user">
+            <div class="mock-avatar mock-avatar-user">Y</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">You</div>
+              <div class="mock-msg-text">Explain the proof of the Erdős–Graham conjecture</div>
+            </div>
+          </div>
+          <div class="mock-msg mock-msg-assistant">
+            <div class="mock-avatar mock-avatar-assistant">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">Assistant</div>
+              <!-- Collapsed -->
+              <div class="thinking-pill thinking-pill-bordered">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 6.5C6 5.67 6.67 5 7.5 5h1c.83 0 1.5.67 1.5 1.5S9.33 8 8.5 8H8v1.5m0 1.5h.01"/></svg>
+                Searched the web
+                <svg class="icon-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5l2 2 2-2"/></svg>
+              </div>
+              <!-- Expanded -->
+              <div class="thinking-expanded thinking-expanded-bordered" style="margin-top: 8px;">
+                <div class="thinking-expanded-header">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 11L14 14M1 7a6 6 0 1112 0A6 6 0 011 7z"/></svg>
+                  Searched the web
+                  <svg class="icon-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7l2-2 2 2"/></svg>
+                </div>
+                <div class="thinking-expanded-body">
+                  This conversation used web search. Detailed search queries and results are not included in the ChatGPT export format.
+                </div>
+              </div>
+              <div class="mock-msg-text mock-prose" style="margin-top: 8px;">
+                <p>The Erdős–Graham conjecture, resolved by Croot in 2003, concerns Egyptian fraction representations…</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Rationale:</strong> Uses a traditional disclosure/details pattern with a visible border.
+          The border makes the block discoverable without adding colour. Maps to HTML <code>&lt;details&gt;</code> mental model.
+          <dl class="pros-cons">
+            <div class="pro"><dt>Pros</dt><dd>Clearly interactive; familiar disclosure pattern; works in both themes</dd></div>
+            <div class="con"><dt>Cons</dt><dd>Border adds visual noise when many thinking blocks appear; expanded state has a "box in a box" feel inside the message bubble</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direction C: Tinted / Accent -->
+    <div class="direction-card direction-c">
+      <div class="direction-card-header">
+        <span class="direction-label">C</span>
+        <h3>Tinted · Semantic Colour</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-user">
+            <div class="mock-avatar mock-avatar-user">Y</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">You</div>
+              <div class="mock-msg-text">Explain the proof of the Erdős–Graham conjecture</div>
+            </div>
+          </div>
+          <div class="mock-msg mock-msg-assistant">
+            <div class="mock-avatar mock-avatar-assistant">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">Assistant</div>
+              <!-- Collapsed -->
+              <div class="thinking-pill thinking-pill-accent">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 6.5C6 5.67 6.67 5 7.5 5h1c.83 0 1.5.67 1.5 1.5S9.33 8 8.5 8H8v1.5m0 1.5h.01"/></svg>
+                Reasoning and web search
+                <svg class="icon-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5l2 2 2-2"/></svg>
+              </div>
+              <!-- Expanded -->
+              <div class="thinking-expanded thinking-expanded-accent" style="margin-top: 8px;">
+                <div class="thinking-expanded-header">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 6.5C6 5.67 6.67 5 7.5 5h1c.83 0 1.5.67 1.5 1.5S9.33 8 8.5 8H8v1.5m0 1.5h.01"/></svg>
+                  Reasoning and web search
+                  <svg class="icon-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7l2-2 2 2"/></svg>
+                </div>
+                <div class="thinking-expanded-body">
+                  This response involved both reasoning and web search. Detailed content is not included in the ChatGPT export format.
+                </div>
+              </div>
+              <div class="mock-msg-text mock-prose" style="margin-top: 8px;">
+                <p>The Erdős–Graham conjecture, resolved by Croot in 2003, concerns Egyptian fraction representations…</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Rationale:</strong> Uses a light blue tint to signal "this is AI-process metadata" without the
+          heaviness of a warning colour. Visually similar to ChatGPT's own thinking block treatment. Most discoverable variant.
+          <dl class="pros-cons">
+            <div class="pro"><dt>Pros</dt><dd>Most discoverable; clear semantic signal; feels native to AI transcript</dd></div>
+            <div class="con"><dt>Cons</dt><dd>Introduces a new colour not used elsewhere in the transcript; may feel too prominent if thinking appears before every response</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sticky-note">
+    <strong>Recommendation:</strong> Direction A (minimal) for the collapsed state — it's the least disruptive to reading flow,
+    and the spec explicitly says this element "preserves context without visual noise." Use the muted background pill.
+    The expanded state can borrow the slightly more structured feel of Direction B's border to differentiate it from surrounding prose.
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     DECISION 3: Date Separators & Conversation Header
+     ═══════════════════════════════════════════════════════════ -->
+<div class="decision-section">
+  <div class="section-header">
+    <span class="section-number">Decision 3</span>
+    <h2>Date Separators & Conversation Header</h2>
+  </div>
+  <p class="section-desc">
+    Multi-day conversations need orientation cues. The spec references iMessage/Slack patterns:
+    a centred date label between messages when the calendar date changes.
+    The header also needs rework — show start date only (no time), add "Updated [date]" when different,
+    and fix the message count to reflect only visible messages.
+  </p>
+  <p class="task-refs">
+    <strong>Tasks:</strong> T005b T013a T006b &nbsp;|&nbsp;
+    <strong>FRs:</strong> FR-018 FR-019 FR-020 &nbsp;|&nbsp;
+    <strong>SC:</strong> SC-011
+  </p>
+
+  <div class="direction-grid">
+
+    <!-- Date separator styles -->
+    <div class="direction-card direction-a">
+      <div class="direction-card-header">
+        <span class="direction-label">A</span>
+        <h3>Separator: Whisper Line</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-assistant" style="padding: 8px 12px;">
+            <div class="mock-avatar mock-avatar-assistant" style="width:22px;height:22px;font-size:10px;">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-text" style="font-size:13px;">…that's the general approach for gradient descent.</div>
+            </div>
+          </div>
+
+          <div class="date-sep date-sep-whisper">
+            <span class="date-sep-line"></span>
+            <span class="date-sep-label">Saturday 15 January 2026</span>
+            <span class="date-sep-line"></span>
+          </div>
+
+          <div class="mock-msg mock-msg-user" style="padding: 8px 12px;">
+            <div class="mock-avatar mock-avatar-user" style="width:22px;height:22px;font-size:10px;">Y</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-text" style="font-size:13px;">Can we continue with the loss function example?</div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Rationale:</strong> Thinnest possible treatment. iMessage-style whisper.
+          Date is present for orientation but doesn't interrupt the reading flow.
+          Uses the app's <code>--fg-faint</code> / <code>--border</code> tokens.
+        </div>
+      </div>
+    </div>
+
+    <div class="direction-card direction-b">
+      <div class="direction-card-header">
+        <span class="direction-label">B</span>
+        <h3>Separator: Bold Label</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-assistant" style="padding: 8px 12px;">
+            <div class="mock-avatar mock-avatar-assistant" style="width:22px;height:22px;font-size:10px;">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-text" style="font-size:13px;">…that's the general approach for gradient descent.</div>
+            </div>
+          </div>
+
+          <div class="date-sep date-sep-medium">
+            <span class="date-sep-line"></span>
+            <span class="date-sep-label">Saturday 15 January</span>
+            <span class="date-sep-line"></span>
+          </div>
+
+          <div class="mock-msg mock-msg-user" style="padding: 8px 12px;">
+            <div class="mock-avatar mock-avatar-user" style="width:22px;height:22px;font-size:10px;">Y</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-text" style="font-size:13px;">Can we continue with the loss function example?</div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Rationale:</strong> Slack-style treatment. Bolder type, uppercase tracking.
+          More prominent for conversations spanning weeks or months where date context is critical.
+        </div>
+      </div>
+    </div>
+
+    <div class="direction-card direction-c">
+      <div class="direction-card-header">
+        <span class="direction-label">C</span>
+        <h3>Separator: Floating Badge</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-assistant" style="padding: 8px 12px;">
+            <div class="mock-avatar mock-avatar-assistant" style="width:22px;height:22px;font-size:10px;">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-text" style="font-size:13px;">…that's the general approach for gradient descent.</div>
+            </div>
+          </div>
+
+          <div class="date-sep date-sep-badge">
+            <span class="date-sep-label">Saturday 15 January 2026</span>
+          </div>
+
+          <div class="mock-msg mock-msg-user" style="padding: 8px 12px;">
+            <div class="mock-avatar mock-avatar-user" style="width:22px;height:22px;font-size:10px;">Y</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-text" style="font-size:13px;">Can we continue with the loss function example?</div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Rationale:</strong> Centred pill badge without lines. Clean, modern. No horizontal rules interrupting the flow.
+          Works well when messages already have their own background colours creating visual separation.
+        </div>
+      </div>
+    </div>
+
+    <!-- Header treatment -->
+    <div class="direction-card direction-d">
+      <div class="direction-card-header">
+        <span class="direction-label">Header</span>
+        <h3>Updated Header Treatment</h3>
+      </div>
+      <div class="direction-card-body">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- Current -->
+          <div>
+            <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--fg-faint); margin-bottom:4px;">Current (before)</div>
+            <div class="mock-conv-header" style="border-radius:8px;">
+              <h2 style="font-size:16px;">Staving off Height Loss</h2>
+              <div class="meta">
+                <span>January 14, 2026, 02:14 PM</span>
+                <span class="dot"></span>
+                <span>47 messages</span>
+                <span class="dot"></span>
+                <span>gpt-4o</span>
+              </div>
+            </div>
+          </div>
+          <!-- Proposed -->
+          <div>
+            <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--fg-faint); margin-bottom:4px;">Proposed (after)</div>
+            <div class="mock-conv-header" style="border-radius:8px;">
+              <h2 style="font-size:16px;">Staving off Height Loss</h2>
+              <div class="meta">
+                <span>14 January 2026</span>
+                <span class="dot"></span>
+                <span class="updated">Updated 18 January 2026</span>
+                <span class="dot"></span>
+                <span>32 messages</span>
+                <span class="dot"></span>
+                <span>gpt-4o</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Changes per spec:</strong>
+          (1) Drop time from header — unreliable vs. first message.
+          (2) Show "Updated [date]" when different from start date.
+          (3) Count reflects only user-visible messages (47→32 after suppressing thinking/system/bootstrap).
+          The "Updated" label uses a lighter weight or italic to signal secondary importance.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sticky-note">
+    <strong>Recommendation:</strong> Direction A (whisper line) for date separators — aligns with the spec's "subtle centred date label"
+    language and the iMessage reference. The badge (C) is a viable alternative if the whisper feels too invisible against the message background colours.
+    Avoid Direction B — the uppercase/bold treatment feels too heavy for date metadata in a transcript context.
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     DECISION 4: Attachments, Fallbacks & Image Modal
+     ═══════════════════════════════════════════════════════════ -->
+<div class="decision-section">
+  <div class="section-header">
+    <span class="section-number">Decision 4</span>
+    <h2>Attachments, Fallbacks & Image Modal</h2>
+  </div>
+  <p class="section-desc">
+    Three related presentation questions: (1) How should the fallback block look when structured content can't be rendered?
+    (2) How should image thumbnails sit within the message flow? (3) How polished should the image modal feel?
+    The existing <code>FallbackBlock</code> uses amber/warning colours — is that the right tone, or is "neutral info" more appropriate
+    since this isn't an <em>error</em> but rather <em>unavailable content</em>?
+  </p>
+  <p class="task-refs">
+    <strong>Tasks:</strong> T005c T020 T026 T027 &nbsp;|&nbsp;
+    <strong>FRs:</strong> FR-003 FR-005 FR-007 FR-009 FR-021 &nbsp;|&nbsp;
+    <strong>SC:</strong> SC-002 SC-003 SC-012
+  </p>
+
+  <div class="direction-grid">
+
+    <!-- Fallback: Warm vs Neutral -->
+    <div class="direction-card direction-a">
+      <div class="direction-card-header">
+        <span class="direction-label">A</span>
+        <h3>Fallback: Warm Amber (Current)</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-assistant">
+            <div class="mock-avatar mock-avatar-assistant">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">Assistant</div>
+              <div class="mock-msg-text mock-prose">
+                <p>Here's the visualization I generated:</p>
+              </div>
+              <div class="mock-fallback mock-fallback-warm">
+                <div class="mock-fallback-label">Structured Content</div>
+                <div class="mock-fallback-text">{'content_type': 'image_asset_pointer', 'asset_pointer': 'file-service://...', 'metadata': {'dalle': {'prompt': 'A serene mountain landscape...'}}}</div>
+              </div>
+              <div class="mock-msg-text mock-prose" style="margin-top: 6px;">
+                <p>The image shows a serene mountain landscape at dawn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Current implementation.</strong> Amber signals "something isn't quite right" — appropriate for genuinely
+          malformed content (US3 fallbacks). But for structured payloads that are simply not renderable yet (US2), the warning
+          tone may overstate the severity.
+        </div>
+      </div>
+    </div>
+
+    <div class="direction-card direction-b">
+      <div class="direction-card-header">
+        <span class="direction-label">B</span>
+        <h3>Fallback: Neutral Info</h3>
+      </div>
+      <div class="direction-card-body">
+        <div class="mock-conversation">
+          <div class="mock-msg mock-msg-assistant">
+            <div class="mock-avatar mock-avatar-assistant">A</div>
+            <div class="mock-msg-body">
+              <div class="mock-msg-meta">Assistant</div>
+              <div class="mock-msg-text mock-prose">
+                <p>Here's the visualization I generated:</p>
+              </div>
+              <div class="mock-fallback mock-fallback-neutral">
+                <div class="mock-fallback-label" style="color:var(--fg-faint);">Structured Content</div>
+                <div class="mock-fallback-text" style="color:var(--fg-muted);">{'content_type': 'image_asset_pointer', 'asset_pointer': 'file-service://...', 'metadata': {'dalle': {'prompt': 'A serene mountain landscape...'}}}</div>
+              </div>
+              <div class="mock-msg-text mock-prose" style="margin-top: 6px;">
+                <p>The image shows a serene mountain landscape at dawn.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">
+          <strong>Alternative.</strong> Neutral grey treatment communicates "this exists but isn't rendered richly" without
+          implying something is broken. Better for the common case where payloads are expected but simply not yet supported.
+          Reserve amber for US3's genuinely malformed/broken content.
+        </div>
+      </div>
+    </div>
+
+    <!-- Image thumbnail + modal -->
+    <div class="direction-card direction-c direction-card-full">
+      <div class="direction-card-header">
+        <span class="direction-label">Images</span>
+        <h3>Thumbnail & Modal Treatment</h3>
+      </div>
+      <div class="direction-card-body">
+        <!-- Thumbnail in context -->
+        <div>
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--fg-faint); margin-bottom:8px;">Inline Thumbnail (current — T005c implemented)</div>
+          <div class="mock-conversation">
+            <div class="mock-msg mock-msg-user">
+              <div class="mock-avatar mock-avatar-user">Y</div>
+              <div class="mock-msg-body">
+                <div class="mock-msg-meta">You</div>
+                <div class="mock-msg-text mock-prose">
+                  <p>Here's the screenshot of the error:</p>
+                </div>
+                <div class="mock-thumb" style="margin-top: 4px;">
+                  <div class="mock-thumb-img" style="display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--fg-faint);font-weight:500;">192 × 128 thumbnail</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="annotation" style="border-top: none; margin-top: 8px; padding-top: 0;">
+            <strong>Already specified:</strong> <code>h-32 w-48 object-cover</code> (192×128px) per T005c.
+            The thumbnail is intentionally small to avoid dominating the message bubble.
+            SC-012 requires the bounding box stays under 200×150px.
+            The existing implementation looks good — rounded corners, border, hover shadow.
+          </div>
+        </div>
+
+        <!-- Modal preview -->
+        <div>
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--fg-faint); margin-bottom:8px;">Modal Overlay (existing implementation)</div>
+          <div class="mock-modal-preview">
+            <div class="mock-modal-chrome">
+              <div class="mock-modal-bar">
+                <span>screenshot-error.png</span>
+                <button class="mock-modal-close">✕</button>
+              </div>
+              <div class="mock-modal-image">Full-size image</div>
+              <div class="mock-modal-footer">
+                <div class="mock-modal-meta">
+                  <span>1920 × 1080</span>
+                  <span>2.4 MB</span>
+                  <span>image/png</span>
+                </div>
+                <a href="#" class="mock-modal-dl" onclick="event.preventDefault();">↓ Download</a>
+              </div>
+            </div>
+          </div>
+          <div class="annotation" style="border-top: none; margin-top: 8px; padding-top: 0;">
+            <strong>Already implemented</strong> in <code>ImageModal.tsx</code> — filename header, metadata footer, download button,
+            escape/backdrop/close dismiss. The implementation matches FR-021 and SC-012 requirements.
+            <strong>Open question:</strong> Should the modal show a dark backdrop (current: <code>bg-black/70</code>) or a lighter
+            frosted backdrop? Dark is more cinematic; frosted keeps more context visible. Dark is the safer default.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sticky-note">
+    <strong>Recommendation:</strong> Split the fallback block into two severity levels:
+    <strong>neutral grey</strong> (Direction B) for recognized-but-unrenderable structured payloads (US2, "we know what this is but can't show it richly"),
+    and <strong>amber</strong> (Direction A) reserved for truly malformed or unrecognized content (US3, "something is wrong").
+    The <code>fallback_label</code> from the API already carries semantic meaning — use it to select the treatment.
+    Image thumbnail and modal are already well-specified and implemented; no design change needed.
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SUMMARY COMPARISON TABLE
+     ═══════════════════════════════════════════════════════════ -->
+<div class="decision-section">
+  <div class="section-header">
+    <span class="section-number">Summary</span>
+    <h2>Decision Matrix</h2>
+  </div>
+  <p class="section-desc">
+    Quick reference for all design choices surfaced by this sprint.
+    "Rec" marks the recommended direction based on spec language, existing patterns, and design system consistency.
+  </p>
+
+  <div class="direction-card" style="overflow-x: auto;">
+    <div class="direction-card-body">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Decision Area</th>
+            <th>Direction A</th>
+            <th>Direction B</th>
+            <th>Direction C</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Typography</strong></td>
+            <td>Tight / ChatGPT-native <span class="rec-badge">Rec</span></td>
+            <td>Spacious / Reader</td>
+            <td>—</td>
+            <td>Start tight, loosen after real data review</td>
+          </tr>
+          <tr>
+            <td><strong>1b. Code blocks</strong></td>
+            <td>Plain dark</td>
+            <td>Labelled header <span class="rec-badge">Rec</span></td>
+            <td>—</td>
+            <td>Language label + copy is high-value polish</td>
+          </tr>
+          <tr>
+            <td><strong>2. ThinkingBlock</strong></td>
+            <td>Minimal / muted <span class="rec-badge">Rec</span></td>
+            <td>Bordered disclosure</td>
+            <td>Tinted accent</td>
+            <td>Minimal collapsed + bordered expanded hybrid</td>
+          </tr>
+          <tr>
+            <td><strong>3. Date separator</strong></td>
+            <td>Whisper line <span class="rec-badge">Rec</span></td>
+            <td>Bold label</td>
+            <td>Floating badge</td>
+            <td>Spec says "subtle"; badge is viable fallback</td>
+          </tr>
+          <tr>
+            <td><strong>3b. Header</strong></td>
+            <td colspan="3" style="text-align:center;">Single direction — spec-mandated changes (date-only, updated date, corrected count)</td>
+            <td>Implementation, not design choice</td>
+          </tr>
+          <tr>
+            <td><strong>4. Fallback block</strong></td>
+            <td>Warm amber (errors)</td>
+            <td>Neutral grey (known) <span class="rec-badge">Rec</span></td>
+            <td>—</td>
+            <td>Two-tier: neutral for US2, amber for US3</td>
+          </tr>
+          <tr>
+            <td><strong>4b. Image modal</strong></td>
+            <td colspan="3" style="text-align:center;">Already implemented and spec-compliant — dark backdrop is the safe default</td>
+            <td>No change needed</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="margin-top: 24px;">
+    <strong>Overall design posture:</strong> This sprint's changes should feel like a natural, <em>quiet upgrade</em> to the existing UI.
+    The app already has a clean, utilitarian shadcn/ui foundation. Formatting improvements should make conversations more readable
+    without making the interface feel heavier or more complex.
+    The user came here to <strong>re-read conversations</strong> — every design choice should serve that goal.
+  </div>
+</div>
+
+</div><!-- .content -->
+</body>
+</html>

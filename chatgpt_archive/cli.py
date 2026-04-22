@@ -30,6 +30,7 @@ from chatgpt_archive.db import (
     list_conversations_by_tag as db_list_by_tag,
 )
 from chatgpt_archive import importer
+from chatgpt_archive.media import get_archive_media_dir, persist_archive_media
 from chatgpt_archive.search import (
     execute_search,
     format_results_human,
@@ -149,6 +150,7 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
         conversations_imported, messages_imported = importer.import_archive(
             archive_path, db_path, progress_callback
         )
+        media_dir = persist_archive_media(archive_path)
 
         # Get database size
         db_size = get_db_size(db_path)
@@ -161,6 +163,7 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
                 "messages_imported": messages_imported,
                 "database_path": str(db_path),
                 "database_size_bytes": db_size,
+                "archive_media_dir": str(media_dir),
             }
             click.echo(json.dumps(result, indent=2))
         else:
@@ -168,6 +171,7 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
             click.echo(f"  Conversations: {conversations_imported}")
             click.echo(f"  Messages: {messages_imported}")
             click.echo(f"  Database: {db_path} ({db_size / 1024 / 1024:.1f} MB)")
+            click.echo(f"  Archive media: {media_dir}")
 
         sys.exit(0)
 
@@ -194,6 +198,51 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
         else:
             click.echo(f"Error: Import failed: {e}", err=True)
         sys.exit(3)
+
+
+@main.command("verify-media")  # type: ignore[attr-defined]
+@click.argument(
+    "archive_dir", type=click.Path(exists=True, file_okay=False), required=False
+)
+@click.pass_context
+def verify_media(ctx: click.Context, archive_dir: str | None) -> None:
+    """Verify the configured archive media directory exists and is readable."""
+    json_output = ctx.obj["json_output"]
+    resolved_dir = (
+        Path(archive_dir).expanduser()
+        if archive_dir
+        else get_archive_media_dir(db_path=ctx.obj["db_path"])
+    )
+
+    exists = resolved_dir.exists()
+    conversations_json = (resolved_dir / "conversations.json").exists()
+    root_files = (
+        sum(1 for path in resolved_dir.glob("file-*") if path.is_file())
+        if exists
+        else 0
+    )
+    conversation_dirs = (
+        sum(1 for path in resolved_dir.iterdir() if path.is_dir()) if exists else 0
+    )
+
+    payload = {
+        "archive_media_dir": str(resolved_dir),
+        "exists": exists,
+        "has_conversations_json": conversations_json,
+        "root_file_count": root_files,
+        "conversation_dir_count": conversation_dirs,
+    }
+
+    if json_output:
+        click.echo(json.dumps(payload, indent=2))
+    else:
+        click.echo(f"Archive media directory: {resolved_dir}")
+        click.echo(f"  Exists: {'yes' if exists else 'no'}")
+        click.echo(f"  conversations.json: {'yes' if conversations_json else 'no'}")
+        click.echo(f"  Root files: {root_files}")
+        click.echo(f"  Conversation directories: {conversation_dirs}")
+
+    sys.exit(0 if exists else 1)
 
 
 @main.command()  # type: ignore[attr-defined]

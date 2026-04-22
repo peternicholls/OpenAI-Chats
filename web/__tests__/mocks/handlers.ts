@@ -1,6 +1,129 @@
 import { http, HttpResponse } from 'msw'
 
-const API_URL = 'http://localhost:8000'
+// In the test environment (jsdom), the API client uses relative paths (no origin).
+// MSW needs an absolute URL pattern; use http://localhost as the origin since
+// jsdom defaults to http://localhost for relative fetch calls.
+const API_URL = 'http://localhost'
+
+export const markdownMessageText = [
+    '# Release Notes',
+    '',
+    '- Added **formatted** transcript rendering',
+    '- Supports [links](https://example.com) and `inline code`',
+    '',
+    '> Blockquotes remain readable',
+    '',
+    '```python',
+    "print('hello')",
+    '```',
+].join('\n')
+
+export function buildRenderSegment(
+    kind: 'markdown' | 'attachment' | 'fallback' | 'thinking',
+    overrides: Partial<{
+        text: string | null
+        attachment_index: number | null
+        fallback_label: string | null
+        activity_type: 'reasoning' | 'search' | 'both'
+    }> = {}
+) {
+    if (kind === 'thinking') {
+        return {
+            kind,
+            activity_type: overrides.activity_type ?? 'reasoning',
+            text: null,
+            attachment_index: null,
+            fallback_label: null,
+            ...overrides,
+        }
+    }
+
+    return {
+        kind,
+        text: kind === 'attachment' ? null : '',
+        attachment_index: kind === 'attachment' ? 0 : null,
+        fallback_label: kind === 'fallback' ? 'Unsupported content' : null,
+        ...overrides,
+    }
+}
+
+export function buildMockMessage(
+    overrides: Partial<{
+        id: string
+        role: 'user' | 'assistant' | 'system' | 'tool'
+        content: string | null
+        create_time: number | null
+        attachments: Array<{
+            type: 'image' | 'audio' | 'file'
+            url: string
+            filename: string
+            mime_type: string | null
+            width: number | null
+            height: number | null
+            size_bytes: number | null
+            found: boolean
+        }>
+        segments: Array<ReturnType<typeof buildRenderSegment>>
+    }> = {}
+) {
+    return {
+        id: 'msg-001',
+        role: 'assistant' as const,
+        content: markdownMessageText,
+        create_time: 1700000000,
+        attachments: [],
+        segments: [
+            buildRenderSegment('markdown', { text: markdownMessageText, attachment_index: null }),
+        ],
+        ...overrides,
+    }
+}
+
+export const mixedStructuredPayloadMessage = buildMockMessage({
+    id: 'msg-mixed-structured',
+    content: [
+        'Intro paragraph before structured content.',
+        '[[ATTACHMENT:0]]',
+        'Follow-up prose after image.',
+        '[[ATTACHMENT:1]]',
+        'Trailing prose after audio.',
+        "{'content_type': 'unsupported_widget', 'metadata': {'label': 'chart', 'version': 1}}",
+    ].join('\n'),
+    attachments: [
+        {
+            type: 'image',
+            url: '/api/media/conv-001-test/file_001',
+            filename: 'sample.png',
+            mime_type: 'image/png',
+            width: 512,
+            height: 512,
+            size_bytes: 2048,
+            found: true,
+        },
+        {
+            type: 'audio',
+            url: '/api/media/conv-001-test/audio_001',
+            filename: 'sample.wav',
+            mime_type: 'audio/wav',
+            width: null,
+            height: null,
+            size_bytes: 1024,
+            found: true,
+        },
+    ],
+    segments: [
+        buildRenderSegment('markdown', { text: 'Intro paragraph before structured content.', attachment_index: null }),
+        buildRenderSegment('attachment', { text: null, attachment_index: 0 }),
+        buildRenderSegment('markdown', { text: 'Follow-up prose after image.', attachment_index: null }),
+        buildRenderSegment('attachment', { text: null, attachment_index: 1 }),
+        buildRenderSegment('markdown', { text: 'Trailing prose after audio.', attachment_index: null }),
+        buildRenderSegment('fallback', {
+            text: "{'content_type': 'unsupported_widget', 'metadata': {'label': 'chart', 'version': 1}}",
+            fallback_label: 'Unsupported content',
+            attachment_index: null,
+        }),
+    ],
+})
 
 // Sample test data
 export const mockConversations = [
@@ -41,14 +164,46 @@ export const mockConversationDetail = {
             role: 'user',
             content: 'Hello, how are you?',
             create_time: 1700000000,
+            attachments: [],
         },
         {
             id: 'msg-002',
             role: 'assistant',
-            content: 'I am doing well, thank you for asking!',
+            content: 'I am doing well, thank you for asking!\n[[ATTACHMENT:0]]',
             create_time: 1700000100,
+            attachments: [
+                {
+                    type: 'image',
+                    url: '/api/media/conv-001-test/file_001',
+                    filename: 'sample.png',
+                    mime_type: 'image/png',
+                    width: 512,
+                    height: 512,
+                    size_bytes: 2048,
+                    found: true,
+                },
+            ],
+            segments: [
+                buildRenderSegment('markdown', {
+                    text: 'I am doing well, thank you for asking!',
+                    attachment_index: null,
+                }),
+                buildRenderSegment('attachment', { text: null, attachment_index: 0 }),
+            ],
         },
     ],
+}
+
+export const mockStructuredConversationDetail = {
+    id: 'conv-structured-test',
+    title: 'Structured Conversation',
+    create_time: 1700000000,
+    update_time: 1700001000,
+    message_count: 1,
+    model: 'gpt-4',
+    tags: [],
+    is_favorite: false,
+    messages: [mixedStructuredPayloadMessage],
 }
 
 export const mockSearchResults = [
@@ -93,6 +248,9 @@ export const handlers = [
         const { id } = params
         if (id === 'conv-001-test') {
             return HttpResponse.json(mockConversationDetail)
+        }
+        if (id === 'conv-structured-test') {
+            return HttpResponse.json(mockStructuredConversationDetail)
         }
         return HttpResponse.json({ detail: 'Not found' }, { status: 404 })
     }),
@@ -191,9 +349,11 @@ export const handlers = [
         return HttpResponse.json({
             theme: 'system',
             default_export_format: 'md',
-            messages_per_page: 50,
-            default_search_type: 'keyword',
-            openai_api_key_set: false,
+            sidebar_open: true,
+            embedding_model: 'text-embedding-3-small',
+            items_per_page: 50,
+            openai_api_key: '',
+            archive_media_dir: '/tmp/archive',
         })
     }),
 
@@ -202,9 +362,11 @@ export const handlers = [
         return HttpResponse.json({
             theme: 'system',
             default_export_format: 'md',
-            messages_per_page: 50,
-            default_search_type: 'keyword',
-            openai_api_key_set: false,
+            sidebar_open: true,
+            embedding_model: 'text-embedding-3-small',
+            items_per_page: 50,
+            openai_api_key: '',
+            archive_media_dir: '/tmp/archive',
             ...body,
         })
     }),

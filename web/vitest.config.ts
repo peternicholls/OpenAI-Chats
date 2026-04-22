@@ -6,11 +6,19 @@ export default defineConfig({
     plugins: [react()],
     test: {
         environment: 'jsdom',
+        environmentOptions: {
+            jsdom: {
+                url: 'http://localhost',
+            },
+        },
         setupFiles: ['./vitest.setup.ts'],
         include: ['**/__tests__/**/*.{test,spec}.{ts,tsx}', '**/*.{test,spec}.{ts,tsx}'],
         exclude: ['**/node_modules/**', '**/e2e/**'],
         globals: true,
         css: true,
+        typecheck: {
+            tsconfig: './tsconfig.test.json',
+        },
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],

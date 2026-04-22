@@ -4,6 +4,7 @@ This adapter provides the API layer with access to all chatgpt_archive
 functionality without duplicating business logic (per FR-012).
 """
 
+import json
 import logging
 import os
 import sqlite3
@@ -15,6 +16,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from api.services import formatting_service, media_service
 from chatgpt_archive import db, importer
 from chatgpt_archive import search as search_module
 
@@ -264,7 +266,67 @@ def list_conversations(
         conn.close()
 
 
-def get_conversation(conversation_id: str) -> dict | None:
+def _is_processing_turn(msg: dict) -> bool:
+    """Check if a message row is an internal processing turn (thinking/search)."""
+    ct = msg["content_type"]
+    role = msg["author_role"]
+    content = msg["content"]
+
+    # Reasoning/recap nodes from thinking models
+    if ct in ("thoughts", "reasoning_recap"):
+        return True
+    # Tool dispatch code blocks (assistant code execution for search/browsing)
+    if role == "assistant" and ct == "code":
+        return True
+    # Tool response nodes with empty content
+    return role == "tool" and (not content or not content.strip())
+
+
+def _is_empty_bootstrap(msg: dict) -> bool:
+    """Check if a message is an empty assistant bootstrap placeholder."""
+    return (
+        msg["author_role"] == "assistant"
+        and msg["content_type"] == "text"
+        and (not msg["content"] or not msg["content"].strip())
+    )
+
+
+def _parse_message_metadata(raw_metadata: Any) -> dict[str, Any]:
+    """Decode a stored metadata blob into a dictionary."""
+    if isinstance(raw_metadata, dict):
+        return raw_metadata
+    if not isinstance(raw_metadata, str) or not raw_metadata.strip():
+        return {}
+
+    try:
+        parsed = json.loads(raw_metadata)
+    except json.JSONDecodeError:
+        logger.warning("Failed to parse message metadata blob")
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _classify_activity_type(cluster: list[dict]) -> str:
+    """Derive activity_type from a cluster of processing turns."""
+    has_reasoning = any(
+        m["content_type"] in ("thoughts", "reasoning_recap") for m in cluster
+    )
+    has_search = any(
+        (m["author_role"] == "assistant" and m["content_type"] == "code")
+        or (m["author_role"] == "tool")
+        for m in cluster
+    )
+    if has_reasoning and has_search:
+        return "both"
+    if has_search:
+        return "search"
+    return "reasoning"
+
+
+def get_conversation(
+    conversation_id: str, include_attachments: bool = False
+) -> dict | None:
     """Get a single conversation with all messages by OpenAI ID."""
     conn = get_connection()
     try:
@@ -280,15 +342,55 @@ def get_conversation(conversation_id: str) -> dict | None:
             ).fetchone()["is_favorite"]
         )
 
-        messages = [
-            {
-                "id": msg["openai_id"],
-                "role": msg["author_role"],
-                "content": msg["content"],
-                "create_time": msg["create_time"],
-            }
-            for msg in messages_rows
-        ]
+        # First pass: classify each message and collect processing clusters
+        messages = []
+        pending_cluster: list[dict] = []
+        visible_count = 0
+
+        for msg in messages_rows:
+            # Skip empty bootstrap placeholders
+            if _is_empty_bootstrap(msg):
+                continue
+
+            # Accumulate processing turns into a cluster
+            if _is_processing_turn(msg):
+                pending_cluster.append(msg)
+                continue
+
+            # Non-processing turn: resolve content and build segments
+            content = msg["content"]
+            metadata = _parse_message_metadata(msg["metadata"])
+            attachments = []
+            if include_attachments:
+                content, attachments = media_service.resolve_message_content(
+                    msg["content"], row["openai_id"]
+                )
+            content = formatting_service.resolve_inline_citations(content, metadata)
+            segments = formatting_service.build_render_segments(content, attachments)
+
+            # Prepend ThinkingSegment from any pending cluster — only for assistant turns.
+            # If the next visible message is a user or system turn (e.g. an image upload),
+            # the cluster belongs to a prior assistant response and must be discarded.
+            if pending_cluster:
+                if msg["author_role"] == "assistant":
+                    activity_type = _classify_activity_type(pending_cluster)
+                    thinking_seg = formatting_service.ThinkingSegment(
+                        kind="thinking", activity_type=activity_type
+                    )
+                    segments = [thinking_seg] + list(segments)
+                pending_cluster = []
+
+            messages.append(
+                {
+                    "id": msg["openai_id"],
+                    "role": msg["author_role"],
+                    "content": content,
+                    "create_time": msg["create_time"],
+                    "attachments": attachments,
+                    "segments": segments,
+                }
+            )
+            visible_count += 1
 
         return {
             "id": row["openai_id"],
@@ -296,6 +398,7 @@ def get_conversation(conversation_id: str) -> dict | None:
             "create_time": row["create_time"],
             "update_time": row["update_time"],
             "message_count": row["message_count"],
+            "visible_message_count": visible_count,
             "model": row["model_slug"],
             "messages": messages,
             "tags": tags,
@@ -425,6 +528,8 @@ def import_archive_from_zip(zip_path: str) -> None:
                 db_path=get_db_path(),
                 progress_callback=progress_callback,
             )
+
+            media_service.persist_archive_media(archive_dir)
 
             _import_progress = {
                 "status": "complete",

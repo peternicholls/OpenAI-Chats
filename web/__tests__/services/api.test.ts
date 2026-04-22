@@ -28,10 +28,33 @@ describe('API Client', () => {
             expect(result).toHaveProperty('title')
             expect(result).toHaveProperty('messages')
             expect(Array.isArray(result.messages)).toBe(true)
+            expect(result.messages[1]).toHaveProperty('attachments')
+            expect(result.messages[1]).toHaveProperty('segments')
+            expect(result.messages[1].segments).toHaveLength(2)
         })
 
         it('should throw error for non-existent conversation', async () => {
             await expect(api.getConversation('non-existent-id')).rejects.toThrow()
+        })
+
+        it('should preserve structured attachment and fallback segments', async () => {
+            const result = await api.getConversation('conv-structured-test')
+
+            expect(result.messages[0].segments).toEqual([
+                expect.objectContaining({ kind: 'markdown', text: 'Intro paragraph before structured content.' }),
+                expect.objectContaining({ kind: 'attachment', attachment_index: 0 }),
+                expect.objectContaining({ kind: 'markdown', text: 'Follow-up prose after image.' }),
+                expect.objectContaining({ kind: 'attachment', attachment_index: 1 }),
+                expect.objectContaining({ kind: 'markdown', text: 'Trailing prose after audio.' }),
+                expect.objectContaining({ kind: 'fallback', fallback_label: 'Unsupported content' }),
+            ])
+        })
+
+        it('should keep segment parity for equivalent message structures', async () => {
+            const first = await api.getConversation('conv-001-test')
+            const second = await api.getConversation('conv-001-test')
+
+            expect(first.messages[1].segments).toEqual(second.messages[1].segments)
         })
     })
 
@@ -102,6 +125,15 @@ describe('API Client', () => {
 
             expect(result).toHaveProperty('theme')
             expect(result).toHaveProperty('default_export_format')
+            expect(result).toHaveProperty('archive_media_dir')
+        })
+
+        it('should build absolute media URLs for relative paths', () => {
+            // In browser context (jsdom) the API client uses relative paths so the
+            // origin is not prepended; the path is returned as-is.
+            expect(api.getMediaUrl('/api/media/root/file-123')).toBe(
+                '/api/media/root/file-123'
+            )
         })
     })
 

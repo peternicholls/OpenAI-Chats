@@ -129,6 +129,42 @@ class TestMessageExtraction:
         assert len(messages) == 1
         assert messages[0].content == "First part\nSecond part"
 
+    def test_extract_messages_preserves_message_metadata(self):
+        """Test extracting message metadata for later citation resolution."""
+        mapping = {
+            "msg-1": {
+                "id": "msg-1",
+                "message": {
+                    "id": "msg-1",
+                    "author": {"role": "assistant"},
+                    "content": {"parts": ["Research \ue200cite\ue202turn1search0\ue201"]},
+                    "metadata": {
+                        "content_references": [
+                            {
+                                "matched_text": "\ue200cite\ue202turn1search0\ue201",
+                                "alt": "([Example Source](https://example.com/source))",
+                            }
+                        ]
+                    },
+                    "create_time": 1710000000,
+                },
+                "parent": None,
+                "children": [],
+            }
+        }
+
+        messages = importer.extract_messages_from_mapping(mapping, conversation_db_id=1)
+
+        assert len(messages) == 1
+        assert messages[0].metadata == {
+            "content_references": [
+                {
+                    "matched_text": "\ue200cite\ue202turn1search0\ue201",
+                    "alt": "([Example Source](https://example.com/source))",
+                }
+            ]
+        }
+
 
 class TestConversationImport:
     """Tests for full conversation import."""
@@ -219,6 +255,57 @@ class TestConversationImport:
         msg_count = cursor.fetchone()[0]
         assert msg_count == 1
         
+        conn.close()
+
+    def test_import_persists_message_metadata_blob(self, tmp_path):
+        """Test that imported message metadata is stored in the DB for later rendering."""
+        db_path = tmp_path / "test.db"
+        init_db(db_path)
+
+        conversation = {
+            "id": "conv-test",
+            "title": "Test",
+            "create_time": 1710000000.0,
+            "mapping": {
+                "msg-1": {
+                    "id": "msg-1",
+                    "message": {
+                        "id": "msg-1",
+                        "author": {"role": "assistant"},
+                        "content": {"parts": ["Research \ue200cite\ue202turn1search0\ue201"]},
+                        "metadata": {
+                            "content_references": [
+                                {
+                                    "matched_text": "\ue200cite\ue202turn1search0\ue201",
+                                    "alt": "([Example Source](https://example.com/source))",
+                                }
+                            ]
+                        },
+                        "create_time": 1710000000.0,
+                    },
+                    "parent": None,
+                    "children": [],
+                }
+            },
+        }
+
+        conn = sqlite3.connect(db_path)
+        importer.insert_conversation(conn, conversation)
+        conn.commit()
+
+        cursor = conn.cursor()
+        cursor.execute("SELECT metadata FROM messages WHERE openai_id = ?", ("msg-1",))
+        metadata_blob = cursor.fetchone()[0]
+
+        assert json.loads(metadata_blob) == {
+            "content_references": [
+                {
+                    "matched_text": "\ue200cite\ue202turn1search0\ue201",
+                    "alt": "([Example Source](https://example.com/source))",
+                }
+            ]
+        }
+
         conn.close()
 
 

@@ -1,6 +1,8 @@
-# OpenAI-Chats Development Guidelines
+# Agent Instruction Pointer
 
-Auto-generated from all feature plans. Last updated: 2026-02-16
+The authoritative repository-wide Copilot instructions live in `../copilot-instructions.md`.
+
+Use that file for shared repository guidance, architecture, conventions, and commands.
 
 ## Shared AI Guidance
 
@@ -21,104 +23,16 @@ When working on CSS, UI, prompts, or agent-facing guidance:
 
 ## Active Technologies
 
-### Backend (Python)
-- Python 3.8+ with virtual environment (.venv/)
-- FastAPI for API backend (api/)
-- SQLite with FTS5 for database
-- pytest for testing (pytest-asyncio, pytest-mock, httpx)
+Use this directory only for specialized agent instructions and workflow-specific handoffs.
 
-### Frontend (TypeScript/React)
-- Next.js 16 with App Router (web/)
-- React 19 with TypeScript
-- Tailwind CSS + shadcn/ui components
-- vitest + testing-library for unit tests
-- Playwright for E2E tests
+## How To Use This Directory
 
-### Infrastructure
-- Docker Compose for deployment
-- nginx for static file serving
+- Start with `../copilot-instructions.md`.
+- Open a more specific file in `.github/agents/` only when the task clearly maps to that workflow or agent.
+- Avoid copying repository-wide guidance into agent files unless the workflow genuinely requires a local override.
 
-## Project Structure
+## Repository Workflow Notes
 
-```text
-chatgpt_archive/         # Core Python library (CLI tool)
-api/                     # FastAPI backend
-  routers/               # API endpoints
-  services/              # Business logic
-  models/                # Pydantic models
-  tests/                 # API integration tests (62 tests)
-web/                     # Next.js frontend
-  src/
-    app/                 # App Router pages
-    components/          # React components
-    hooks/               # Custom hooks
-    services/            # API client
-  __tests__/             # Test files
-    components/          # Component tests
-    hooks/               # Hook tests
-    services/            # API client tests
-    e2e/                 # Playwright E2E tests
-    mocks/               # MSW handlers
-tests/                   # Core library tests
-specs/                   # Design documents
-docker/                  # Dockerfiles
-```
-
-## Commands
-
-```bash
-# Activate Python virtual environment
-source .venv/bin/activate
-
-# Run core library tests
-pytest tests/
-
-# Run API tests (62 tests)
-pytest api/tests/ -v
-
-# Run frontend tests (55 tests)
-cd web && npm test
-
-# Run E2E tests (Playwright)
-cd web && npm run test:e2e
-
-# Start dev servers
-cd web && npm run dev         # Frontend on :3000
-cd api && uvicorn main:app    # API on :8000
-
-# Docker deployment
-docker-compose up -d
-```
-
-## Code Style
-
-### Python
-- Black for formatting
-- Ruff for linting
-- Type hints required for public functions
-- Google-style docstrings
-
-### TypeScript/React
-- ESLint + Prettier
-- Functional components with hooks
-- Server components by default, 'use client' for interactivity
-
-## Recent Changes
-
-- **002-web-ui**: Web UI with FastAPI backend, Next.js frontend, Docker deployment
-  - Test suite: 62 API tests, 55 frontend tests, 27 E2E tests
-  - Coverage: API 82%, Frontend core paths covered
-- **001-archive-search-export**: Core CLI tool with import, search, export functionality
-
-<!-- MANUAL ADDITIONS START -->
-## Test Commands Quick Reference
-
-```bash
-# All tests at once
-source .venv/bin/activate && pytest api/tests/ -v && cd web && npm test
-
-# With coverage
-pytest api/tests/ --cov=api --cov-report=term-missing
-cd web && npm test -- --coverage
-```
-<!-- MANUAL ADDITIONS END -->
+- This repository may include generated or workflow-managed files in `.github/agents/`.
+- If those files are updated by tooling, keep repository-wide guidance centralized in `../copilot-instructions.md` and leave this file as a thin pointer.
+- Current feature context and recent stack changes have been consolidated into the main Copilot instruction file.

@@ -17,11 +17,22 @@ class UserSettings(BaseModel):
         None, description="OpenAI API key for embeddings"
     )
     sidebar_open: bool = Field(True, description="Whether sidebar is open")
+    sidebar_collapsed: bool = Field(False, description="Whether sidebar is collapsed")
     embedding_model: str = Field(
         "text-embedding-3-small", description="Model for embeddings"
     )
     items_per_page: int = Field(
         50, description="Number of conversations per page (FR-022)"
+    )
+    archive_media_dir: str | None = Field(
+        None, description="Optional path to the extracted archive media directory"
+    )
+    code_line_numbers: bool = Field(
+        False, description="Show line numbers in code blocks"
+    )
+    long_prompt_truncation: bool = Field(
+        True,
+        description="Truncate user prompts longer than 500 characters",
     )
 
 
@@ -32,8 +43,12 @@ class UserSettingsUpdate(BaseModel):
     default_export_format: str | None = None
     openai_api_key: str | None = None
     sidebar_open: bool | None = None
+    sidebar_collapsed: bool | None = None
     embedding_model: str | None = None
     items_per_page: int | None = None
+    archive_media_dir: str | None = None
+    code_line_numbers: bool | None = None
+    long_prompt_truncation: bool | None = None
 
 
 @router.get("/api/settings", response_model=UserSettings)

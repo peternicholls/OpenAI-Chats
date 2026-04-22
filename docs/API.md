@@ -8,6 +8,7 @@ Documentation for using ChatGPT Archive as a Python library.
 - [Installation](#installation)
 - [Database Module](#database-module)
 - [Importer Module](#importer-module)
+- [Media Helpers](#media-helpers)
 - [Search Module](#search-module)
 - [Embeddings Module](#embeddings-module)
 - [Exporters Module](#exporters-module)
@@ -230,6 +231,38 @@ except Exception as e:
 
 - `InvalidArchiveError`: Raised when archive directory is invalid
 - `InvalidJSONError`: Raised when conversations.json is malformed
+
+---
+
+## Media Helpers
+
+`api.services.media_service` provides the runtime helpers used by the API to resolve inline archive attachments.
+
+### `get_archive_media_dir(settings: dict[str, Any] | None = None) -> Path`
+
+Returns the directory used to resolve inline media files. Resolution order is:
+
+1. `CHATGPT_ARCHIVE_DIR`
+2. persisted `archive_media_dir` setting
+3. `<db parent>/media`
+
+### `persist_archive_media(source_dir: Path, destination_dir: Path | None = None) -> Path`
+
+Copies extracted archive files into the permanent media directory used by the API and web UI.
+
+### `resolve_message_content(content: str | None, conversation_id: str) -> tuple[str | None, list[Attachment]]`
+
+Strips asset pointer dicts from stored message content, replaces them with ordering tokens, and returns resolved runtime `Attachment` objects for the API response.
+
+### `api.services.formatting_service.build_render_segments(content: str | None, attachments: list[Attachment]) -> list[RenderSegment]`
+
+Builds the ordered render contract consumed by the web transcript UI. The function emits:
+
+- `markdown` segments for prose and markdown blocks
+- `attachment` segments referencing `attachments[]` by index
+- `fallback` segments for unsupported or malformed structured payloads
+
+The segment list preserves reading order and treats raw HTML as inert text.
 
 ---
 
@@ -723,6 +756,6 @@ if __name__ == '__main__':
 ## See Also
 
 - [README.md](../README.md) - Quick start and overview
-- [USAGE.md](USAGE.md) - CLI command reference
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Development guide
+- [CLI Reference](user-guide/usage.md) - CLI command reference
+- [Contributing](../CONTRIBUTING.md) - Development guide
 - [Database Schema](../specs/001-archive-search-export/data-model.md) - Full schema documentation

@@ -16,6 +16,50 @@ export interface Message {
     role: "user" | "assistant" | "system" | "tool";
     content: string | null;
     create_time: number | null;
+    attachments: Attachment[];
+    segments?: RenderSegment[];
+}
+
+export interface MarkdownSegment {
+    kind: "markdown";
+    text: string;
+    attachment_index: null;
+    fallback_label: null;
+}
+
+export interface AttachmentSegment {
+    kind: "attachment";
+    text: null;
+    attachment_index: number;
+    fallback_label: null;
+}
+
+export interface FallbackSegment {
+    kind: "fallback";
+    text: string;
+    attachment_index: null;
+    fallback_label: string;
+}
+
+export interface ThinkingSegment {
+    kind: "thinking";
+    activity_type: "reasoning" | "search" | "both";
+    text: null;
+    attachment_index: null;
+    fallback_label: null;
+}
+
+export type RenderSegment = MarkdownSegment | AttachmentSegment | FallbackSegment | ThinkingSegment;
+
+export interface Attachment {
+    type: "image" | "audio" | "file";
+    url: string;
+    filename: string;
+    mime_type: string | null;
+    width: number | null;
+    height: number | null;
+    size_bytes: number | null;
+    found: boolean;
 }
 
 export interface ConversationDetail {
@@ -25,6 +69,7 @@ export interface ConversationDetail {
     update_time: number | null;
     model: string | null;
     message_count: number;
+    visible_message_count?: number | null;
     messages: Message[];
     tags: string[];
     is_favorite: boolean;
@@ -93,8 +138,12 @@ export interface UserSettings {
     default_export_format: ExportFormatCode;
     theme: "light" | "dark" | "system";
     sidebar_open: boolean;
+    sidebar_collapsed: boolean;
     embedding_model: string;
     items_per_page: number;
+    archive_media_dir?: string | null;
+    code_line_numbers: boolean;
+    long_prompt_truncation: boolean;
 }
 
 export interface EmbeddingEstimate {

@@ -66,7 +66,7 @@ async def get_conversation(conversation_id: str) -> ConversationDetail:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    conv = archive_service.get_conversation(validated_id)
+    conv = archive_service.get_conversation(validated_id, include_attachments=True)
     if conv is None:
         raise HTTPException(
             status_code=404, detail=f"Conversation {conversation_id} not found"

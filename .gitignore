@@ -52,15 +52,26 @@ env/
 
 # Test files
 .pytest_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 *.cover
 .hypothesis/
+*.log
+.env*
 test_phases_1_2.py
 
 # Temporary review files
 PHASE_1_2_REVIEW.md
 inspect_archive.py
+uv.lock
+
+# OMX local runtime/state
+.omx/logs/
+.omx/state/
+.omx/metrics.json
+.omx/notepad.md
+.omx/project-memory.json
 
 # Web UI
 web/node_modules/

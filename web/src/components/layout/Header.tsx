@@ -1,50 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSidebarUi } from "@/components/layout/SidebarUiContext";
 
+/**
+ * Top-of-page header. Search has moved to the sidebar; on desktop the
+ * header is hidden so the sidebar provides all primary navigation.
+ */
 export function Header() {
-    const router = useRouter();
-    const [searchQuery, setSearchQuery] = useState("");
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-        }
-    };
+    const { setMobileOpen } = useSidebarUi();
 
     return (
-        <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-            <div className="flex h-14 items-center gap-4 px-4 md:px-6">
-                {/* Mobile menu button */}
-                <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                </Button>
-
-                {/* Mobile logo */}
-                <Link href="/" className="md:hidden font-bold text-lg">
-                    Archive
-                </Link>
-
-                {/* Search bar */}
-                <form onSubmit={handleSearch} className="flex-1 max-w-lg">
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Search conversations... (Ctrl+K)"
-                            className="pl-8 bg-muted/50"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                </form>
-            </div>
+        <header
+            role="banner"
+            className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-backdrop-filter:bg-background/60 md:hidden"
+        >
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setMobileOpen(true)}
+                        aria-label="Open navigation"
+                        className="h-9 w-9"
+                    >
+                        <Menu className="h-5 w-5" aria-hidden="true" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>Open navigation</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Link href="/" className="rounded-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        ChatGPT Archive
+                    </Link>
+                </TooltipTrigger>
+                <TooltipContent>Return to the conversation browser</TooltipContent>
+            </Tooltip>
         </header>
     );
 }

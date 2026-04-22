@@ -1,2 +1,0 @@
-[console_scripts]
-chatgpt-archive = chatgpt_archive.cli:main

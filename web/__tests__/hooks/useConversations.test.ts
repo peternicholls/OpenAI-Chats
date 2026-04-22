@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
-import { useConversations, useConversation } from '@/hooks/useConversations'
+import { act, renderHook, waitFor } from '@testing-library/react'
+import { useConversation, useConversations, useInfiniteConversations } from '@/hooks/useConversations'
 import { createWrapper } from '../utils/test-utils'
 
 describe('useConversations', () => {
@@ -95,5 +95,48 @@ describe('useConversation detail (FE-HOOK-005)', () => {
 
         expect(result.current.isPending).toBe(true)
         expect(result.current.isFetching).toBe(false)
+    })
+})
+
+describe('useInfiniteConversations', () => {
+    it('should return the first page of conversations on success', async () => {
+        const { result } = renderHook(
+            () => useInfiniteConversations({ limit: 1 }),
+            { wrapper: createWrapper() }
+        )
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true)
+        })
+
+        expect(result.current.data?.pages).toHaveLength(1)
+        expect(result.current.data?.pages[0]?.items.length).toBeLessThanOrEqual(1)
+        expect(result.current.hasNextPage).toBe(true)
+    })
+
+    it('should fetch the next page when requested', async () => {
+        const { result } = renderHook(
+            () => useInfiniteConversations({ limit: 1 }),
+            { wrapper: createWrapper() }
+        )
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true)
+        })
+
+        await waitFor(() => {
+            expect(result.current.hasNextPage).toBe(true)
+        })
+
+        await act(async () => {
+            await result.current.fetchNextPage()
+        })
+
+        await waitFor(() => {
+            expect(result.current.data?.pages).toHaveLength(2)
+        })
+
+        const allItems = result.current.data?.pages.flatMap((page) => page.items) ?? []
+        expect(allItems.length).toBe(2)
     })
 })

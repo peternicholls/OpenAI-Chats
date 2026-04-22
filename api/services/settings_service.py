@@ -22,9 +22,13 @@ DEFAULT_SETTINGS = {
     "theme": "light",
     "default_export_format": "md",
     "sidebar_open": True,
+    "sidebar_collapsed": False,
     "openai_api_key": "",
     "embedding_model": "text-embedding-3-small",
     "items_per_page": 50,
+    "archive_media_dir": "",
+    "code_line_numbers": False,
+    "long_prompt_truncation": True,
 }
 
 # Settings that should be encrypted at rest

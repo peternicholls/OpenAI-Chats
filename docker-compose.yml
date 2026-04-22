@@ -2,7 +2,7 @@
 # Run with: docker compose up -d
 # Access at: http://localhost (port 80 via nginx)
 #
-# For configuration options, see docs/DEPLOYMENT.md
+# For configuration options, see docs/user-guide/web-ui.md
 
 services:
   # Reverse proxy (nginx)
@@ -29,10 +29,18 @@ services:
       # Mount host data directory for database persistence
       # Data in ~/.chatgpt-archive/ persists across container restarts
       - ${HOME}/.chatgpt-archive:/data
+      # Mount archive export directory as the media source (read-only).
+      # Defaults to ./archive for a portable out-of-the-box setup.
+      # Override CHATGPT_ARCHIVE_HOST_DIR to point at an extracted archive.
+      - ${CHATGPT_ARCHIVE_HOST_DIR:-./archive}:/data/media:ro
     environment:
       # CHATGPT_ARCHIVE_DB: Path to SQLite database inside container
       # Default: /data/chats.db (maps to ~/.chatgpt-archive/chats.db on host)
       - CHATGPT_ARCHIVE_DB=/data/chats.db
+
+      # CHATGPT_ARCHIVE_DIR: Directory containing extracted archive media files.
+      # Defaults to /data/media when not explicitly set.
+      - CHATGPT_ARCHIVE_DIR=/data/media
       
       # API_HOST: Network interface to bind to
       # 0.0.0.0 = all interfaces (required for Docker), 127.0.0.1 = localhost only
