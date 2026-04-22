@@ -23,7 +23,7 @@
 
 ## Background & Ground Truth
 
-All data-model facts in this spec are derived from direct inspection of `conversations.json` in the ChatGPT export archive. See [`/Ground-truth-from-ChatGPT-archive.md`](/Ground-truth-from-ChatGPT-archive.md) for the full research notes. The database is **not** authoritative for data-model questions — it reflects whatever the importer produced, which may be incorrect.
+All data-model facts in this spec are derived from direct inspection of `conversations.json` in the ChatGPT export archive. The database is **not** authoritative for data-model questions — it reflects whatever the importer produced, which may be incorrect.
 
 ### How ChatGPT Stores Conversations
 

@@ -65,6 +65,7 @@ test_phases_1_2.py
 PHASE_1_2_REVIEW.md
 inspect_archive.py
 uv.lock
+Ground-truth-from-ChatGPT-archive.md
 
 # OMX local runtime/state
 .omx/logs/
