@@ -43,7 +43,7 @@ vi.mock("@/components/layout/SidebarFavoritesSection", () => ({
 
 vi.mock("@/components/layout/SidebarConversationList", () => ({
     SidebarConversationList: ({ onNavigate }: { onNavigate?: () => void }) => (
-        <a href="/conversation/1" onClick={onNavigate}>Conversation item</a>
+        <button type="button" onClick={onNavigate}>Conversation item</button>
     ),
 }));
 

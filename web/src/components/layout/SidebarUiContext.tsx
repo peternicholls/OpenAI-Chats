@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 
 interface SidebarUiContextValue {
@@ -18,23 +18,18 @@ export function SidebarUiProvider({ children }: { children: ReactNode }) {
     const { data: settings } = useSettings();
     const { mutate: updateSettings } = useUpdateSettings();
 
-    const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+    const [collapsedOverride, setCollapsedOverride] = useState<boolean | null>(null);
     const [isMobileOpen, setMobileOpen] = useState(false);
-
-    // Hydrate from server-side settings once they arrive.
-    useEffect(() => {
-        if (typeof settings?.sidebar_collapsed === "boolean") {
-            setIsCollapsed(settings.sidebar_collapsed);
-        }
-    }, [settings?.sidebar_collapsed]);
+    const isCollapsed = collapsedOverride ?? settings?.sidebar_collapsed ?? false;
 
     const toggleCollapsed = useCallback(() => {
-        setIsCollapsed((prev) => {
-            const next = !prev;
+        setCollapsedOverride((prev) => {
+            const current = prev ?? settings?.sidebar_collapsed ?? false;
+            const next = !current;
             updateSettings({ sidebar_collapsed: next });
             return next;
         });
-    }, [updateSettings]);
+    }, [settings?.sidebar_collapsed, updateSettings]);
 
     const value = useMemo<SidebarUiContextValue>(
         () => ({ isCollapsed, toggleCollapsed, isMobileOpen, setMobileOpen }),

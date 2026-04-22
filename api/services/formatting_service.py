@@ -120,7 +120,9 @@ def classify_structured_payload(raw_text: str) -> FallbackSegment | None:
     if _contains_asset_pointer(parsed):
         fallback_label = "Malformed attachment payload"
 
-    return FallbackSegment(kind="fallback", text=stripped, fallback_label=fallback_label)
+    return FallbackSegment(
+        kind="fallback", text=stripped, fallback_label=fallback_label
+    )
 
 
 def _flush_markdown_segment(
@@ -256,9 +258,7 @@ def _format_file_citation(citation: dict[str, Any]) -> str | None:
     return f"(Source: {label})"
 
 
-def _apply_replacements(
-    content: str, replacements: list[tuple[int, int, str]]
-) -> str:
+def _apply_replacements(content: str, replacements: list[tuple[int, int, str]]) -> str:
     if not replacements:
         return content
 

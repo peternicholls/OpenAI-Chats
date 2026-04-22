@@ -29,7 +29,9 @@ def get_archive_media_dir(settings: dict[str, Any] | None = None) -> Path:
     )
 
 
-def persist_archive_media(source_dir: Path, destination_dir: Path | None = None) -> Path:
+def persist_archive_media(
+    source_dir: Path, destination_dir: Path | None = None
+) -> Path:
     """Merge extracted archive files into the permanent media directory."""
     return archive_media.persist_archive_media(
         source_dir,
@@ -99,7 +101,9 @@ def build_root_content_disposition(path: Path) -> str:
 
 def _build_attachment(parsed: dict[str, Any], conversation_id: str) -> Attachment:
     pointer = str(parsed["asset_pointer"])
-    metadata = parsed.get("metadata") if isinstance(parsed.get("metadata"), dict) else {}
+    metadata = (
+        parsed.get("metadata") if isinstance(parsed.get("metadata"), dict) else {}
+    )
     size_bytes = _as_int(parsed.get("size_bytes") or metadata.get("size_bytes"))
     width = _as_int(parsed.get("width") or metadata.get("width"))
     height = _as_int(parsed.get("height") or metadata.get("height"))
@@ -216,7 +220,10 @@ def _ensure_relative_to_archive(path: Path, archive_dir: Path) -> Path:
 
 def _display_filename(path: Path) -> str:
     name = path.name
-    if path.parent == get_archive_media_dir().expanduser().resolve() and name.startswith("file-"):
+    if (
+        path.parent == get_archive_media_dir().expanduser().resolve()
+        and name.startswith("file-")
+    ):
         parts = name.split("-", 2)
         if len(parts) == 3:
             return parts[2]

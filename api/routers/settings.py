@@ -27,8 +27,13 @@ class UserSettings(BaseModel):
     archive_media_dir: str | None = Field(
         None, description="Optional path to the extracted archive media directory"
     )
-    code_line_numbers: bool = Field(False, description="Show line numbers in code blocks")
-    long_prompt_truncation: bool = Field(True, description="Truncate user prompts longer than 500 characters")
+    code_line_numbers: bool = Field(
+        False, description="Show line numbers in code blocks"
+    )
+    long_prompt_truncation: bool = Field(
+        True,
+        description="Truncate user prompts longer than 500 characters",
+    )
 
 
 class UserSettingsUpdate(BaseModel):
