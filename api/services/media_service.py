@@ -195,7 +195,7 @@ def _find_first_prefix_match(directory: Path, prefix: str) -> Path | None:
     # Strip trailing "-" for the contains-match used on hash-prefixed filenames
     bare_id = prefix.rstrip("-")
 
-    for entry in sorted(directory.iterdir(), key=lambda item: item.name):
+    for entry in directory.iterdir():
         if not entry.is_file():
             continue
         # Standard match: filename starts with the file ID prefix
