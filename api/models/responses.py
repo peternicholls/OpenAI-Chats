@@ -65,21 +65,6 @@ RenderSegment = Annotated[
 ]
 
 
-class Message(BaseModel):
-    """Single message in a conversation."""
-
-    id: str = Field(..., description="OpenAI message ID")
-    role: str = Field(..., description="author role: user, assistant, system, tool")
-    content: str | None = Field(None, description="Message content")
-    create_time: float | None = Field(None, description="Unix timestamp")
-    attachments: list["Attachment"] = Field(
-        default_factory=list, description="Resolved media attachments"
-    )
-    segments: list[RenderSegment] = Field(
-        default_factory=list, description="Ordered renderable content segments"
-    )
-
-
 class Attachment(BaseModel):
     """Resolved media attachment."""
 
@@ -93,6 +78,21 @@ class Attachment(BaseModel):
     found: bool = Field(..., description="Whether the attachment exists on disk")
 
 
+class Message(BaseModel):
+    """Single message in a conversation."""
+
+    id: str = Field(..., description="OpenAI message ID")
+    role: str = Field(..., description="author role: user, assistant, system, tool")
+    content: str | None = Field(None, description="Message content")
+    create_time: float | None = Field(None, description="Unix timestamp")
+    attachments: list[Attachment] = Field(
+        default_factory=list, description="Resolved media attachments"
+    )
+    segments: list[RenderSegment] = Field(
+        default_factory=list, description="Ordered renderable content segments"
+    )
+
+
 class ConversationDetail(BaseModel):
     """Full conversation with messages."""
 
@@ -102,6 +102,7 @@ class ConversationDetail(BaseModel):
     update_time: float | None
     model: str | None
     message_count: int
+    visible_message_count: int | None = None
     messages: list[Message]
     tags: list[str] = Field(default_factory=list)
     is_favorite: bool = False

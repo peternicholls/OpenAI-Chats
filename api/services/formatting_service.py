@@ -10,7 +10,6 @@ from api.models.responses import (
     FallbackSegment,
     MarkdownSegment,
     RenderSegment,
-    ThinkingSegment,
 )
 from api.services import media_service
 
@@ -25,6 +24,7 @@ STRUCTURED_KEYS = {
     "mime_type",
     "attachments",
 }
+MAX_STRUCTURED_PAYLOAD_LENGTH = 10_000
 
 
 def resolve_inline_citations(
@@ -144,6 +144,8 @@ def _looks_like_structured_payload(text: str) -> bool:
 
 
 def _parse_payload(text: str) -> Any | None:
+    if len(text) > MAX_STRUCTURED_PAYLOAD_LENGTH:
+        return None
     try:
         return ast.literal_eval(text)
     except (SyntaxError, ValueError):
@@ -262,8 +264,13 @@ def _apply_replacements(
 
     resolved = content
     applied_spans: list[tuple[int, int]] = []
-    for start, end, replacement in sorted(replacements, key=lambda item: item[0], reverse=True):
-        if any(start < existing_end and end > existing_start for existing_start, existing_end in applied_spans):
+    for start, end, replacement in sorted(
+        replacements, key=lambda item: item[0], reverse=True
+    ):
+        if any(
+            start < existing_end and end > existing_start
+            for existing_start, existing_end in applied_spans
+        ):
             continue
         resolved = resolved[:start] + replacement + resolved[end:]
         applied_spans.append((start, end))

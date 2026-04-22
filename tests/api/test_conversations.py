@@ -383,3 +383,6 @@ class TestThinkingSegmentScoping:
         assert thinking_segs == [], (
             "ThinkingSegment must not appear on a user-role message"
         )
+
+        assert detail["message_count"] == 3
+        assert detail["visible_message_count"] == 2

@@ -16,9 +16,9 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from api.services import formatting_service, media_service
 from chatgpt_archive import db, importer
 from chatgpt_archive import search as search_module
-from api.services import formatting_service, media_service
 
 logger = logging.getLogger(__name__)
 
@@ -279,9 +279,7 @@ def _is_processing_turn(msg: dict) -> bool:
     if role == "assistant" and ct == "code":
         return True
     # Tool response nodes with empty content
-    if role == "tool" and (not content or not content.strip()):
-        return True
-    return False
+    return role == "tool" and (not content or not content.strip())
 
 
 def _is_empty_bootstrap(msg: dict) -> bool:
@@ -397,7 +395,8 @@ def get_conversation(conversation_id: str, include_attachments: bool = False) ->
             "title": row["title"],
             "create_time": row["create_time"],
             "update_time": row["update_time"],
-            "message_count": visible_count,
+            "message_count": row["message_count"],
+            "visible_message_count": visible_count,
             "model": row["model_slug"],
             "messages": messages,
             "tags": tags,

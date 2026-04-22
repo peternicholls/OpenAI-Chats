@@ -69,6 +69,7 @@ export interface ConversationDetail {
     update_time: number | null;
     model: string | null;
     message_count: number;
+    visible_message_count?: number | null;
     messages: Message[];
     tags: string[];
     is_favorite: boolean;
