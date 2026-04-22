@@ -1,143 +1,120 @@
-# ChatGPT Archive - REST API Reference
+# OpenAI-Chats REST API Reference
 
-Complete reference for the Web UI REST API endpoints.
+This reference documents the current FastAPI surface used by the local web app.
 
-## Base URL
+## Base URLs
 
-- **Development**: `http://localhost:8000`
-- **Production**: Configure via Docker environment
+| Mode | Base URL |
+|------|----------|
+| Docker Compose | `http://localhost/api` |
+| Direct backend development | `http://localhost:8000/api` |
+
+Interactive OpenAPI docs are available when the backend is running directly:
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+- OpenAPI JSON: `http://localhost:8000/openapi.json`
 
 ## Authentication
 
-The API is designed for single-user local deployment. No authentication is required by default.
+The shipped API is intended for trusted, single-user local deployment. It has no built-in authentication layer.
 
-## Response Format
+## Error Format
 
-All responses are JSON. Successful responses return HTTP 200-204. Errors return appropriate status codes with an error message:
+Most errors are returned as:
 
 ```json
 {
-  "detail": "Error message description"
+  "detail": "Error message"
 }
 ```
 
----
+## Core Response Shapes
+
+### Conversation Summary
+
+```json
+{
+  "id": "6974cc29-45d8-8327-a6dc-ef1ef0a82f46",
+  "title": "Example conversation",
+  "create_time": 1700000000,
+  "update_time": 1700001000,
+  "message_count": 24,
+  "model": "gpt-4",
+  "tags": ["research"],
+  "is_favorite": false
+}
+```
+
+### Import / Embedding Progress
+
+```json
+{
+  "status": "processing",
+  "current": 10,
+  "total": 50,
+  "percent": 20.0,
+  "message": "Importing conversations..."
+}
+```
 
 ## Endpoints
 
-### Health
+### GET /api/health
 
-#### GET /api/health
+Checks database connectivity.
 
-Check API health and database connectivity.
+Response:
 
-**Response:**
 ```json
 {
-  "status": "healthy",
-  "database": "connected",
-  "api_version": "1.0.0"
+  "status": "ok",
+  "database": "connected"
 }
 ```
 
-**Status Codes:**
-- `200`: API is healthy
-- `500`: Service unavailable
+### GET /api/conversations
 
----
+Lists conversations.
 
-### Conversations
+Query parameters:
 
-#### GET /api/conversations
+| Parameter | Description |
+|-----------|-------------|
+| `sort_by` | `date`, `title`, or `messages` |
+| `order` | `asc` or `desc` |
+| `limit` | page size |
+| `offset` | pagination offset |
+| `tag` | optional tag filter |
 
-List conversations with pagination and filtering.
+Response:
 
-**Query Parameters:**
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `sort_by` | string | `date` | Sort field: `date`, `title`, `messages` |
-| `order` | string | `desc` | Sort order: `asc`, `desc` |
-| `limit` | int | `50` | Results per page (1-100) |
-| `offset` | int | `0` | Pagination offset |
-| `tag` | string | — | Filter by tag name |
-
-**Response:**
 ```json
 {
   "total": 150,
   "offset": 0,
   "limit": 50,
-  "items": [
-    {
-      "id": "6974cc29-45d8-8327-a6dc-ef1ef0a82f46",
-      "title": "Python Flask Tutorial",
-      "create_time": 1700000000,
-      "update_time": 1700001000,
-      "model": "gpt-4",
-      "message_count": 24,
-      "tags": ["coding", "tutorial"],
-      "is_favorite": false
-    }
-  ]
+  "items": []
 }
 ```
 
-#### GET /api/conversations/{conversation_id}
+### GET /api/conversations/{conversation_id}
 
-Get conversation details with all messages.
+Returns a conversation with its messages.
 
-**Response:**
+### DELETE /api/conversations/{conversation_id}
+
+Deletes a conversation.
+
+Returns `204 No Content` on success.
+
+### POST /api/search
+
+Search request body:
+
 ```json
 {
-  "id": "6974cc29-45d8-8327-a6dc-ef1ef0a82f46",
-  "title": "Python Flask Tutorial",
-  "create_time": 1700000000,
-  "update_time": 1700001000,
-  "model": "gpt-4",
-  "message_count": 24,
-  "tags": ["coding"],
-  "is_favorite": false,
-  "messages": [
-    {
-      "id": "msg-001",
-      "role": "user",
-      "content": "Help me build a Flask app",
-      "create_time": 1700000000
-    },
-    {
-      "id": "msg-002",
-      "role": "assistant",
-      "content": "I'd be happy to help...",
-      "create_time": 1700000001
-    }
-  ]
-}
-```
-
-**Status Codes:**
-- `200`: Success
-- `404`: Conversation not found
-
-#### DELETE /api/conversations/{conversation_id}
-
-Delete a conversation and all its messages.
-
-**Status Codes:**
-- `204`: Successfully deleted
-- `404`: Conversation not found
-
----
-
-### Search
-
-#### POST /api/search
-
-Search conversations by keyword or semantic similarity.
-
-**Request Body:**
-```json
-{
-  "query": "machine learning tutorial",
+  "query": "machine learning",
   "from_date": "2024-01-01",
   "to_date": "2024-12-31",
   "limit": 20,
@@ -146,352 +123,217 @@ Search conversations by keyword or semantic similarity.
 }
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `query` | string | **Yes** | Search query |
-| `from_date` | string | No | Filter from date (YYYY-MM-DD) |
-| `to_date` | string | No | Filter to date (YYYY-MM-DD) |
-| `limit` | int | No | Max results (default: 20) |
-| `offset` | int | No | Pagination offset (default: 0) |
-| `search_type` | string | No | `keyword`, `semantic`, or `hybrid` (default: keyword) |
+`search_type` supports `keyword`, `semantic`, and `hybrid`.
 
-**Response:**
+Search result items currently use `preview` and `relevance_score`:
+
 ```json
 {
-  "total": 5,
-  "offset": 0,
-  "limit": 20,
-  "items": [
-    {
-      "conversation_id": "6974cc29-45d8-8327-a6dc-ef1ef0a82f46",
-      "title": "ML Basics",
-      "snippet": "...discusses **machine learning** concepts...",
-      "match_count": 3,
-      "create_time": 1700000000,
-      "score": 0.95
-    }
-  ]
+  "conversation_id": "6974cc29-45d8-8327-a6dc-ef1ef0a82f46",
+  "title": "ML Basics",
+  "create_time": 1700000000,
+  "match_count": 3,
+  "preview": "...matching excerpt...",
+  "relevance_score": 0.95
 }
 ```
 
-**Status Codes:**
-- `200`: Success
-- `400`: Invalid query syntax
-- `422`: Missing required fields
+### GET /api/conversations/{conversation_id}/export
 
----
+Exports one conversation.
 
-### Export
+Query parameters:
 
-#### GET /api/export/{conversation_id}
+| Parameter | Description |
+|-----------|-------------|
+| `format` | `md`, `json`, `yaml`, `html`, `xml`, `csv`, or `xlsx` |
 
-Export a conversation in the specified format.
+Returns a downloadable file.
 
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `format` | string | **Yes** | Export format |
+### GET /api/export/batch
 
-**Supported Formats:**
-- `md` - Markdown
-- `json` - JSON
-- `yaml` - YAML
-- `html` - HTML with styling
-- `xml` - XML
-- `csv` - CSV (flat message list)
-- `xlsx` - Excel spreadsheet
+Exports multiple conversations in one response.
 
-**Response:** File download with appropriate Content-Type and Content-Disposition headers.
+Query parameters:
 
-**Status Codes:**
-- `200`: Success (file download)
-- `404`: Conversation not found or invalid format
+| Parameter | Description |
+|-----------|-------------|
+| `ids` | comma-separated conversation IDs |
+| `format` | export format |
 
-#### GET /api/export
+### GET /api/tags
 
-Export multiple conversations.
+Lists tags with usage counts.
 
-**Query Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `ids` | string | **Yes** | Comma-separated conversation IDs |
-| `format` | string | **Yes** | Export format |
+### GET /api/conversations/{conversation_id}/tags
 
-**Example:**
-```
-GET /api/export?ids=abc-123,def-456,ghi-789&format=json
-```
+Lists tags for one conversation.
 
-**Response:** Combined export file or ZIP archive.
+### POST /api/conversations/{conversation_id}/tags
 
----
+Request body:
 
-### Tags
-
-#### GET /api/tags
-
-List all tags with conversation counts.
-
-**Response:**
-```json
-[
-  {
-    "name": "coding",
-    "count": 15
-  },
-  {
-    "name": "tutorial",
-    "count": 8
-  }
-]
-```
-
-#### GET /api/conversations/{conversation_id}/tags
-
-Get tags for a specific conversation.
-
-**Response:**
-```json
-["coding", "python", "tutorial"]
-```
-
-#### POST /api/conversations/{conversation_id}/tags
-
-Add a tag to a conversation.
-
-**Request Body:**
 ```json
 {
   "tag_name": "important"
 }
 ```
 
-**Tag Name Rules:**
-- Max 50 characters
-- Alphanumeric, hyphens, underscores only
-- Case-insensitive (stored lowercase)
+### DELETE /api/conversations/{conversation_id}/tags/{tag_name}
 
-**Status Codes:**
-- `204`: Tag added
-- `400`: Invalid tag name
-- `404`: Conversation not found
+Removes a tag.
 
-#### DELETE /api/conversations/{conversation_id}/tags/{tag_name}
+### PUT /api/tags/{tag_name}
 
-Remove a tag from a conversation.
+Renames a tag.
 
-**Status Codes:**
-- `204`: Tag removed
-- `404`: Conversation or tag not found
+Request body:
 
----
-
-### Favorites
-
-#### POST /api/conversations/{conversation_id}/favorite
-
-Toggle favorite status for a conversation.
-
-**Response:**
 ```json
 {
-  "conversation_id": "6974cc29-45d8-8327-a6dc-ef1ef0a82f46",
+  "new_name": "renamed-tag"
+}
+```
+
+### POST /api/conversations/{conversation_id}/favorite
+
+Toggles favorite state.
+
+Response:
+
+```json
+{
   "is_favorite": true
 }
 ```
 
-#### GET /api/favorites
+### GET /api/favorites
 
-List all favorited conversations.
+Lists favorited conversations using the same paginated shape as `/api/conversations`.
 
-**Response:** Same format as `GET /api/conversations`, filtered to favorites only.
+### POST /api/import
 
----
+Starts an archive import from a ZIP upload.
 
-### Import
+Request type: `multipart/form-data` with field `file`
 
-#### POST /api/import
+Constraints:
 
-Import a ChatGPT export archive.
+- ZIP only
+- 500 MB max upload size
 
-**Request:** `multipart/form-data` with file field `file`.
+Response status: `202 Accepted`
 
-**Constraints:**
-- Max file size: 500MB
-- Accepted types: `.zip`
+Response body:
 
-**Response:**
 ```json
 {
-  "import_id": "import-abc123",
-  "status": "started"
+  "status": "pending",
+  "current": 0,
+  "total": 0,
+  "percent": 0.0,
+  "message": "Import queued..."
 }
 ```
 
-**Status Codes:**
-- `202`: Import queued and running in background
-- `400`: Invalid file type or corrupt archive
-- `413`: File exceeds 500MB limit
+### GET /api/import/progress
 
-#### GET /api/import/progress
+Returns the current import progress as JSON.
 
-Server-Sent Events stream for import progress.
+### GET /api/import/progress/stream
 
-**Response:** SSE stream with events:
-```
-data: {"import_id": "import-abc123", "status": "processing", "current": 50, "total": 100, "message": "Importing conversations..."}
+Streams import progress as Server-Sent Events.
 
-data: {"import_id": "import-abc123", "status": "completed", "current": 100, "total": 100, "conversations_imported": 50, "messages_imported": 1234}
-```
+### GET /api/embeddings/stats
 
-**Event Fields:**
-- `status`: `pending`, `processing`, `completed`, `failed`
-- `current`: Current progress count
-- `total`: Total items
-- `message`: Human-readable status
-- `error`: Error message (when status=failed)
+Returns embedding coverage stats.
 
----
+### GET /api/embeddings/estimate
 
-### Embeddings
+Estimates embedding cost.
 
-#### GET /api/embeddings/estimate
+Optional query parameter:
 
-Estimate cost for generating embeddings.
+| Parameter | Description |
+|-----------|-------------|
+| `model` | embedding model name |
 
-**Response:**
+### POST /api/embeddings/generate
+
+Starts embedding generation.
+
+Request body:
+
 ```json
 {
-  "total_messages": 5000,
-  "messages_to_embed": 4500,
-  "already_embedded": 500,
-  "estimated_tokens": 450000,
-  "estimated_cost": 0.009,
-  "estimated_cost_display": "$0.01",
-  "model": "text-embedding-3-small"
+  "model": "text-embedding-3-small",
+  "batch_size": 100,
+  "estimate_only": false,
+  "max_cost": 5.0
 }
 ```
 
-#### POST /api/embeddings/generate
+### POST /api/embeddings/cancel
 
-Start embedding generation.
+Requests cancellation of embedding generation.
 
-**Request Body:**
+### GET /api/embeddings/progress
+
+Returns embedding progress as JSON.
+
+### GET /api/embeddings/progress/stream
+
+Streams embedding progress as Server-Sent Events.
+
+### POST /api/embeddings/validate-key
+
+Validates either a supplied OpenAI API key or the stored key.
+
+Request body:
+
 ```json
 {
-  "max_cost": 5.00
+  "api_key": "sk-..."
 }
 ```
 
-**Response:**
+### GET /api/settings
+
+Returns user settings.
+
+Current fields:
+
 ```json
 {
-  "task_id": "embed-abc123",
-  "status": "started"
-}
-```
-
-#### GET /api/embeddings/progress
-
-Server-Sent Events stream for embedding progress.
-
-**Response:** SSE stream similar to import progress.
-
-#### POST /api/embeddings/cancel
-
-Cancel embedding generation.
-
-**Status Codes:**
-- `200`: Cancellation requested
-- `400`: No active embedding task
-
----
-
-### Settings
-
-#### GET /api/settings
-
-Get current user settings.
-
-**Response:**
-```json
-{
-  "openai_api_key_set": true,
+  "theme": "light",
+  "default_export_format": "md",
+  "openai_api_key": null,
+  "sidebar_open": true,
   "embedding_model": "text-embedding-3-small",
-  "page_size": 50,
-  "theme": "system"
+  "items_per_page": 50
 }
 ```
 
-#### PATCH /api/settings
+### PUT /api/settings
 
-Update user settings.
+Updates any subset of settings.
 
-**Request Body:**
+Request body example:
+
 ```json
 {
-  "openai_api_key": "sk-...",
-  "page_size": 25
+  "theme": "dark",
+  "items_per_page": 25
 }
 ```
-
-**Note:** API key is encrypted at rest.
-
-**Status Codes:**
-- `200`: Settings updated
-- `400`: Invalid settings value
-
-#### POST /api/settings/test-api-key
-
-Test OpenAI API key validity.
-
-**Response:**
-```json
-{
-  "valid": true,
-  "error": null
-}
-```
-
----
 
 ## Rate Limiting
 
-The API enforces rate limiting:
-- **100 requests per minute** per IP address
-- Returns `429 Too Many Requests` when exceeded
-
-**Response Headers:**
-- `X-RateLimit-Limit`: Request limit
-- `X-RateLimit-Remaining`: Remaining requests
-- `X-RateLimit-Reset`: Reset timestamp
-
----
-
-## Error Codes
-
-| Code | Description |
-|------|-------------|
-| `400` | Bad Request - Invalid input |
-| `404` | Not Found - Resource doesn't exist |
-| `422` | Validation Error - Missing/invalid fields |
-| `429` | Rate Limited - Too many requests |
-| `500` | Server Error - Internal error |
-
----
-
-## OpenAPI Schema
-
-Interactive API documentation is available at:
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
-- **OpenAPI JSON**: `http://localhost:8000/openapi.json`
-
----
+The app configures rate limiting at 100 requests per minute per IP by default.
 
 ## See Also
 
-- [README.md](../README.md) - Quick start
-- [DEPLOYMENT.md](DEPLOYMENT.md) - Docker deployment
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Common issues
-- [API.md](API.md) - Python library API
+- [README.md](../README.md)
+- [DEPLOYMENT.md](DEPLOYMENT.md)
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- [API.md](API.md)

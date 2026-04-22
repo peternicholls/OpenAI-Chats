@@ -669,54 +669,9 @@ with open("conversation.txt", "w") as f:
 conn.close()
 ```
 
-### Web API Example (Flask)
+### Web API Note
 
-```python
-from flask import Flask, jsonify, request
-from chatgpt_archive.db import get_connection, list_conversations
-from chatgpt_archive.search import execute_search
-
-app = Flask(__name__)
-
-@app.route('/api/conversations')
-def get_conversations():
-    """List conversations with pagination."""
-    limit = int(request.args.get('limit', 50))
-    offset = int(request.args.get('offset', 0))
-    
-    conn = get_connection()
-    conversations, total = list_conversations(conn, limit=limit, offset=offset)
-    conn.close()
-    
-    return jsonify({
-        'total': total,
-        'offset': offset,
-        'limit': limit,
-        'conversations': [dict(c) for c in conversations]
-    })
-
-@app.route('/api/search')
-def search_conversations():
-    """Search conversations."""
-    query = request.args.get('q', '')
-    limit = int(request.args.get('limit', 20))
-    
-    if not query:
-        return jsonify({'error': 'Missing query parameter'}), 400
-    
-    conn = get_connection()
-    results = execute_search(conn, query, limit=limit)
-    conn.close()
-    
-    return jsonify({
-        'query': query,
-        'total': len(results),
-        'results': results
-    })
-
-if __name__ == '__main__':
-    app.run(debug=True)
-```
+This repository now ships a dedicated FastAPI backend in [api](/Users/peternicholls/Dev/OpenAI-Chats/api). If you want an HTTP interface over the archive, prefer using the built-in API instead of treating the Flask example as a current reference.
 
 ---
 

@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OpenAI-Chats Frontend
 
-## Getting Started
+This directory contains the Next.js frontend for the local OpenAI-Chats archive app.
 
-First, run the development server:
+## What It Covers
+
+- Conversation browsing and detail views
+- Search UI
+- Import flow and progress display
+- Favorites, tags, and settings
+- Batch export controls
+- Embedding management UI
+
+## Local Development
+
+```bash
+cd web
+npm install
+NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
+```
+
+Open `http://localhost:3000`.
+
+If you are running the full Docker stack instead, the browser entrypoint is `http://localhost` and nginx proxies requests to the backend for you.
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm run start
+npm run lint
+npm test
+npm run test:e2e
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The frontend currently depends on:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `NEXT_PUBLIC_API_URL`: browser-facing API base URL
 
-## Learn More
+Examples:
 
-To learn more about Next.js, take a look at the following resources:
+- Local frontend + local backend: `http://localhost:8000`
+- Docker Compose through nginx: `http://localhost`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`NEXT_PUBLIC_API_URL` is baked into the frontend build, so rebuild the frontend if you change it.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Notes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The app uses Next.js 16, React 19, TypeScript, and React Query.
+- The main project overview lives in [../README.md](../README.md).
+- The previous scaffold README has been archived in [../docs/archive/frontend-scaffold-readme.md](../docs/archive/frontend-scaffold-readme.md).

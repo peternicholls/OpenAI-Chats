@@ -177,16 +177,13 @@ We use [Semantic Versioning](https://semver.org/):
 
 ### Planned Features (Future Releases)
 
-See GitHub Issues for planned enhancements:
-- [ ] Conversation tagging system
-- [ ] Delete/edit conversations via CLI
-- [ ] CSV and Excel export formats
-- [ ] Web interface with Flask
-- [ ] Docker deployment
-- [ ] Incremental import (only new conversations)
+See GitHub Issues for planned enhancements. This list excludes features that are already shipped in the current local web app and Docker stack.
+
+- [ ] Delete or edit conversations via the CLI
+- [ ] Incremental import for newly added archive data
 - [ ] Conversation statistics and charts
-- [ ] Multi-database support
-- [ ] Attachment file export
+- [ ] Multi-database workflows
+- [ ] Attachment file export improvements
 
 ---
 
