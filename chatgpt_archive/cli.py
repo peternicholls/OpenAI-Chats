@@ -201,7 +201,9 @@ def import_archive(ctx: click.Context, archive_dir: str) -> None:
 
 
 @main.command("verify-media")  # type: ignore[attr-defined]
-@click.argument("archive_dir", type=click.Path(exists=True, file_okay=False), required=False)
+@click.argument(
+    "archive_dir", type=click.Path(exists=True, file_okay=False), required=False
+)
 @click.pass_context
 def verify_media(ctx: click.Context, archive_dir: str | None) -> None:
     """Verify the configured archive media directory exists and is readable."""
@@ -214,8 +216,14 @@ def verify_media(ctx: click.Context, archive_dir: str | None) -> None:
 
     exists = resolved_dir.exists()
     conversations_json = (resolved_dir / "conversations.json").exists()
-    root_files = sum(1 for path in resolved_dir.glob("file-*") if path.is_file()) if exists else 0
-    conversation_dirs = sum(1 for path in resolved_dir.iterdir() if path.is_dir()) if exists else 0
+    root_files = (
+        sum(1 for path in resolved_dir.glob("file-*") if path.is_file())
+        if exists
+        else 0
+    )
+    conversation_dirs = (
+        sum(1 for path in resolved_dir.iterdir() if path.is_dir()) if exists else 0
+    )
 
     payload = {
         "archive_media_dir": str(resolved_dir),

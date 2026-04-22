@@ -324,7 +324,9 @@ def _classify_activity_type(cluster: list[dict]) -> str:
     return "reasoning"
 
 
-def get_conversation(conversation_id: str, include_attachments: bool = False) -> dict | None:
+def get_conversation(
+    conversation_id: str, include_attachments: bool = False
+) -> dict | None:
     """Get a single conversation with all messages by OpenAI ID."""
     conn = get_connection()
     try:

@@ -8,7 +8,9 @@ SQL_INJECTION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 XSS_PATTERN = re.compile(r"(<script|javascript:|on\w+=)", re.IGNORECASE)
-UUID_LIKE_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+UUID_LIKE_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+)
 MEDIA_FILE_ID_PATTERN = re.compile(r"^file_[0-9a-f]+$")
 ROOT_FILE_ID_PATTERN = re.compile(r"^file[-_][A-Za-z0-9]+$")
 

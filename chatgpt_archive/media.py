@@ -22,12 +22,14 @@ def get_archive_media_dir(
     return resolved_db_path.parent / "media"
 
 
-def persist_archive_media(source_dir: Path, destination_dir: Path | None = None) -> Path:
+def persist_archive_media(
+    source_dir: Path, destination_dir: Path | None = None
+) -> Path:
     """Merge extracted archive files into the permanent media directory."""
     source_dir = Path(source_dir).expanduser().resolve()
     destination_dir = (
-        destination_dir or get_archive_media_dir()
-    ).expanduser().resolve()
+        (destination_dir or get_archive_media_dir()).expanduser().resolve()
+    )
 
     if source_dir == destination_dir:
         return destination_dir
