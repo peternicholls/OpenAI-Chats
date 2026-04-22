@@ -13,7 +13,7 @@ Modules:
     exporters: Output formatters (Markdown, JSON, YAML, HTML, XML)
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0-beta"
 __author__ = "Peter Nicholls"
 
 from chatgpt_archive.models import Conversation, Message, Attachment

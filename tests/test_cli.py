@@ -17,7 +17,7 @@ class TestCLI:
         result = runner.invoke(main, ['--version'])
         assert result.exit_code == 0
         assert "chatgpt-archive" in result.output
-        assert "0.1.0" in result.output
+        assert "1.0.0-beta" in result.output
     
     def test_help_option(self):
         """Test --help flag."""
