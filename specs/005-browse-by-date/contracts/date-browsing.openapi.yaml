@@ -1,0 +1,381 @@
+openapi: 3.1.0
+info:
+  title: OpenAI-Chats Date Browsing API
+  version: 0.1.0
+  description: >-
+    Additive API contract for the 005 browse-by-date feature. It introduces
+    calendar summary and day-detail endpoints and extends existing list/search
+    ordering with initiated-date and updated-date semantics.
+servers:
+  - url: http://localhost:8000
+paths:
+  /api/conversations/calendar:
+    get:
+      summary: Get calendar buckets for a visible period
+      operationId: getConversationCalendar
+      tags: [ Conversations ]
+      parameters:
+        - in: query
+          name: period_unit
+          required: true
+          schema:
+            type: string
+            enum: [ month, week ]
+        - in: query
+          name: period_start
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: timezone
+          required: true
+          schema:
+            type: string
+          description: IANA timezone name resolved from the viewer environment
+        - in: query
+          name: range_start
+          required: false
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: range_end
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Calendar period summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarPeriodResponse"
+        "400":
+          description: Invalid date range or timezone
+  /api/conversations/by-date:
+    get:
+      summary: Get paginated conversations for one initiated-date bucket
+      operationId: getConversationsByDate
+      tags: [ Conversations ]
+      parameters:
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: timezone
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: offset
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Conversations initiated on the selected local day
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DateBrowseResponse"
+        "400":
+          description: Invalid date or timezone
+  /api/conversations/by-date/unknown:
+    get:
+      summary: Get paginated conversations with no usable initiated date
+      operationId: getUnknownDateConversations
+      tags: [ Conversations ]
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: offset
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Conversations grouped outside calendar placement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnknownDateGroupResponse"
+  /api/conversations:
+    get:
+      summary: List conversations with expanded date sort options
+      operationId: listConversations
+      tags: [ Conversations ]
+      parameters:
+        - in: query
+          name: sort_by
+          required: false
+          schema:
+            type: string
+            enum: [ date, initiated_date, updated_date, title, messages ]
+            default: date
+          description: "`date` is a backward-compatible alias for initiated_date"
+        - in: query
+          name: order
+          required: false
+          schema:
+            type: string
+            enum: [ asc, desc ]
+            default: desc
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - in: query
+          name: offset
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Paginated conversation summaries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedConversationResponse"
+  /api/search:
+    post:
+      summary: Search conversations with optional date sorting
+      operationId: searchConversations
+      tags: [ Search ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchRequest"
+      responses:
+        "200":
+          description: Paginated search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedSearchResponse"
+        "400":
+          description: Invalid query or sort parameters
+components:
+  schemas:
+    ConversationSummary:
+      type: object
+      required: [ id, message_count, tags, is_favorite ]
+      properties:
+        id:
+          type: string
+        title:
+          type: [ string, "null" ]
+        create_time:
+          type: [ number, "null" ]
+          description: Unix timestamp for initiated date
+        update_time:
+          type: [ number, "null" ]
+          description: Unix timestamp for last updated date
+        message_count:
+          type: integer
+        model:
+          type: [ string, "null" ]
+        tags:
+          type: array
+          items:
+            type: string
+        is_favorite:
+          type: boolean
+    CalendarDayBucket:
+      type: object
+      required: [ date, conversation_count, has_conversations ]
+      properties:
+        date:
+          type: string
+          format: date
+        conversation_count:
+          type: integer
+        has_conversations:
+          type: boolean
+        is_selected:
+          type: boolean
+        is_in_range:
+          type: boolean
+    CalendarPeriodResponse:
+      type: object
+      required:
+        [
+          period_unit,
+          period_start,
+          period_end,
+          timezone,
+          days,
+          unknown_date_count,
+        ]
+      properties:
+        period_unit:
+          type: string
+          enum: [ month, week ]
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        timezone:
+          type: string
+        range_start:
+          type: [ string, "null" ]
+          format: date
+        range_end:
+          type: [ string, "null" ]
+          format: date
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarDayBucket"
+        unknown_date_count:
+          type: integer
+    DateBrowseResponse:
+      type: object
+      required: [ selected_date, timezone, total, offset, limit, items ]
+      properties:
+        selected_date:
+          type: string
+          format: date
+        timezone:
+          type: string
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationSummary"
+    UnknownDateGroupResponse:
+      type: object
+      required: [ label, total, offset, limit, items ]
+      properties:
+        label:
+          type: string
+          example: Unknown date
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationSummary"
+    SearchRequest:
+      type: object
+      required: [ query ]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 500
+        from_date:
+          type: [ string, "null" ]
+          format: date
+        to_date:
+          type: [ string, "null" ]
+          format: date
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+        search_type:
+          type: string
+          enum: [ keyword, semantic, hybrid ]
+          default: keyword
+        sort_by:
+          type: string
+          enum: [ relevance, initiated_date, updated_date ]
+          default: relevance
+        order:
+          type: string
+          enum: [ asc, desc ]
+          default: desc
+    SearchResult:
+      type: object
+      required: [ conversation_id, match_count, preview ]
+      properties:
+        conversation_id:
+          type: string
+        title:
+          type: [ string, "null" ]
+        create_time:
+          type: [ number, "null" ]
+        update_time:
+          type: [ number, "null" ]
+        match_count:
+          type: integer
+        preview:
+          type: string
+        relevance_score:
+          type: [ number, "null" ]
+    PaginatedConversationResponse:
+      type: object
+      required: [ total, offset, limit, items ]
+      properties:
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationSummary"
+    PaginatedSearchResponse:
+      type: object
+      required: [ total, offset, limit, items ]
+      properties:
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResult"

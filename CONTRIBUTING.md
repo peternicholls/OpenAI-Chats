@@ -1,4 +1,4 @@
-# Contributing to ChatGPT Archive
+# Contributing to OpenAI-Chats
 
 Thank you for your interest in contributing! This guide will help you get started with development.
 
@@ -19,8 +19,10 @@ Thank you for your interest in contributing! This guide will help you get starte
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- pip and virtualenv (or similar)
+- Python 3.10+ for the CLI/core package
+- Python 3.11+ for the FastAPI backend
+- Node.js 20+ for the frontend
+- npm
 - Git
 - SQLite 3.x (usually pre-installed on macOS/Linux)
 
@@ -32,31 +34,33 @@ git clone https://github.com/peternicholls/OpenAI-Chats.git
 cd OpenAI-Chats
 
 # Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install in development mode
+# Install the CLI/core package
 pip install -e .
 
-# Install development dependencies
+# Install backend dependencies
+pip install -e "./api[dev]"
+
+# Optional: semantic search dependencies
 pip install -e ".[dev,semantic]"
+
+# Install frontend dependencies
+cd web && npm install && cd ..
 
 # Verify installation
 chatgpt-archive --version
 ```
 
-### Development Dependencies
+### Development Tooling
 
-The `[dev]` extra includes:
-- `pytest` - Testing framework
-- `black` - Code formatter
-- `mypy` - Type checker
-- `ruff` - Fast linter (replaces flake8, isort, etc.)
+Common tooling used in this repo:
 
-The `[semantic]` extra includes:
-- `openai` - OpenAI API client
-- `numpy` - Numerical operations
-- `sqlite-vec` - Vector similarity search
+- `pytest` for Python tests
+- `ruff` and `black` for backend formatting/linting
+- `vitest` for frontend unit tests
+- `playwright` for end-to-end tests
 
 ---
 
@@ -145,14 +149,14 @@ pytest -v
 ### 4. Format and Lint
 
 ```bash
-# Format code with black
-black chatgpt_archive/ tests/
+# Backend formatting
+black api chatgpt_archive tests api/tests
 
-# Lint with ruff
-ruff check chatgpt_archive/ tests/
+# Backend linting
+ruff check api chatgpt_archive tests api/tests
 
-# Type check with mypy
-mypy chatgpt_archive/
+# Frontend typecheck
+cd web && npx tsc --noEmit
 ```
 
 ### 5. Commit Changes
@@ -331,33 +335,33 @@ Follow PEP 8 with these conventions:
 
 ### Formatting with Black
 
-Black is the code formatter - it handles most style automatically:
+Use Black for the Python code in the backend and core package:
 
 ```bash
-black chatgpt_archive/ tests/
+black api chatgpt_archive tests api/tests
 ```
 
 ### Linting with Ruff
 
-Ruff checks for issues and enforces style:
+Ruff handles linting for the Python code:
 
 ```bash
 # Check for issues
-ruff check chatgpt_archive/ tests/
+ruff check api chatgpt_archive tests api/tests
 
 # Auto-fix where possible
-ruff check --fix chatgpt_archive/ tests/
+ruff check --fix api chatgpt_archive tests api/tests
 ```
 
-### Type Checking with Mypy
+### Type Safety
 
-Add type hints and check with mypy:
+Add type hints where they improve clarity, and run the frontend typecheck when you touch the web app:
 
 ```bash
-mypy chatgpt_archive/
+cd web && npx tsc --noEmit
 ```
 
-Example type hints:
+Example Python type hints:
 
 ```python
 from typing import Optional, List, Dict, Any
@@ -419,7 +423,8 @@ Before submitting:
 
 - [ ] Code is formatted with `black`
 - [ ] Code passes `ruff` linting
-- [ ] Type hints added and `mypy` passes
+- [ ] Type hints added where helpful
+- [ ] Frontend typecheck passes when `web/` changed
 - [ ] Tests added for new functionality
 - [ ] All tests pass (`pytest`)
 - [ ] Documentation updated (README, USAGE, etc.)

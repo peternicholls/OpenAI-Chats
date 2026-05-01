@@ -1,323 +1,178 @@
-# ChatGPT Archive - Deployment Guide
+# OpenAI-Chats Deployment Guide
 
-Deploy the ChatGPT Archive Web UI using Docker.
-
-## Prerequisites
-
-- Docker 24+ with Compose v2 (`docker compose` — note: no hyphen)
-- 2GB available disk space
-- Existing ChatGPT archive data (optional, can import via the UI)
+This guide covers the current runtime shipped by this repository. The default Docker setup exposes a single browser entrypoint through nginx at `http://localhost` and proxies `/api` traffic to the FastAPI backend.
 
 ## Quick Start
 
+### Docker Compose
+
 ```bash
-# Clone the repository
 git clone https://github.com/peternicholls/OpenAI-Chats.git
 cd OpenAI-Chats
-
-# Build images and start services (first run takes a few minutes)
 docker compose up -d
-
-# Open in browser
-open http://localhost:3001
 ```
 
-That's it! The web UI is now running.
+Open `http://localhost` in your browser.
 
-| Service | URL |
+Default compose URLs:
+
+| Surface | URL |
 |---------|-----|
-| Web UI | http://localhost:3001 |
-| API | http://localhost:8000 |
+| App | `http://localhost` |
+| API via nginx | `http://localhost/api` |
 
----
+The `web` and `api` containers are not exposed directly to the host in the default compose file.
 
-## Architecture
+## Runtime Layout
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────────────┐
-│   Browser   │────▶│  Frontend   │────▶│      Backend API    │
-│ :3001       │     │  (Next.js)  │     │     (FastAPI)       │
-└─────────────┘     │  :3001      │     │     :8000           │
-                    └─────────────┘     └──────────┬──────────┘
-                                                   │
-                                        ┌──────────▼──────────┐
-                                        │   ~/.chatgpt-archive │
-                                        │   - chats.db        │
-                                        │   - settings.json   │
-                                        │   - encryption.key  │
-                                        └─────────────────────┘
+```text
+Browser
+  -> nginx (:80 on host)
+    -> Next.js web container
+    -> FastAPI api container
+      -> ~/.chatgpt-archive on the host
 ```
 
----
+The host data directory is mounted into the API container at `/data`.
 
-## Configuration
+## Data Storage
 
-### Environment Variables
+Application data is stored in `~/.chatgpt-archive/` on the host:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CHATGPT_ARCHIVE_DB` | `/data/chats.db` | Database file path inside container |
-| `API_HOST` | `0.0.0.0` | API bind address |
-| `API_PORT` | `8000` | API port |
-| `CORS_ORIGINS` | `["http://localhost:3001"]` | Allowed CORS origins (JSON array) |
-| `OPENAI_API_KEY` | — | OpenAI API key for semantic search (optional — can also be set via Settings UI) |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | API URL baked into the frontend at build time |
-
-> **`NEXT_PUBLIC_API_URL` is a build-time variable** — it is compiled into the frontend bundle.
-> If you change the API port or hostname, update the `args` section in `docker-compose.yml`
-> and rebuild the web image (`docker compose build web`).
-
-### Custom Port Configuration
-
-If ports `3001` or `8000` conflict with other services, change the host-side port in `docker-compose.yml`:
-
-```yaml
-services:
-  web:
-    ports:
-      - "3002:3000"   # host:container — change left side only
-    build:
-      args:
-        - NEXT_PUBLIC_API_URL=http://localhost:8000   # always the API host port
-  api:
-    ports:
-      - "8001:8000"   # change host port to 8001
-    environment:
-      - CORS_ORIGINS=["http://localhost:3002"]
-```
-
-Then rebuild: `docker compose build && docker compose up -d`
-
----
-
-## Data Persistence
-
-Your data is stored in `~/.chatgpt-archive/` on the host machine:
-
-```
+```text
 ~/.chatgpt-archive/
-├── chats.db          # SQLite database
-├── settings.json     # User settings
-└── attachments/      # Imported file attachments
+├── chats.db
+├── settings.json
+├── encryption.key
+└── attachments/
 ```
 
-This directory is mounted into the container at `/data/`. Data persists across:
-- Container restarts
-- Image updates
-- docker-compose down/up cycles
+Back up the whole directory, not just the database, so encrypted settings remain readable.
 
 ### Backup
 
 ```bash
-# Stop services (optional but recommended)
 docker compose stop
-
-# Backup data (includes database, settings, and encryption key)
 cp -r ~/.chatgpt-archive ~/.chatgpt-archive.backup
-
-# Restart
 docker compose start
 ```
 
-> ⚠️ **Encryption key backup is critical.**  
-> The file `~/.chatgpt-archive/encryption.key` is used to encrypt sensitive settings
-> (such as your OpenAI API key) stored in `settings.json`. If this key is lost, any
-> encrypted settings will be permanently unreadable and you will need to re-enter them.
->
-> **Always include `encryption.key` in your backups.** The backup command above copies the
-> entire `.chatgpt-archive/` directory, so the key is included automatically.
->
-> **Do not commit `encryption.key` to version control.** It is listed in `.gitignore`.
-> Keep a separate secure copy (e.g., a password manager, encrypted cloud storage, or an
-> offline backup drive).
-
 ### Migration
 
-To move data to another machine:
-
 ```bash
-# On source machine
 tar -czvf chatgpt-archive-backup.tar.gz ~/.chatgpt-archive
-
-# Transfer to destination
 scp chatgpt-archive-backup.tar.gz user@new-host:~
-
-# On destination
-tar -xzvf chatgpt-archive-backup.tar.gz -C ~
-docker compose up -d
+ssh user@new-host 'tar -xzvf ~/chatgpt-archive-backup.tar.gz -C ~'
 ```
 
-> The `encryption.key` file inside `.chatgpt-archive/` is included in the archive above.
-> Keep its permissions restricted (`chmod 600 ~/.chatgpt-archive/encryption.key`) on the
-> destination host so only your user can read it.
+## Compose Configuration
 
----
+The current `docker-compose.yml` uses these key settings:
 
-## Production Deployment
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `CHATGPT_ARCHIVE_DB` | `/data/chats.db` | Database path inside the API container |
+| `API_HOST` | `0.0.0.0` | API bind address inside Docker |
+| `API_PORT` | `8000` | Internal API port |
+| `CORS_ORIGINS` | `["http://localhost"]` | Browser origins allowed to call the API |
+| `TRUSTED_PROXY_IPS` | `127.0.0.1,::1` | Proxy IPs trusted for forwarded headers |
+| `NEXT_PUBLIC_API_URL` | `http://localhost` | Browser-facing base URL baked into the web build |
 
-### Security Considerations
+`NEXT_PUBLIC_API_URL` is a build-time variable for the frontend. If you change it, rebuild the `web` image.
 
-⚠️ **Important Security Notices:**
+## Changing the Exposed Port
 
-1. **Network Exposure**: By default, the API binds to `0.0.0.0`, making it accessible on all network interfaces. For local-only access:
-   ```yaml
-   services:
-     api:
-       ports:
-         - "127.0.0.1:8000:8000"
-     web:
-       ports:
-         - "127.0.0.1:3000:3000"
-   ```
+If host port `80` is already in use, change the nginx port mapping, then keep the browser-facing API URL aligned with the new host origin.
 
-2. **No Authentication**: The API has no built-in authentication. For shared deployments, add a reverse proxy with authentication.
-
-3. **API Key Storage**: OpenAI API keys are encrypted at rest but consider using environment variables instead of storing in settings.
-
-### Reverse Proxy (nginx)
-
-For production, use nginx as a reverse proxy:
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name archive.example.com;
-
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-
-    # Frontend
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    # API
-    location /api/ {
-        proxy_pass http://localhost:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # SSE support
-        proxy_buffering off;
-        proxy_cache off;
-        proxy_read_timeout 86400s;
-    }
-}
-```
-
-### Resource Limits
-
-For constrained environments:
+Example: expose the stack on `http://localhost:8080`
 
 ```yaml
 services:
-  api:
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
+  nginx:
+    ports:
+      - "8080:80"
+
   web:
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
+    build:
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8080
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+
+  api:
+    environment:
+      - CORS_ORIGINS=["http://localhost:8080"]
 ```
 
----
-
-## Updating
+Then rebuild:
 
 ```bash
-# Pull latest changes
-git pull
+docker compose build web api nginx
+docker compose up -d
+```
 
-# Rebuild and restart (use --no-cache to force a full rebuild)
+## Local Development Without Docker
+
+For faster iteration, run the backend and frontend separately:
+
+Backend:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+pip install -e ./api
+uvicorn api.main:app --reload --port 8000
+```
+
+Frontend:
+
+```bash
+cd web
+npm install
+NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
+```
+
+In local development, the browser typically uses:
+
+| Surface | URL |
+|---------|-----|
+| Frontend dev server | `http://localhost:3000` |
+| FastAPI dev server | `http://localhost:8000` |
+| OpenAPI docs | `http://localhost:8000/docs` |
+
+## Updating the Stack
+
+```bash
+git pull
 docker compose build
 docker compose up -d
-
-# Force full rebuild (clears Docker layer cache)
-docker compose build --no-cache
-docker compose up -d
 ```
 
----
-
-## Developer Workflow
-
-When iterating on the code locally, rebuild only the image you changed to save time:
+Rebuild one service when only one side changed:
 
 ```bash
-# Changed anything in api/ or chatgpt_archive/
 docker compose build api && docker compose up -d api
-
-# Changed anything in web/src/ or web/public/
 docker compose build web && docker compose up -d web
-
-# Changed both
-docker compose build && docker compose up -d
 ```
 
-### Running Services Without Docker
+## Security Notes
 
-For faster iteration without rebuilding images:
+- The project is designed for single-user local deployment by default.
+- The API has no built-in authentication.
+- `API_HOST=0.0.0.0` is expected inside Docker, but do not expose the stack to an untrusted network without adding auth and a hardened reverse proxy.
+- The OpenAI API key is stored encrypted in `settings.json` using `encryption.key`.
 
-```bash
-# Backend API (auto-reloads on file changes)
-source .venv/bin/activate
-uvicorn api.main:app --reload --port 8000
-
-# Frontend (in a separate terminal)
-cd web && npm run dev   # served at http://localhost:3000
-```
-
-### Running Tests
+## Troubleshooting Quick Checks
 
 ```bash
-# All Python tests (225)
-source .venv/bin/activate
-pytest tests/ api/tests/ -q
-
-# Frontend unit tests (81)
-cd web && npm test -- --run
-
-# Frontend E2E tests (Playwright)
-cd web && npm run test:e2e
-```
-
----
-
-## Troubleshooting
-
-### Services Won't Start
-
-```bash
-# Check logs
+docker compose ps
 docker compose logs api
 docker compose logs web
-
-# Verify containers are running
-docker compose ps
+curl http://localhost/api/health
 ```
 
-### Port Conflicts
-
-If ports `3001` or `8000` are already in use, check what's using them:
-
-```bash
-lsof -iTCP -sTCP:LISTEN -P | grep -E "3001|8000"
-```
-
-Then change the host-side port in `docker-compose.yml` as described in [Custom Port Configuration](#custom-port-configuration) above.
+If you are running the backend directly instead of through nginx, use `curl http://localhost:8000/api/health`.
 
 ### Permission Denied on Volume
 

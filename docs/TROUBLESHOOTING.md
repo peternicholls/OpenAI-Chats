@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-Common issues and solutions for ChatGPT Archive Search & Export.
+Common issues and solutions for OpenAI-Chats.
 
 ## Table of Contents
 
@@ -520,51 +520,50 @@ chatgpt-archive search "query" --hybrid
 
 ## Web UI Issues
 
-### Port 3000 or 8000 already in use
+### Port 80, 3000, or 8000 already in use
 
-**Problem**: When starting the web UI, you get "address already in use" error.
+**Problem**: The stack fails to start because one of the expected ports is already bound.
+
+**What matters now**:
+
+- Docker Compose default entrypoint: port `80`
+- Frontend dev server: port `3000`
+- Backend dev server: port `8000`
 
 **Solutions**:
-1. Find and kill the process using the port:
+1. Find what is using the port:
    ```bash
-   # Find process on port 3000
-   lsof -i :3000
-   # Kill it
-   kill -9 <PID>
-   
-   # Same for port 8000
-   lsof -i :8000
-   kill -9 <PID>
+   lsof -iTCP -sTCP:LISTEN -P | grep -E '80|3000|8000'
    ```
 
-2. Or change the ports in docker-compose.yml:
-   ```yaml
-   services:
-     web:
-       ports:
-         - "3001:3000"  # Use 3001 instead
-     api:
-       ports:
-         - "8001:8000"  # Use 8001 instead
-   ```
+2. If Docker Compose is colliding on port `80`, remap nginx instead of trying to expose `web` and `api` directly.
+
+3. If running locally without Docker, change either the frontend or backend dev port and keep `NEXT_PUBLIC_API_URL` aligned.
 
 ### CORS errors in browser console
 
-**Problem**: Browser shows "Cross-Origin Request Blocked" or similar CORS errors.
+**Problem**: Browser requests to the API are blocked by origin mismatch.
 
 **Solutions**:
-1. Ensure CORS_ORIGINS environment variable includes your frontend URL:
+1. In Docker Compose, keep the browser on the same origin as nginx, for example `http://localhost` or `http://localhost:8080`.
+
+2. Make sure `CORS_ORIGINS` matches the browser origin exactly:
    ```bash
-   # In .env or docker-compose.yml
-   CORS_ORIGINS='["http://localhost:3000"]'
+   CORS_ORIGINS='["http://localhost"]'
    ```
 
-2. For production, include all allowed origins:
+3. If you changed the exposed nginx port, update both:
    ```bash
-   CORS_ORIGINS='["http://localhost:3000", "https://your-domain.com"]'
+   CORS_ORIGINS='["http://localhost:8080"]'
+   NEXT_PUBLIC_API_URL=http://localhost:8080
    ```
 
-3. Verify the API is running and accessible:
+4. Verify the API route you expect is reachable:
+   ```bash
+   curl http://localhost/api/health
+   ```
+
+   If you are running FastAPI directly instead of through nginx, use:
    ```bash
    curl http://localhost:8000/api/health
    ```
@@ -606,14 +605,13 @@ chatgpt-archive search "query" --hybrid
 
 2. Verify environment variables are set correctly:
    ```bash
-   # Required variables
-   DB_PATH=/data/archive.db
-   CORS_ORIGINS='["http://localhost:3000"]'
+   CHATGPT_ARCHIVE_DB=/data/chats.db
+   CORS_ORIGINS='["http://localhost"]'
    ```
 
 3. Check database file exists and has correct schema:
    ```bash
-   sqlite3 ~/.chatgpt-archive/archive.db "PRAGMA integrity_check;"
+   sqlite3 ~/.chatgpt-archive/chats.db "PRAGMA integrity_check;"
    ```
 
 ### Security warning: "API exposed on all interfaces"

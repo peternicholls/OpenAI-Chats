@@ -1,6 +1,6 @@
 # OpenAI-Chats Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-02-16
+Auto-generated from all feature plans. Last updated: 2026-05-01
 
 ## Active Technologies
 
@@ -14,6 +14,7 @@ Auto-generated from all feature plans. Last updated: 2026-02-16
 - Next.js 16 with App Router (web/)
 - React 19 with TypeScript
 - Tailwind CSS + shadcn/ui components
+- date-fns + react-day-picker for date filters and calendar interactions
 - vitest + testing-library for unit tests
 - Playwright for E2E tests
 
@@ -88,6 +89,9 @@ docker-compose up -d
 
 ## Recent Changes
 
+- **005-browse-by-date**: Planned separate date-browsing mode with local-timezone calendar bucketing
+  - Adds calendar summary/day-detail API contracts plus unknown-date grouping
+  - Extends non-date search/list flows with initiated-date and updated-date ordering
 - **002-web-ui**: Web UI with FastAPI backend, Next.js frontend, Docker deployment
   - Test suite: 62 API tests, 55 frontend tests, 27 E2E tests
   - Coverage: API 82%, Frontend core paths covered
